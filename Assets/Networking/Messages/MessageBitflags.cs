@@ -11,6 +11,7 @@ namespace Networking
         {
             return (flags | (byte)(1 << (int)flag)) != 0;
         }
+
         public void SetFlag(int flag, bool value)
         {
             if (value)
@@ -22,13 +23,5 @@ namespace Networking
                 flags &= (byte)(byte.MaxValue ^ (byte)(1 << (int)flag));
             }
         }
-    }
-
-    enum PlayerActionFlag : int
-    {
-        FORWARD = 0,
-        RIGHT = 1,
-        BACKWARD = 2,
-        LEFT = 3,
     }
 }

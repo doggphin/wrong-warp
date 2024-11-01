@@ -1,5 +1,8 @@
 using Networking;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Networking
@@ -16,7 +19,7 @@ namespace Networking
         [SerializeField] private InspectorNetPrefabIdToPrefab[] netPrefabIdArr;
         public readonly Dictionary<NetPrefabId, GameObject> netPrefabIdDict = new();
 
-        public static NetManager instance;
+        public static NetManager Instance { get; private set; }
         public readonly Dictionary<ulong, NetObject> activeNetObjects = new();
         public bool IsServer { get; private set; }
         public bool IsClient { get; private set; }
@@ -24,11 +27,11 @@ namespace Networking
 
         private void Awake()
         {
-            if(instance)
+            if(Instance)
             {
                 Destroy(gameObject);
             }
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
 
             // Load netPrefabIdArr into a dictionary
@@ -45,13 +48,32 @@ namespace Networking
         }
 
 
-        public void RunAsClient(ushort serverPort)
+        UdpClient udpClient;
+        public void StartAsClient(ushort serverPort = 2791)
+        {
+            udpClient = new UdpClient(serverPort);  
+        }
+        private async void ReceiveMessage(ushort serverPort)
+        {
+            udpClient = new UdpClient(serverPort);
+
+            byte[] data = new byte[NetConsts.MAX_NETMESSAGE_PACKET_SIZE];
+            while(true)
+            {
+                UdpReceiveResult recv = await udpClient.ReceiveAsync();
+                data = recv.Buffer;
+            }
+        }
+
+        public void StartAsHost(ushort hostPort = 2791)
         {
 
         }
 
-
-        public void RunAsHost(ushort hostPort)
+        /* tick = ulong
+         * following data type 
+         */
+        public void Client_ProcessPacket(byte[] data)
         {
 
         }
