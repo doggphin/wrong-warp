@@ -1,8 +1,10 @@
+using System.Net.Sockets;
 using UnityEngine;
+
 
 namespace Networking
 {
-    public class NetPlayer : NetObject
+    public class NetUdpServer
     {
 
     }

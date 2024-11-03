@@ -7,6 +7,27 @@ using UnityEngine;
 
 namespace Networking
 {
+    public enum SessionMode
+    {
+        Offline,
+        Server,
+        Client
+    }
+
+
+    public class NetClient
+    {
+        public NetObject playerObject { get; private set; }
+        public ulong playerId { get; private set; }
+
+        public NetClient(NetObject playerObject, ulong playerId)
+        {
+            this.playerObject = playerObject;
+            this.playerId = playerId;
+        }
+    }
+
+
     public class NetManager : MonoBehaviour
     {
         [System.Serializable]
@@ -24,6 +45,7 @@ namespace Networking
         public bool IsServer { get; private set; }
         public bool IsClient { get; private set; }
         public NetObject player;
+
 
         private void Awake()
         {
@@ -47,35 +69,21 @@ namespace Networking
             }
         }
 
-
-        UdpClient udpClient;
-        public void StartAsClient(ushort serverPort = 2791)
+        SessionMode sessionMode = SessionMode.Offline;
+        NetUdpClient netUdpClient;
+        NetUdpServer netUdpServer;
+        public void StartAsClient(ushort port = 2791)
         {
-            udpClient = new UdpClient(serverPort);  
-        }
-        private async void ReceiveMessage(ushort serverPort)
-        {
-            udpClient = new UdpClient(serverPort);
-
-            byte[] data = new byte[NetConsts.MAX_NETMESSAGE_PACKET_SIZE];
-            while(true)
+            if(netUdpClient != null)
             {
-                UdpReceiveResult recv = await udpClient.ReceiveAsync();
-                data = recv.Buffer;
+                netUdpClient.Disconnect();
             }
+            netUdpClient = new NetUdpClient(port);
         }
 
-        public void StartAsHost(ushort hostPort = 2791)
+        public void StartAsServer(ushort port = 2791)
         {
-
-        }
-
-        /* tick = ulong
-         * following data type 
-         */
-        public void Client_ProcessPacket(byte[] data)
-        {
-
+            netUdpServer = new NetUdpServer(port);
         }
     }
 }
