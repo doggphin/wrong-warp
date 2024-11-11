@@ -22,44 +22,27 @@ namespace Networking
     }
 
 
-    public static class NetMessageDeserializerFactory
-    {
-        public ClientNetMessage FromClientMessage(byte[] data, uint tick, uint playerId)
-        {
-            ClientNetMessageType netMsgType;
-            if (data.Length >= 2) { 
-                netMsgType = (ClientNetMessageType)BitConverter.ToUInt16(data, 0));
-            } else {
-                return null;
-            }
-
-            switch(netMsgType)
-            {
-                case ClientNetMessageType.Heartbeat:
-                    return new CNM_Inputs(playerId);
-                    
-            }
-        }
-    }
-
     public class NetMessageBase
     {
         public uint tick;
         public virtual byte[] Serialize() { throw new NotImplementedException(); }
         public virtual void Apply() { throw new NotImplementedException(); }
-        public virtual bool Deserialize(byte[] data) { throw new NotImplementedException(); }
+        public virtual int? Deserialize(byte[] data, int readFrom) { throw new NotImplementedException(); }
     }
 
-    public class ClientNetMessage : NetMessageBase
+
+    public abstract class ClientNetMessage : NetMessageBase
     {
         public uint playerId;
+        public ConnectionType type;
 
         public ClientNetMessage(uint playerId) {
             this.playerId = playerId;
         }
     }
 
-    public class ServerNetMessage : NetMessageBase
+
+    public abstract class ServerNetMessage : NetMessageBase
     {
 
     }

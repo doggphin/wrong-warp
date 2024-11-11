@@ -1,5 +1,6 @@
 using Networking;
 using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Networking
 {
@@ -18,8 +19,7 @@ namespace Networking
         public float rotX;
         public float rotY;
 
-        public CNM_Inputs(uint playerId) {
-            this.playerId = playerId;
+        public CNM_Inputs(uint playerId) : base(playerId) {
         }
 
         public bool GetPlayerInputFlag(PlayerInputFlag flag)
@@ -28,18 +28,18 @@ namespace Networking
         }
 
 
-        public override bool Deserialize(byte[] data)
+        public override int? Deserialize(byte[] data, int readFrom)
         {
-            if(data.Length != sizeof(int) * 3)
+            if(data.Length - readFrom < 4 * 3)
             {
-                return false;
+                return null;
             }
 
             inputs.flags = BitConverter.ToInt32(data, 0);
             rotX = BitConverter.ToSingle(data, 4);
             rotY = BitConverter.ToSingle(data, 8);
 
-            return true;
+            return 4 * 3;
         }
 
 

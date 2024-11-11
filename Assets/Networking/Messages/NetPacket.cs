@@ -19,7 +19,7 @@ namespace Networking
 
         public bool AppendToMsg(byte[] data)
         {
-            if (currentDataLength + data.Length > NetConsts.MAX_NETMESSAGE_PACKET_SIZE)
+            if (currentDataLength + data.Length > NetCommon.MAX_NETMESSAGE_PACKET_SIZE)
             {
                 return false;
             }

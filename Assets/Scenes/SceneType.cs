@@ -1,5 +1,6 @@
-public enum SceneType : int
-{
-    MainMenu = 0,
-    Game = 1,
+namespace Scenes {
+    public enum SceneType : int {
+        MainMenu = 0,
+        Game = 1,
+    }
 }

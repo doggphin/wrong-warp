@@ -1,48 +1,85 @@
-using NUnit.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using UnityEngine.InputSystem.Android;
+using UnityEngine;
 
 namespace Networking
 {
-    public class NetUdpClient
+    public class NetClient
     {
         private UdpClient udpClient;
+        private IPEndPoint udpEndpoint;
+
         private List<ClientNetMessage> sendBuffer;
-        private SynchronizedCollection<ServerNetMessage> receiveBuffer;
-        private Thread receivePacketsThread;
-        private IPEndPoint endpoint;
+        private Thread receiveUdpPacketsThread;
 
+        public static ConcurrentBag<ServerNetMessage> receiveBuffer;
 
-        public NetUdpClient(string hostname, ushort port)
+        public bool isConnected = false;
+
+        public NetClient(string hostname, ushort udpPort)
         {
-            endpoint = new IPEndPoint(IPAddress.Parse(hostname), port);
-            udpClient = new UdpClient(endpoint);
+            udpEndpoint = new IPEndPoint(IPAddress.Parse(hostname), udpPort);
 
-            receivePacketsThread = new Thread(
-                () => ReceivePackets(udpClient));
+            udpClient = new UdpClient(udpEndpoint);
+
+            receiveUdpPacketsThread = new Thread(
+                () => ReceiveUdpPackets(udpClient));
+            receiveUdpPacketsThread.Start();
+
+            isConnected = true;
         }
 
 
-        private void ReceivePackets(UdpClient udpClient)
-        {
-            
+        private void ProcessPacket(byte[] data) {
+
+            uint tick = BitConverter.ToUInt32(data, 0);
+
+            for (int i = sizeof(uint); i < data.Length; i++) {
+                ServerNetMessageType messageType = (ServerNetMessageType)BitConverter.ToUInt16(data, i);
+                i += sizeof(ushort);
+
+                ServerNetMessage netMessage;
+                int? indicesRead = null;
+                switch (messageType) {
+                    case ServerNetMessageType.NetObjectUpdate:
+                        netMessage = new SNM_NetObjectUpdate();
+                        netMessage.Deserialize(data, i);
+                        break;
+                    default:
+                        throw new Exception("Unimplemented ServerNetMessageType decode case!");
+                }
+
+                if (indicesRead == null) {
+                    throw new Exception($"Not enough bytes for a message of type ${messageType}! ({data.Length - i} bytes remained).");
+                } else {
+                    i += (int)indicesRead;
+                }
+
+                receiveBuffer.Add(netMessage);
+            }
         }
 
 
-        public void SendPackets()
+        private void ReceiveUdpPackets(UdpClient udpClient)
         {
-
+            while(true) {
+                byte[] receiveBytes = udpClient.Receive(ref udpEndpoint);
+                ThreadPool.QueueUserWorkItem(_ => ProcessPacket(receiveBytes));
+            }
         }
 
 
         public void Disconnect()
         {
             udpClient.Close();
-            receivePacketsThread.Join();
+
+            receiveUdpPacketsThread.Join();
+
+            isConnected = false;
         }
 
 
@@ -52,14 +89,18 @@ namespace Networking
         }
 
 
-        public void SendMessages(uint tick)
+        public void WrapAndSendMessages(List<ClientNetMessage> messages, ConnectionType connectionType) {
+            SendMessageBuffer(sendBuffer, NetManager.Instance.Tick, ConnectionType.UDP);
+        }
+
+        public void SendMessageBuffer(List<ClientNetMessage> messages, long tick, ConnectionType overChannel)
         {
-            byte[][] serializedMessages = new byte[sendBuffer.Count][];
+            byte[][] serializedMessages = new byte[messages.Count][];
 
             int totalMessagesBytes = 0;
-            for(int i = 0; i < sendBuffer.Count; i++)
+            for(int i = 0; i < messages.Count; i++)
             {
-                serializedMessages[i] = sendBuffer[i].Serialize();
+                serializedMessages[i] = messages[i].Serialize();
                 totalMessagesBytes += serializedMessages[i].Length;
             }
 
@@ -75,9 +116,13 @@ namespace Networking
                 writeIndex += serializedMessages[i].Length;
             }
 
-            udpClient.Send(bytesToSend, bytesToSend.Length);
+            if (overChannel == ConnectionType.UDP) {
+                udpClient.Send(bytesToSend, bytesToSend.Length);
+            } else {
+                Debug.Log("TCP not yet implemented");
+            }    
 
-            sendBuffer.Clear();
+            messages.Clear();
         }
     }
 }

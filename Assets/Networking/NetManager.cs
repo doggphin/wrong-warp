@@ -1,33 +1,10 @@
-using Networking;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Scenes;
 
 namespace Networking
 {
-    public enum SessionMode
-    {
-        Offline,
-        Server,
-        Client
-    }
-
-
-    public class NetClient
-    {
-        public NetObject playerObject { get; private set; }
-        public ulong playerId { get; private set; }
-
-        public NetClient(NetObject playerObject, ulong playerId)
-        {
-            this.playerObject = playerObject;
-            this.playerId = playerId;
-        }
-    }
-
-
     public class NetManager : MonoBehaviour
     {
         [System.Serializable]
@@ -38,15 +15,18 @@ namespace Networking
         }
 
         [SerializeField] private InspectorNetPrefabIdToPrefab[] netPrefabIdArr;
-        public readonly Dictionary<NetPrefabId, GameObject> netPrefabIdDict = new();
+        public Dictionary<NetPrefabId, GameObject> netPrefabIdDict;
+        public Dictionary<long, NetObject> objects = new();
 
-        public static NetManager Instance { get; private set; }
-        public readonly Dictionary<ulong, NetObject> activeNetObjects = new();
+        public long Tick { get; private set; }
         public bool IsServer { get; private set; }
         public bool IsClient { get; private set; }
         public NetObject player;
 
+        public NetClient NetClient { get; private set; }
+        public NetServer NetServer { get; private set; }
 
+        public static NetManager Instance { get; private set; }
         private void Awake()
         {
             if(Instance)
@@ -57,7 +37,8 @@ namespace Networking
             DontDestroyOnLoad(gameObject);
 
             // Load netPrefabIdArr into a dictionary
-            foreach(var entry in netPrefabIdArr)
+            Instance.netPrefabIdDict = new();
+            foreach (var entry in netPrefabIdArr)
             {
                 if(entry.prefabId != NetPrefabId.Empty && entry.prefab != null)
                 {
@@ -69,21 +50,23 @@ namespace Networking
             }
         }
 
-        SessionMode sessionMode = SessionMode.Offline;
-        NetUdpClient netUdpClient;
-        NetUdpServer netUdpServer;
-        public void StartAsClient(ushort port = 2791)
+
+        public void StartAsClient(ushort port)
         {
-            if(netUdpClient != null)
-            {
-                netUdpClient.Disconnect();
-            }
-            netUdpClient = new NetUdpClient(port);
+            NetClient = new NetClient("127.0.0.1", port);
+            SceneManager.LoadScene((int)SceneType.Game);
+        }
+        public void StartAsClient() {
+            StartAsClient(8000);
         }
 
-        public void StartAsServer(ushort port = 2791)
+        public void StartAsServer(ushort port)
         {
-            netUdpServer = new NetUdpServer(port);
+            NetServer = new NetServer("127.0.0.1", port);
+            SceneManager.LoadScene((int)SceneType.Game);
+        }
+        public void StartAsServer() {
+            StartAsServer(8000);
         }
     }
 }
