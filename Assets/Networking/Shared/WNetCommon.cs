@@ -2,7 +2,7 @@ using Networking;
 using System;
 using UnityEngine;
 
-namespace Code.Shared
+namespace Networking.Shared
 {
     public enum WConnectionType {
         TCP,

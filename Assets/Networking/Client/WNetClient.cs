@@ -5,15 +5,14 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-using Code.Shared;
+using Networking.Shared;
 
-namespace Code.Client {
+namespace Networking.Client {
     public class WNetClient : MonoBehaviour, INetEventListener {
         private NetPeer server;
         private NetManager netManager;
 
         private NetDataWriter writer;
-        private NetPacketProcessor packetProcessor;
         private Action<DisconnectInfo> onDisconnected;
 
         private string userName;
@@ -22,7 +21,6 @@ namespace Code.Client {
         private void Awake() {
             DontDestroyOnLoad(gameObject);
             writer = new();
-            packetProcessor = new();
             System.Random rand = new();
             userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
 
@@ -36,6 +34,8 @@ namespace Code.Client {
 
         public void Connect(string ip, Action<DisconnectInfo> onDisconnected) {
             this.onDisconnected = onDisconnected;
+
+            Debug.Log($"Connecting to {ip}:{WNetCommon.WRONGWARP_PORT}");
             netManager.Connect(ip, WNetCommon.WRONGWARP_PORT, "WW 0.01");
         }
 
@@ -45,13 +45,29 @@ namespace Code.Client {
         }
 
 
+        public void SendPacket<T>(WPacketType packetType, T packet, DeliveryMethod deliveryMethod) where T : INetSerializable, new() {
+            if (server == null)
+                return;
+            writer.Reset();
+            writer.Put((ushort)packetType);
+            packet.Serialize(writer);
+            
+            server.Send(writer, deliveryMethod);
+        }
+
+
         public void OnPeerConnected(NetPeer peer) {
             Debug.Log("Connected to server: " + peer.Address);
             server = peer;
+
+            WCJoinPacket joinPacket = new() { userName = userName };
+            Debug.Log($"Sending join packet with username {joinPacket.userName}");
+            SendPacket(WPacketType.CJoin, joinPacket, DeliveryMethod.ReliableOrdered);
         }
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            Debug.unityLogger.Log("Received a packet!");
             WPacketType packetType = (WPacketType)reader.GetUShort();
 
             switch(packetType) {

@@ -3,11 +3,10 @@ using UnityEngine;
 using Scenes;
 using UnityEngine.SceneManagement;
 
-using Code.Server;
-using Code.Client;
-using System;
+using Networking.Server;
+using Networking.Client;
 
-namespace Code.Shared {
+namespace Networking.Shared {
     public class WNetManager : MonoBehaviour {
         [SerializeField] private GameObject serverPrefab;
         public WNetServer WNetServer { get; private set; }
