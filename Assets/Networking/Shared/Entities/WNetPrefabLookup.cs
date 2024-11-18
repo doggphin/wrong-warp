@@ -39,6 +39,9 @@ namespace Networking.Shared {
         }
 
         public static GameObject GetById(WNetPrefabId prefabId) {
+            if(idToNetPrefabs == null) {
+                Init();
+            }
             return idToNetPrefabs[prefabId];
         }
     }

@@ -5,20 +5,26 @@ using System.Net;
 using System.Net.Sockets;
 
 using Networking.Shared;
+using System.Collections.Generic;
 
 namespace Networking.Server {
     public class WNetServer : MonoBehaviour, INetEventListener {
-        private NetManager netManager;
+        public NetManager ServerNetManager { get; private set; }
 
         private NetDataWriter writer;
 
         public int Tick { get; private set; }
+        public static WNetServer Instance { get; private set; }
 
         private void Awake() {
+            if(Instance != null)
+                Destroy(gameObject);
+
+            Instance = this;
             DontDestroyOnLoad(gameObject);
             writer = new();
 
-            netManager = new NetManager(this) {
+            ServerNetManager = new NetManager(this) {
                 AutoRecycle = true,
                 IPv6Enabled = false
             };
@@ -26,17 +32,32 @@ namespace Networking.Server {
 
 
         private void Update() {
-            netManager.PollEvents();
+            ServerNetManager.PollEvents();
+        }
+
+
+        public void FixedUpdate() {
+            AdvanceTick();
         }
 
 
         public void StartServer() {
-            netManager.Start(WNetCommon.WRONGWARP_PORT);
+            ServerNetManager.Start(WNetCommon.WRONGWARP_PORT);
 
             Tick = 0;
             Debug.Log($"Running server on port {WNetCommon.WRONGWARP_PORT}!");
         }
 
+
+        public void AdvanceTick() {
+            WNetEntityManager.Instance.AdvanceTick(Tick);
+
+            // If this tick isn't an update tick, advance to the next one
+            if(Tick++ % WNetCommon.TICKS_PER_UPDATE != 0)
+                return;
+
+
+        }
 
         private NetDataWriter WriteSerializable<T>(WPacketType packetType, T packet) where T : INetSerializable {
             writer.Reset();
@@ -68,9 +89,9 @@ namespace Networking.Server {
 
             switch (packetType) {
                 case WPacketType.CJoin:
-                    WCJoinPacket joinPacket = new();
-                    joinPacket.Deserialize(reader);
-                    OnJoinReceived(joinPacket, peer);
+                    WCJoinRequestPkt joinRequest = new();
+                    joinRequest.Deserialize(reader);
+                    OnJoinReceived(joinRequest, peer);
                     break;
                 default:
                     Debug.Log($"Could not handle packet of type {packetType}!");
@@ -89,18 +110,25 @@ namespace Networking.Server {
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
             Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
+
+            WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
+            WNetEntityManager.Instance.KillEntity(netPlayer.Id);
         }
     
 
-        private void OnJoinReceived(WCJoinPacket joinPacket, NetPeer peer) {
-            Debug.Log($"Join packet received for {joinPacket.userName}");
-            WNetEntity playerEntity = WNetEntityManager.SpawnEntity(WNetPrefabId.Player);
-            peer.Send(WriteSerializable(WPacketType.SJoinAccept, new WSJoinAcceptPacket { userName = joinPacket.userName }), DeliveryMethod.ReliableOrdered);
+        private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
+            Debug.Log($"Join packet received for {joinRequest.userName}");
+
+            WNetEntity playerEntity = WNetEntityManager.Instance.SpawnEntity(WNetPrefabId.Player);
+            WNetPlayer netPlayer = playerEntity.GetComponent<WNetPlayer>();
+            peer.Tag = netPlayer;
+
+            peer.Send(WriteSerializable(WPacketType.SJoinAccept, new WSJoinAcceptPkt { userName = joinRequest.userName }), DeliveryMethod.ReliableOrdered);
         }
 
 
         private void OnDestroy() {
-            netManager.Stop();
+            ServerNetManager.Stop();
         }
     }
 }

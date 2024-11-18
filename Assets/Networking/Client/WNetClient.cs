@@ -60,21 +60,9 @@ namespace Networking.Client {
             Debug.Log("Connected to server: " + peer.Address);
             server = peer;
 
-            WCJoinPacket joinPacket = new() { userName = userName };
-            Debug.Log($"Sending join packet with username {joinPacket.userName}");
-            SendPacket(WPacketType.CJoin, joinPacket, DeliveryMethod.ReliableOrdered);
-        }
-
-
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            Debug.unityLogger.Log("Received a packet!");
-            WPacketType packetType = (WPacketType)reader.GetUShort();
-
-            switch(packetType) {
-                default:
-                    Debug.Log($"Could not handle packet of type {packetType}!");
-                    break;
-            }
+            WCJoinRequestPkt joinRequest = new() { userName = userName };
+            Debug.Log($"Sending join packet with username {joinRequest.userName}");
+            SendPacket(WPacketType.CJoin, joinRequest, DeliveryMethod.ReliableOrdered);
         }
 
 
@@ -91,5 +79,17 @@ namespace Networking.Client {
 
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
+
+
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            Debug.unityLogger.Log("Received a packet!");
+            WPacketType packetType = (WPacketType)reader.GetUShort();
+
+            switch (packetType) {
+                default:
+                    Debug.Log($"Could not handle packet of type {packetType}!");
+                    break;
+            }
+        }
     }
 }

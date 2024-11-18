@@ -14,6 +14,19 @@ namespace Networking.Shared {
         [SerializeField] private GameObject clientPrefab;
         public WNetClient WNetClient { get; private set; }
 
+        public static WNetManager Instance { get; private set; }
+
+        public static bool IsServer { get { return Instance.WNetServer != null; } }
+        public static bool IsClient { get { return Instance.WNetClient != null; } }
+
+
+        private void Awake() {
+            if (Instance != null)
+                Destroy(gameObject);
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
 
         private void OnDisconnect(DisconnectInfo info) {
             Debug.Log($"Disconnected: {info.Reason}");
