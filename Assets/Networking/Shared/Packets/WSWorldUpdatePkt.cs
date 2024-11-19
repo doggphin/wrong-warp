@@ -2,16 +2,14 @@ using LiteNetLib.Utils;
 using System.Collections.Generic;
 
 namespace Networking.Shared {
-
-    public class WWorldUpdateTick {
-        public Dictionary<int, INetSerializable> entityUpdates;
-        public List<INetSerializable> generalUpdates;
-    }
-
     class WSWorldUpdatePkt : INetSerializable {
-        public WWorldUpdateTick[] worldUpdateTicks;
+        public List<INetSerializable>[] generalUpdates;
+        public Dictionary<int, List<INetSerializable>>[] entityUpdates;
 
-        public void Deserialize(NetDataReader reader) => throw new System.NotImplementedException();
+        public void Deserialize(NetDataReader reader) {
+
+        }
+
         public void Serialize(NetDataWriter writer) => throw new System.NotImplementedException();
     }
 }

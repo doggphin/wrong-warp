@@ -3,6 +3,7 @@ namespace Networking
     public enum WNetPrefabId : int
     {
         Empty = 0,
-        Player = 1,
+        Test = 1,
+        Player = 2,
     }
 }

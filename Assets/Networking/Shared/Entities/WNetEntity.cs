@@ -2,6 +2,7 @@ using LiteNetLib.Utils;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.ProBuilder.MeshOperations;
 
 namespace Networking.Shared {
     public class WNetEntity : MonoBehaviour {
@@ -9,53 +10,91 @@ namespace Networking.Shared {
         public WNetPrefabId PrefabId { get; private set; }
 
         [SerializeField]
-        private bool s_updatePos, s_updateRot, s_updateScale;
-        private Vector3 position;
-        private Quaternion rotation;
-        private Vector3 scale;
+        private bool updatePos, updateRot, updateScale;
+        private Vector3 lastPosition;
+        private Quaternion lastRotation;
+        private Vector3 lastScale;
+        public Vector2Int ChunkPosition { get; private set; } = Vector2Int.zero;
+        public WNetChunk CurrentChunk { get; private set; } = null;
+        private bool isDead;
 
-        protected List<INetSerializable>[] s_updatesBuffer = new List<INetSerializable>[WNetCommon.TICKS_PER_UPDATE];
-        private bool s_bufferContainsUpdates = false;
-
-        /// <summary>
-        /// Outputs the updates attached to this net entity within the last WNetCommon.TICKS_PER_UPDATE ticks.
-        /// </summary>
-        /// <param name="updates"> The updates this Net Entity had within the last WNetCommon.TICKS_PER_UPDATE ticks, or null if it received nothing. </param>
-        /// <returns> Whether any updates were attached to this net entity. </returns>
-        public bool GetUpdates(out List<INetSerializable>[] updates) {
-            if(!s_bufferContainsUpdates) {
-                updates = null;
-                return false;
+        private bool isChunkLoader;
+        public bool IsChunkLoader {
+            get {
+                return isChunkLoader;
             }
-
-            updates = s_updatesBuffer;
-            s_updatesBuffer = new List<INetSerializable>[WNetCommon.TICKS_PER_UPDATE];
-            for(int i=0; i< WNetCommon.TICKS_PER_UPDATE; i++) {
-                s_updatesBuffer[i] = new();
+            set {
+                if (isChunkLoader && !value) {
+                    WNetChunkManager.RemoveChunkLoader(ChunkPosition, this, true);
+                }
+                else if (!isChunkLoader && value) {
+                    WNetChunkManager.AddChunkLoader(ChunkPosition, this, true);
+                }
+                
+                isChunkLoader = value;
             }
-            s_bufferContainsUpdates = false;
-            return true;
+        }
+
+        public void Init(bool isChunkLoader) {
+            ChunkPosition = WNetChunkManager.ProjectToGrid(transform.position);
+            IsChunkLoader = isChunkLoader;
+            CurrentChunk = WNetChunkManager.GetChunk(ChunkPosition, false);
         }
 
 
         public void Poll(int tick) {
-            if (!gameObject.activeInHierarchy)
+            if (!gameObject.activeInHierarchy || isDead)
                 return;
 
-            bool hasMoved = s_updatePos && position != transform.position;
-            bool hasRotated = s_updateRot && rotation != transform.rotation;
-            bool hasScaled = s_updateScale && scale != transform.localScale;
+            bool hasMoved = updatePos && lastPosition != transform.position;
+            bool hasRotated = updateRot && lastRotation != transform.rotation;
+            bool hasScaled = updateScale && lastScale != transform.localScale;
 
-            s_updatesBuffer[tick % WNetCommon.TICKS_PER_UPDATE].Add(new WSEntityTransformUpdatePkt() {
-                position = hasMoved ? transform.position : null,
-                rotation = hasRotated ? transform.rotation : null,
-                scale = hasScaled ? transform.localScale : null
-            });
+            WSEntityTransformUpdatePkt transformPacket = hasMoved || hasRotated || hasScaled ?
+                new() {
+                    position = hasMoved ? transform.position : null,
+                    rotation = hasRotated ? transform.rotation : null,
+                    scale = hasScaled ? transform.localScale : null
+                }
+                : null;
+
+            if (hasScaled)
+                lastScale = transform.localScale;
+            if (hasRotated)
+                lastRotation = transform.rotation;
+            if (hasMoved) {
+                lastPosition = transform.position;
+
+                Vector2Int newChunkPosition = WNetChunkManager.ProjectToGrid(transform.position);
+                if (newChunkPosition != ChunkPosition) {
+                    CurrentChunk = WNetChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
+                }
+                ChunkPosition = newChunkPosition;
+            }
+
+            PushUpdate(tick, transformPacket);
+        }
+
+
+        public void Kill(WEntityKillReason killReason) {
+            switch(killReason) {
+                default:
+                    gameObject.SetActive(false);
+                    break;
+            }
+
+            if(isChunkLoader) {
+                WNetChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
+            }
+
+            isDead = true;
         }
 
 
         public void PushUpdate(int tick, INetSerializable packet) {
-            s_updatesBuffer[tick % WNetCommon.TICKS_PER_UPDATE].Add(packet);
+            if(!CurrentChunk.AddEntityUpdate(tick, Id, packet)) {
+                WNetEntityManager.KillEntity(Id, WEntityKillReason.Unload);
+            }
         }
     }
 }

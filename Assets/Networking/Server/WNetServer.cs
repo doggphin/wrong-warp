@@ -6,12 +6,13 @@ using System.Net.Sockets;
 
 using Networking.Shared;
 using System.Collections.Generic;
+using UnityEditor.PackageManager;
 
 namespace Networking.Server {
     public class WNetServer : MonoBehaviour, INetEventListener {
         public NetManager ServerNetManager { get; private set; }
 
-        private NetDataWriter writer;
+        private NetDataWriter writer = new();
 
         public int Tick { get; private set; }
         public static WNetServer Instance { get; private set; }
@@ -22,7 +23,6 @@ namespace Networking.Server {
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            writer = new();
 
             ServerNetManager = new NetManager(this) {
                 AutoRecycle = true,
@@ -52,18 +52,24 @@ namespace Networking.Server {
         public void AdvanceTick() {
             WNetEntityManager.Instance.AdvanceTick(Tick);
 
+            WNetChunkManager.UnloadChunksMarkedForUnloading();
+
             // If this tick isn't an update tick, advance to the next one
-            if(Tick++ % WNetCommon.TICKS_PER_UPDATE != 0)
+            if (Tick++ % WNetCommon.TICKS_PER_UPDATE != 0)
                 return;
 
+            foreach(var peer in ServerNetManager.ConnectedPeerList) {
+                WNetPlayer netPlayer = WNetPlayer.FromPeer(peer);
 
-        }
+                if (netPlayer == null)
+                    continue;
 
-        private NetDataWriter WriteSerializable<T>(WPacketType packetType, T packet) where T : INetSerializable {
-            writer.Reset();
-            writer.Put((ushort)packetType);
-            packet.Serialize(writer);
-            return writer;
+                WNetChunk chunk = netPlayer.Entity.CurrentChunk;
+
+                chunk.SerializeAllUpdates();
+
+                peer.Send(writer, DeliveryMethod.Unreliable);
+            }
         }
 
 
@@ -83,20 +89,31 @@ namespace Networking.Server {
         }
 
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            Debug.unityLogger.Log("Received a packet!");
-            WPacketType packetType = (WPacketType)reader.GetUShort();
+        private bool ProcessPacketFromReader(
+            NetPeer peer,
+            NetDataReader reader,
+            int tick,
+            WPacketType packetType) {
 
             switch (packetType) {
+
                 case WPacketType.CJoin:
                     WCJoinRequestPkt joinRequest = new();
                     joinRequest.Deserialize(reader);
+                    if (!joinRequest.s_isValid)
+                        return false;
                     OnJoinReceived(joinRequest, peer);
-                    break;
+                    return true;
+
                 default:
                     Debug.Log($"Could not handle packet of type {packetType}!");
-                    break;
+                    return false;
             }
+        }
+
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            Debug.unityLogger.Log("Received a packet!");
+            WNetPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
 
 
@@ -112,18 +129,21 @@ namespace Networking.Server {
             Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
 
             WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
-            WNetEntityManager.Instance.KillEntity(netPlayer.Id);
+            WNetEntityManager.KillEntity(netPlayer.Entity.Id);
         }
     
 
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
             Debug.Log($"Join packet received for {joinRequest.userName}");
 
-            WNetEntity playerEntity = WNetEntityManager.Instance.SpawnEntity(WNetPrefabId.Player);
-            WNetPlayer netPlayer = playerEntity.GetComponent<WNetPlayer>();
+            WNetEntity playerEntity = WNetEntityManager.Instance.SpawnEntity(WNetPrefabId.Player, true);
+
+            WNetPlayer netPlayer = new WNetPlayer();
+            netPlayer.Init(peer, playerEntity);
+
             peer.Tag = netPlayer;
 
-            peer.Send(WriteSerializable(WPacketType.SJoinAccept, new WSJoinAcceptPkt { userName = joinRequest.userName }), DeliveryMethod.ReliableOrdered);
+            WNetPacketComms.SendSingle(writer, peer, Tick, WPacketType.SJoinAccept, new WSJoinAcceptPkt { userName = joinRequest.userName }, DeliveryMethod.ReliableOrdered);
         }
 
 

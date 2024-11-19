@@ -55,6 +55,8 @@ namespace Networking.Shared {
             WNetServer.StartServer();
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
+
+            WNetEntityManager.Instance.SpawnEntity(WNetPrefabId.Test, true);
         }
     }
 }

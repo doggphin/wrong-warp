@@ -12,15 +12,15 @@ namespace Networking.Client {
         private NetPeer server;
         private NetManager netManager;
 
-        private NetDataWriter writer;
         private Action<DisconnectInfo> onDisconnected;
 
         private string userName;
+        private NetDataWriter writer = new();
         public int Ping { get; private set; }
+        public int Tick { get; private set; }
 
         private void Awake() {
             DontDestroyOnLoad(gameObject);
-            writer = new();
             System.Random rand = new();
             userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
 
@@ -45,24 +45,13 @@ namespace Networking.Client {
         }
 
 
-        public void SendPacket<T>(WPacketType packetType, T packet, DeliveryMethod deliveryMethod) where T : INetSerializable, new() {
-            if (server == null)
-                return;
-            writer.Reset();
-            writer.Put((ushort)packetType);
-            packet.Serialize(writer);
-            
-            server.Send(writer, deliveryMethod);
-        }
-
-
         public void OnPeerConnected(NetPeer peer) {
             Debug.Log("Connected to server: " + peer.Address);
             server = peer;
 
             WCJoinRequestPkt joinRequest = new() { userName = userName };
             Debug.Log($"Sending join packet with username {joinRequest.userName}");
-            SendPacket(WPacketType.CJoin, joinRequest, DeliveryMethod.ReliableOrdered);
+            WNetPacketComms.SendSingle(writer, server, Tick, WPacketType.CJoin, joinRequest, DeliveryMethod.ReliableOrdered);
         }
 
 
@@ -81,15 +70,23 @@ namespace Networking.Client {
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
 
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            Debug.unityLogger.Log("Received a packet!");
-            WPacketType packetType = (WPacketType)reader.GetUShort();
+        private bool ProcessPacketFromReader(
+            NetPeer peer,
+            NetDataReader reader,
+            int tick,
+            WPacketType packetType) {
 
-            switch (packetType) {
+            switch(packetType) {
                 default:
                     Debug.Log($"Could not handle packet of type {packetType}!");
-                    break;
+                    return false;
             }
+        }
+
+
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            Debug.unityLogger.Log("Received a packet!");
+            WNetPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
     }
 }
