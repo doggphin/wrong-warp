@@ -8,6 +8,8 @@ namespace Networking.Shared {
         public bool s_isValid;
 
         public void Serialize(NetDataWriter writer) {
+            writer.Put((ushort)WPacketType.CJoinRequest);
+
             writer.Put(userName);
 
             if(userName == null)

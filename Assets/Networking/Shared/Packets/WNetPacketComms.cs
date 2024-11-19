@@ -7,8 +7,7 @@ namespace Networking.Shared {
         public static void SendSingle<T>(
             NetDataWriter writer, 
             NetPeer peer, 
-            int tick, 
-            WPacketType packetType, 
+            int tick,  
             T packet, 
             DeliveryMethod deliveryMethod) where T : INetSerializable {
 
@@ -17,7 +16,6 @@ namespace Networking.Shared {
 
             writer.Reset();
             writer.Put(tick);
-            writer.Put((ushort)packetType);
             packet.Serialize(writer);
 
             peer.Send(writer, deliveryMethod);
@@ -46,8 +44,7 @@ namespace Networking.Shared {
         }
 
         
-        public static void AddToMultiPacket<T>(NetDataWriter writer, WPacketType packetType, T packet) where T : INetSerializable {
-            writer.Put((ushort)packetType);
+        public static void AddToMultiPacket<T>(NetDataWriter writer, T packet) where T : INetSerializable {
             packet.Serialize(writer);
         }
 

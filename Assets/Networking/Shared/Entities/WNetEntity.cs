@@ -1,4 +1,6 @@
 using LiteNetLib.Utils;
+using Networking.Server;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,7 +37,8 @@ namespace Networking.Shared {
             }
         }
 
-        public void Init(bool isChunkLoader) {
+
+        public void InitServer(bool isChunkLoader) {
             ChunkPosition = WNetChunkManager.ProjectToGrid(transform.position);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WNetChunkManager.GetChunk(ChunkPosition, false);
@@ -77,14 +80,19 @@ namespace Networking.Shared {
 
 
         public void Kill(WEntityKillReason killReason) {
+            Debug.Log("Killing object!");
             switch(killReason) {
                 default:
                     gameObject.SetActive(false);
                     break;
             }
 
-            if(isChunkLoader) {
-                WNetChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
+            if (WNetManager.IsServer) {
+                PushUpdate(WNetServer.Instance.Tick, new WSEntityKillUpdatePkt() { killReason = killReason });
+
+                if (isChunkLoader) {
+                    WNetChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
+                }
             }
 
             isDead = true;
@@ -92,9 +100,12 @@ namespace Networking.Shared {
 
 
         public void PushUpdate(int tick, INetSerializable packet) {
-            if(!CurrentChunk.AddEntityUpdate(tick, Id, packet)) {
-                WNetEntityManager.KillEntity(Id, WEntityKillReason.Unload);
+            if (isDead) {
+                Debug.Log("I'm dead, I can't push an update out!");
+                return;
             }
+
+            CurrentChunk.AddEntityUpdate(tick, Id, packet);
         }
     }
 }

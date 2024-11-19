@@ -51,7 +51,7 @@ namespace Networking.Client {
 
             WCJoinRequestPkt joinRequest = new() { userName = userName };
             Debug.Log($"Sending join packet with username {joinRequest.userName}");
-            WNetPacketComms.SendSingle(writer, server, Tick, WPacketType.CJoin, joinRequest, DeliveryMethod.ReliableOrdered);
+            WNetPacketComms.SendSingle(writer, server, Tick, joinRequest, DeliveryMethod.ReliableOrdered);
         }
 
 
@@ -70,13 +70,43 @@ namespace Networking.Client {
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
 
 
+        private void ConsumeEntityUpdate(
+            int tick,
+            int entityId,
+            WPacketType packetType,
+            NetDataReader reader) {
+
+            Debug.Log($"Received a {packetType} packet!");
+        }
+
+        private void ConsumeGeneralUpdate(
+            int tick,
+            WPacketType packetType,
+            NetDataReader reader) {
+
+            Debug.Log($"Received a {packetType} packet!");
+        }
+
         private bool ProcessPacketFromReader(
             NetPeer peer,
             NetDataReader reader,
             int tick,
             WPacketType packetType) {
 
-            switch(packetType) {
+            switch (packetType) {
+                case WPacketType.SChunkSnapshot:
+                    Debug.Log("Received a chunk snapshot!");
+                    WSChunkSnapshotPkt chunkSnapshotPkt = new WSChunkSnapshotPkt() {
+                        c_headerTick = tick,
+                        c_entityHandler = ConsumeEntityUpdate,
+                        c_generalHandler = ConsumeGeneralUpdate
+                    };
+                    return true;
+
+                case WPacketType.SJoinAccept:
+                    Debug.Log($"Yippee! I got in the server!!!");
+                    return true;
+
                 default:
                     Debug.Log($"Could not handle packet of type {packetType}!");
                     return false;

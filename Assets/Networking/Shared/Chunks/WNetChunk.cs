@@ -16,39 +16,46 @@ namespace Networking.Shared {
         private bool isLoaded;
         public Vector2Int Coords { get; private set; }
 
-        public NetDataWriter writer { get; private set; } = new();
 
-        private bool isSerialized;
-        public void SerializeAllUpdates() {
-            if (isSerialized)
+        private bool hasBeenSerialized = false;
+        public WSChunkSnapshotPkt Snapshot { get; private set; } = null;
+
+        public NetDataWriter Writer { get; private set; } = new();
+
+        public void GenerateSnapshotFromUpdates() {
+            if (hasBeenSerialized)
                 return;
 
-            WSWorldUpdatePkt chunkUpdate = new() { generalUpdates = generalUpdates, entityUpdates = entityUpdates };
+            WSChunkSnapshotPkt chunkUpdate = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
+            Debug.Log($"Serialized chunk {Coords}!");
 
-
-
-            isSerialized = true;
+            hasBeenSerialized = true;
         }
+
+
+        public void ResetUpdates() {
+            for (int i = 0; i < WNetCommon.TICKS_PER_SNAPSHOT; i++) {
+                generalUpdates[i].Clear();
+                entityUpdates[i].Clear();
+            }
+
+            Snapshot = null;
+            hasBeenSerialized = false;
+            Writer.Reset();
+        }
+
 
         public void Load(Vector2Int coords) {
             isLoaded = true;
-            generalUpdates = new List<INetSerializable>[WNetCommon.TICKS_PER_UPDATE];
-            entityUpdates = new Dictionary<int, List<INetSerializable>>[WNetCommon.TICKS_PER_UPDATE];
+            generalUpdates = new List<INetSerializable>[WNetCommon.TICKS_PER_SNAPSHOT];
+            entityUpdates = new Dictionary<int, List<INetSerializable>>[WNetCommon.TICKS_PER_SNAPSHOT];
 
-            for (int i = 0; i < WNetCommon.TICKS_PER_UPDATE; i++) {
+            for (int i = 0; i < WNetCommon.TICKS_PER_SNAPSHOT; i++) {
                 generalUpdates[i] = new();
                 entityUpdates[i] = new();
             }
 
             Coords = coords;
-        }
-
-
-        public void ResetUpdates() {
-            for(int i=0; i < WNetCommon.TICKS_PER_UPDATE; i++) {
-                generalUpdates[i].Clear();
-                entityUpdates[i].Clear();
-            }
         }
 
 
@@ -63,9 +70,9 @@ namespace Networking.Shared {
             if (!isLoaded)
                 return false;
 
-            if (!entityUpdates[tick % WNetCommon.TICKS_PER_UPDATE].TryGetValue(id, out var entityUpdatesList)) {
+            if (!entityUpdates[tick % WNetCommon.TICKS_PER_SNAPSHOT].TryGetValue(id, out var entityUpdatesList)) {
                 List<INetSerializable> newEntityUpdatesList = new();
-                entityUpdates[tick % WNetCommon.TICKS_PER_UPDATE].Add(id, newEntityUpdatesList);
+                entityUpdates[tick % WNetCommon.TICKS_PER_SNAPSHOT].Add(id, newEntityUpdatesList);
                 entityUpdatesList = newEntityUpdatesList;
             }
 

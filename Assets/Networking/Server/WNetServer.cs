@@ -55,21 +55,37 @@ namespace Networking.Server {
             WNetChunkManager.UnloadChunksMarkedForUnloading();
 
             // If this tick isn't an update tick, advance to the next one
-            if (Tick++ % WNetCommon.TICKS_PER_UPDATE != 0)
+            if (Tick++ % WNetCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
 
-            foreach(var peer in ServerNetManager.ConnectedPeerList) {
+
+            //WNetChunk testChunk = WNetChunkManager.GetChunk(new Vector2Int(0, 0), false);
+            //testChunk.GenerateSnapshotFromUpdates();
+            //testChunk.ResetUpdates();
+
+            foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WNetPlayer netPlayer = WNetPlayer.FromPeer(peer);
 
                 if (netPlayer == null)
                     continue;
 
+                // Check the current player's chunk to see if the writer has already been written
                 WNetChunk chunk = netPlayer.Entity.CurrentChunk;
+                NetDataWriter chunkWriter = chunk.Writer;
 
-                chunk.SerializeAllUpdates();
+                if(chunkWriter.Length == 0) {
+                    // If not, write it now
+                    List<WNetChunk> chunks = WNetChunkManager.GetNeighboringChunks(chunk.Coords);
+                    foreach(var surroundingChunk in chunks) {
+                        surroundingChunk.GenerateSnapshotFromUpdates();
+                        surroundingChunk.Snapshot.Serialize(chunkWriter);
+                    }
+                }
 
-                peer.Send(writer, DeliveryMethod.Unreliable);
+                peer.Send(chunk.Writer, DeliveryMethod.Unreliable);
             }
+
+            WNetChunkManager.ResetChunkUpdatesAndSnapshots();
         }
 
 
@@ -97,7 +113,7 @@ namespace Networking.Server {
 
             switch (packetType) {
 
-                case WPacketType.CJoin:
+                case WPacketType.CJoinRequest:
                     WCJoinRequestPkt joinRequest = new();
                     joinRequest.Deserialize(reader);
                     if (!joinRequest.s_isValid)
@@ -143,7 +159,7 @@ namespace Networking.Server {
 
             peer.Tag = netPlayer;
 
-            WNetPacketComms.SendSingle(writer, peer, Tick, WPacketType.SJoinAccept, new WSJoinAcceptPkt { userName = joinRequest.userName }, DeliveryMethod.ReliableOrdered);
+            WNetPacketComms.SendSingle(writer, peer, Tick, new WSJoinAcceptPkt { userName = joinRequest.userName }, DeliveryMethod.ReliableOrdered);
         }
 
 

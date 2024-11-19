@@ -5,6 +5,8 @@ namespace Networking.Shared {
         public string userName;
 
         public void Serialize(NetDataWriter writer) {
+            writer.Put((ushort)WPacketType.SJoinAccept);
+
             writer.Put(userName);
         }
 

@@ -33,7 +33,8 @@ namespace Networking.Shared {
 
             entitiesToAddCache.Add(ret);
             ret.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
-            ret.Init(isChunkLoader);
+
+            ret.InitServer(isChunkLoader);
 
             return ret;
         }
@@ -41,20 +42,16 @@ namespace Networking.Shared {
 
         public static bool KillEntity(int id, WEntityKillReason killReason = WEntityKillReason.Unload) {
             Debug.Log($"Killing {id}!");
-            bool exists = Instance.Entities.TryGetValue(id, out WNetEntity netEntity);
 
-            if (!exists)
+            if (!Instance.Entities.TryGetValue(id, out WNetEntity netEntity))
                 return false;
 
-            if(WNetManager.IsServer) {
-                netEntity.Kill(killReason);
-                netEntity.PushUpdate(WNetServer.Instance.Tick, new WSEntityKillUpdatePkt() { killReason = killReason });
-                //WNetChunkManager.Remove
+            netEntity.Kill(killReason);
+            if (WNetManager.IsServer)
                 entitiesToDeleteCache.Add(netEntity);
-            }
-            else if(WNetManager.IsClient) {
+
+            else if(WNetManager.IsClient)
                 Destroy(netEntity.gameObject);
-            }
 
             return true;
         }

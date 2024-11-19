@@ -23,6 +23,12 @@ namespace Networking.Shared {
         }
 
 
+        public static void ResetChunkUpdatesAndSnapshots() {
+            foreach(WNetChunk chunk in Instance.loadedChunks.Values) {
+                chunk.ResetUpdates();
+            }
+        }
+
         /// <summary>
         /// Stop receiving chunk loader updates, unloading all chunks that should be unloaded.
         /// </summary>
@@ -62,7 +68,7 @@ namespace Networking.Shared {
         /// <param name="coords"> The coordinates of the chunk to act on </param>
         /// <param name="entity"> The chunk loader </param>
         /// <param name="removeFromAllNearbyChunks"> Should this act on all nearby chunks? </param>
-        public static void RemoveChunkLoader(Vector2Int coords, WNetEntity entity, bool removeFromAllNearbyChunks = true) {
+        public static void RemoveChunkLoader(Vector2Int coords, WNetEntity entity, bool removeFromAllNearbyChunks = false) {
             if(removeFromAllNearbyChunks) {
                 foreach(Vector2Int offset in GetOffsets(coords)) {
                     RemoveChunkLoader(offset, entity, false);
@@ -74,7 +80,7 @@ namespace Networking.Shared {
                 return;
 
             chunk.RemoveChunkLoader(entity);
-            Debug.Log($"Removed chunk loader from {coords}");
+            //Debug.Log($"Removed chunk loader from {coords}");
         }
 
 
@@ -93,7 +99,7 @@ namespace Networking.Shared {
             }
             
             GetChunk(coords, true).AddChunkLoader(entity);
-            Debug.Log($"Added chunk loader to {coords}");
+            //Debug.Log($"Added chunk loader to {coords}");
         }
 
 
@@ -118,7 +124,7 @@ namespace Networking.Shared {
                     // This chunk is in start coords but not end coords
                     // Unload it
                     Debug.Log($"Unloaded chunk {startingLoadedChunks[i]}");
-                    RemoveChunkLoader(startingLoadedChunks[i], entity);
+                    RemoveChunkLoader(startingLoadedChunks[i], entity, false);
                 }
                 endingLoadedChunks.Remove(startingLoadedChunks[i]);
             }
@@ -137,7 +143,7 @@ namespace Networking.Shared {
         /// </summary>
         /// <returns> The chunk the entity was moved to if it exists, or null. </returns>
         public static WNetChunk MoveEntityBetweenChunks(WNetEntity entity, Vector2Int from, Vector2Int to) {
-            if(entity.IsChunkLoader) {
+            if (entity.IsChunkLoader) {
                 MoveChunkLoader(entity, from, to);
             }
 
@@ -147,6 +153,20 @@ namespace Networking.Shared {
             toChunk.PresentEntities.Add(entity);
 
             return toChunk;
+        }
+
+
+        public static List<WNetChunk> GetNeighboringChunks(Vector2Int center, bool getCenter = true, bool createIfNotExists = false) {
+            List<WNetChunk> ret = new List<WNetChunk>(getCenter ? 9 : 8);
+
+            for (int i = 0; i < 9; i++) {
+                if (i == 4 && !getCenter)
+                    continue;
+
+                ret.Add(GetChunk(offsets[i] + center, createIfNotExists));
+            }
+
+            return ret;
         }
 
 

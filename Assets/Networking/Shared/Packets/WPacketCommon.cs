@@ -36,11 +36,13 @@ namespace Networking.Shared {
     public enum WPacketType : ushort {
         Unimplemented,
 
-        CJoin,
+        CJoinRequest,
 
         SJoinAccept,
         SJoinDenied,
         SEntityTransformUpdate,
         SEntityKillUpdate,
+        SChunkSnapshot,
+
     }
 }
