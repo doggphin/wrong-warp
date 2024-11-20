@@ -70,21 +70,37 @@ namespace Networking.Client {
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
 
 
-        private void ConsumeEntityUpdate(
+        private bool ConsumeEntityUpdate(
             int tick,
             int entityId,
             WPacketType packetType,
             NetDataReader reader) {
 
-            Debug.Log($"Received a {packetType} packet!");
+            switch(packetType) {
+                case WPacketType.SEntityTransformUpdate:
+                    WSEntityTransformUpdatePkt pkt = new WSEntityTransformUpdatePkt();
+                    pkt.Deserialize(reader);
+                    if (pkt.position != null)
+                        Debug.Log($"Move {entityId} to {pkt.position} at tick {tick}.");
+                    return true;
+
+                default:
+                    Debug.Log($"Unrecognized entity update packet type {packetType}!");
+                    return false;
+            }
         }
 
-        private void ConsumeGeneralUpdate(
+        private bool ConsumeGeneralUpdate(
             int tick,
             WPacketType packetType,
             NetDataReader reader) {
 
-            Debug.Log($"Received a {packetType} packet!");
+
+            switch(packetType) {
+                default:
+                    Debug.Log($"Unrecognized entity update packet type {packetType}!");
+                    return false;
+            }
         }
 
         private bool ProcessPacketFromReader(
@@ -95,12 +111,12 @@ namespace Networking.Client {
 
             switch (packetType) {
                 case WPacketType.SChunkSnapshot:
-                    Debug.Log("Received a chunk snapshot!");
-                    WSChunkSnapshotPkt chunkSnapshotPkt = new WSChunkSnapshotPkt() {
+                    WSChunkSnapshotPkt chunkSnapshotPkt = new() {
                         c_headerTick = tick,
                         c_entityHandler = ConsumeEntityUpdate,
                         c_generalHandler = ConsumeGeneralUpdate
                     };
+                    chunkSnapshotPkt.Deserialize(reader);
                     return true;
 
                 case WPacketType.SJoinAccept:
@@ -108,14 +124,13 @@ namespace Networking.Client {
                     return true;
 
                 default:
-                    Debug.Log($"Could not handle packet of type {packetType}!");
+                    Debug.Log($"Received an (unimplemented) {packetType} packet!");
                     return false;
             }
         }
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            Debug.unityLogger.Log("Received a packet!");
             WNetPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
     }

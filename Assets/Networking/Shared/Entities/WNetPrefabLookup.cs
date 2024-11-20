@@ -15,7 +15,6 @@ namespace Networking.Shared {
 
         public static void Init() {
             idToNetPrefabs = new();
-            Debug.Log("Initializing prefab lookup");
 
             foreach (string filePath in Directory.GetFileSystemEntries(netPrefabPath, "*.prefab")) {
                 string fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
@@ -33,9 +32,7 @@ namespace Networking.Shared {
                 idToNetPrefabs[(WNetPrefabId)id] = Resources.Load<GameObject>(gameObjectPath);
             }
 
-            foreach(var val in idToNetPrefabs.Values) {
-                Debug.Log(val);
-            }
+            Debug.Log($"Loaded {idToNetPrefabs.Values.Count} NetPrefabs!");
         }
 
         public static GameObject GetById(WNetPrefabId prefabId) {

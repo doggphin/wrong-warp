@@ -65,24 +65,13 @@ namespace Networking.Server {
 
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WNetPlayer netPlayer = WNetPlayer.FromPeer(peer);
-
                 if (netPlayer == null)
                     continue;
-
                 // Check the current player's chunk to see if the writer has already been written
                 WNetChunk chunk = netPlayer.Entity.CurrentChunk;
-                NetDataWriter chunkWriter = chunk.Writer;
+                NetDataWriter chunkWriter = chunk.GetStartedMultiPacketWith3x3Snapshot();
 
-                if(chunkWriter.Length == 0) {
-                    // If not, write it now
-                    List<WNetChunk> chunks = WNetChunkManager.GetNeighboringChunks(chunk.Coords);
-                    foreach(var surroundingChunk in chunks) {
-                        surroundingChunk.GenerateSnapshotFromUpdates();
-                        surroundingChunk.Snapshot.Serialize(chunkWriter);
-                    }
-                }
-
-                peer.Send(chunk.Writer, DeliveryMethod.Unreliable);
+                peer.Send(chunkWriter, DeliveryMethod.Unreliable);
             }
 
             WNetChunkManager.ResetChunkUpdatesAndSnapshots();
@@ -128,7 +117,6 @@ namespace Networking.Server {
         }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            Debug.unityLogger.Log("Received a packet!");
             WNetPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
 
@@ -144,15 +132,15 @@ namespace Networking.Server {
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
             Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
 
-            WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
-            WNetEntityManager.KillEntity(netPlayer.Entity.Id);
+            //WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
+            //WNetEntityManager.KillEntity(netPlayer.Entity.Id);
         }
     
 
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
             Debug.Log($"Join packet received for {joinRequest.userName}");
 
-            WNetEntity playerEntity = WNetEntityManager.Instance.SpawnEntity(WNetPrefabId.Player, true);
+            WNetEntity playerEntity = WNetEntityManager.SpawnEntity(WNetPrefabId.Player, true);
 
             WNetPlayer netPlayer = new WNetPlayer();
             netPlayer.Init(peer, playerEntity);

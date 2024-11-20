@@ -1,7 +1,9 @@
 using LiteNetLib.Utils;
+using Networking.Server;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.Serialization;
+using System.Xml;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -17,19 +19,46 @@ namespace Networking.Shared {
         public Vector2Int Coords { get; private set; }
 
 
-        private bool hasBeenSerialized = false;
-        public WSChunkSnapshotPkt Snapshot { get; private set; } = null;
+        private WSChunkSnapshotPkt snapshot = null;
+        private bool is3x3SnapshotsWritten = false;
+        private NetDataWriter writer = new();
 
-        public NetDataWriter Writer { get; private set; } = new();
 
-        public void GenerateSnapshotFromUpdates() {
-            if (hasBeenSerialized)
-                return;
+        public NetDataWriter GetStartedMultiPacketWith3x3Snapshot() {
+            if (is3x3SnapshotsWritten) {
+                Debug.Log("Returning already written snapshot!");
+                return writer;
+            }
+                
 
-            WSChunkSnapshotPkt chunkUpdate = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
-            Debug.Log($"Serialized chunk {Coords}!");
+            Debug.Log("Writing a new snapshot!");
+            writer.Reset();
 
-            hasBeenSerialized = true;
+            WNetPacketComms.StartMultiPacket(writer, WNetServer.Instance.Tick);
+            GetSnapshot().Serialize(writer);
+
+            WNetChunk[] neighbors = WNetChunkManager.GetNeighboringChunks(Coords, false, false);
+            for (int i = 0; i < 8; i++) {
+                if (neighbors[i] == null) {
+                    Debug.Log("A surrounding chunk was null!");
+                    continue;
+                }
+                neighbors[i].GetSnapshot().Serialize(writer);
+            }
+
+            is3x3SnapshotsWritten = true;
+
+            return writer;
+        }
+
+
+        public WSChunkSnapshotPkt GetSnapshot() {
+            if (snapshot != null)
+                return snapshot;
+
+            snapshot = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
+
+            return snapshot;
         }
 
 
@@ -39,9 +68,8 @@ namespace Networking.Shared {
                 entityUpdates[i].Clear();
             }
 
-            Snapshot = null;
-            hasBeenSerialized = false;
-            Writer.Reset();
+            snapshot = null;
+            is3x3SnapshotsWritten = false;
         }
 
 

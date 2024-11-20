@@ -5,6 +5,7 @@ using Networking.Shared;
 using Unity.VisualScripting;
 using Networking.Server;
 using UnityEditor.VersionControl;
+using System.Linq;
 
 namespace Networking.Shared {
     public class WNetEntityManager : MonoBehaviour {
@@ -13,8 +14,6 @@ namespace Networking.Shared {
         private int tick;
 
         public static WNetEntityManager Instance { get; private set; }
-        public static HashSet<WNetEntity> entitiesToAddCache = new();
-        public static HashSet<WNetEntity> entitiesToDeleteCache = new();
 
         private void Awake() {
             if(Instance != null) {
@@ -24,16 +23,14 @@ namespace Networking.Shared {
             Instance = this;
         }
 
-        public WNetEntity SpawnEntity(WNetPrefabId prefabId, bool isChunkLoader = false) {
-            WNetEntity ret = Instantiate(WNetPrefabLookup.GetById(prefabId), transform).GetComponent<WNetEntity>();
+        public static WNetEntity SpawnEntity(WNetPrefabId prefabId, bool isChunkLoader = false) {
+            WNetEntity ret = Instantiate(WNetPrefabLookup.GetById(prefabId), Instance.transform).GetComponent<WNetEntity>();
 
             // Insert into entities at next available integer
-            while (Entities.ContainsKey(++nextEntityId));
-            Debug.Log($"Spawned {nextEntityId}!");
+            while (!Instance.Entities.TryAdd(++Instance.nextEntityId, ret));
 
-            entitiesToAddCache.Add(ret);
-            ret.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
-
+            Debug.Log($"Spawned {Instance.nextEntityId}!");
+            ret.gameObject.name = $"{Instance.nextEntityId:0000000000}_{prefabId}";
             ret.InitServer(isChunkLoader);
 
             return ret;
@@ -48,7 +45,7 @@ namespace Networking.Shared {
 
             netEntity.Kill(killReason);
             if (WNetManager.IsServer)
-                entitiesToDeleteCache.Add(netEntity);
+                Instance.Entities.Remove(id);
 
             else if(WNetManager.IsClient)
                 Destroy(netEntity.gameObject);
@@ -60,17 +57,8 @@ namespace Networking.Shared {
         public void AdvanceTick(int tick) {
             this.tick = tick;
 
-            foreach (var entity in entitiesToDeleteCache) {
-                Entities.Remove(entity.Id);
-            }
-            entitiesToDeleteCache.Clear();
-
-            foreach (var entity in entitiesToAddCache) {
-                Entities.Add(entity.Id, entity);
-            }
-            entitiesToAddCache.Clear();
-
-            foreach (WNetEntity netEntity in Entities.Values) {
+            // TODO: This could be done more efficiently
+            foreach (WNetEntity netEntity in Entities.Values.ToList()) {
                 netEntity.Poll(tick);
             }
         }

@@ -156,14 +156,16 @@ namespace Networking.Shared {
         }
 
 
-        public static List<WNetChunk> GetNeighboringChunks(Vector2Int center, bool getCenter = true, bool createIfNotExists = false) {
-            List<WNetChunk> ret = new List<WNetChunk>(getCenter ? 9 : 8);
+        public static WNetChunk[] GetNeighboringChunks(Vector2Int center, bool getCenter = true, bool createIfNotExists = false) {
+            int chunksToGet = getCenter ? 9 : 8;
+            WNetChunk[] ret = new WNetChunk[chunksToGet];
 
-            for (int i = 0; i < 9; i++) {
-                if (i == 4 && !getCenter)
-                    continue;
-
-                ret.Add(GetChunk(offsets[i] + center, createIfNotExists));
+            for (int offsetIndex = 0, retIndex = 0; offsetIndex < 9;) {
+                if (offsetIndex == 4 && !getCenter) {
+                    offsetIndex++;
+                }
+                    
+                ret[retIndex++] = GetChunk(offsets[offsetIndex++] + center, createIfNotExists);
             }
 
             return ret;

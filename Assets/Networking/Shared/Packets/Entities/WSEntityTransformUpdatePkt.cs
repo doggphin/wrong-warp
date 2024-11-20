@@ -1,4 +1,5 @@
 using LiteNetLib.Utils;
+using System;
 using UnityEngine;
 
 namespace Networking.Shared {
@@ -8,6 +9,8 @@ namespace Networking.Shared {
         public Vector3? scale;
 
         public void Serialize(NetDataWriter writer) {
+            writer.Put((ushort)WPacketType.SEntityTransformUpdate);
+
             byte flags = 0;
             if (position != null) {
                 flags |= 1;
@@ -20,6 +23,7 @@ namespace Networking.Shared {
             }
 
             writer.Put(flags);
+
             if (position != null) {
                 writer.Put((Vector3)position);
             }
@@ -40,7 +44,7 @@ namespace Networking.Shared {
             if ((flags & 2) != 0) {
                 rotation = reader.GetQuaternion();
             }
-            if ((flags & 3) != 0) {
+            if ((flags & 4) != 0) {
                 scale = reader.GetVector3();
             }
         }

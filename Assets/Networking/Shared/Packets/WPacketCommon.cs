@@ -40,9 +40,9 @@ namespace Networking.Shared {
 
         SJoinAccept,
         SJoinDenied,
+
+        SChunkSnapshot,
         SEntityTransformUpdate,
         SEntityKillUpdate,
-        SChunkSnapshot,
-
     }
 }

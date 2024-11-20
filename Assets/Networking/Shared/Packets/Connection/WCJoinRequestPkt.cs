@@ -3,21 +3,21 @@ using UnityEngine;
 
 namespace Networking.Shared {
     public class WCJoinRequestPkt : INetSerializable {
-        public string userName;
-
         public bool s_isValid;
+
+        public string userName;
 
         public void Serialize(NetDataWriter writer) {
             writer.Put((ushort)WPacketType.CJoinRequest);
 
-            writer.Put(userName);
-
-            if(userName == null)
-                s_isValid = false;
+            writer.Put(userName);     
         }
 
         public void Deserialize(NetDataReader reader) {
             userName = reader.GetString();
+
+            if (userName != null)
+                s_isValid = true;
         }
     }
 }

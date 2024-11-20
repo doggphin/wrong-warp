@@ -75,7 +75,8 @@ namespace Networking.Shared {
                 ChunkPosition = newChunkPosition;
             }
 
-            PushUpdate(tick, transformPacket);
+            if(transformPacket != null)
+                PushUpdate(tick, transformPacket);
         }
 
 
