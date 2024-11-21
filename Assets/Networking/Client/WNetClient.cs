@@ -80,8 +80,8 @@ namespace Networking.Client {
                 case WPacketType.SEntityTransformUpdate:
                     WSEntityTransformUpdatePkt pkt = new WSEntityTransformUpdatePkt();
                     pkt.Deserialize(reader);
-                    if (pkt.position != null)
-                        Debug.Log($"Move {entityId} to {pkt.position} at tick {tick}.");
+                    if (pkt.transform.position != null)
+                        Debug.Log($"Move {entityId} to {pkt.transform.position} at tick {tick}.");
                     return true;
 
                 default:
@@ -110,8 +110,8 @@ namespace Networking.Client {
             WPacketType packetType) {
 
             switch (packetType) {
-                case WPacketType.SChunkSnapshot:
-                    WSChunkSnapshotPkt chunkSnapshotPkt = new() {
+                case WPacketType.SChunkDeltaSnapshot:
+                    WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
                         c_headerTick = tick,
                         c_entityHandler = ConsumeEntityUpdate,
                         c_generalHandler = ConsumeGeneralUpdate

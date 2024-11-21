@@ -1,7 +1,5 @@
-using LiteNetLib;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Runtime.CompilerServices;
 
 namespace Networking.Shared {
     public class WNetChunkManager : MonoBehaviour {
@@ -11,7 +9,7 @@ namespace Networking.Shared {
 
         public static HashSet<Vector2Int> chunksMarkedToUnload;
 
-        private void Awake() {
+        void Awake() {
             if (Instance != null) {
                 Destroy(gameObject);
             }

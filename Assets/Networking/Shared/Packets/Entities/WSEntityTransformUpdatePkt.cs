@@ -4,49 +4,16 @@ using UnityEngine;
 
 namespace Networking.Shared {
     public class WSEntityTransformUpdatePkt : INetSerializable {
-        public Vector3? position;
-        public Quaternion? rotation;
-        public Vector3? scale;
+        public WTransformSerializable transform;
 
         public void Serialize(NetDataWriter writer) {
             writer.Put((ushort)WPacketType.SEntityTransformUpdate);
 
-            byte flags = 0;
-            if (position != null) {
-                flags |= 1;
-            }
-            if (rotation != null) {
-                flags |= 2;
-            }
-            if (scale != null) {
-                flags |= 4;
-            }
-
-            writer.Put(flags);
-
-            if (position != null) {
-                writer.Put((Vector3)position);
-            }
-            if (rotation != null) {
-                writer.Put((Quaternion)rotation);
-            }
-            if (scale != null) {
-                writer.Put((Vector3)scale);
-            }
+            transform.Serialize(writer);
         }
 
         public void Deserialize(NetDataReader reader) {
-            byte flags = reader.GetByte();
-
-            if ((flags & 1) != 0) {
-                position = reader.GetVector3();
-            }
-            if ((flags & 2) != 0) {
-                rotation = reader.GetQuaternion();
-            }
-            if ((flags & 4) != 0) {
-                scale = reader.GetVector3();
-            }
+            transform.Deserialize(reader);
         }
     }
 }

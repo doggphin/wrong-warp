@@ -58,18 +58,13 @@ namespace Networking.Server {
             if (Tick++ % WNetCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
 
-
-            //WNetChunk testChunk = WNetChunkManager.GetChunk(new Vector2Int(0, 0), false);
-            //testChunk.GenerateSnapshotFromUpdates();
-            //testChunk.ResetUpdates();
-
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WNetPlayer netPlayer = WNetPlayer.FromPeer(peer);
                 if (netPlayer == null)
                     continue;
                 // Check the current player's chunk to see if the writer has already been written
                 WNetChunk chunk = netPlayer.Entity.CurrentChunk;
-                NetDataWriter chunkWriter = chunk.GetStartedMultiPacketWith3x3Snapshot();
+                NetDataWriter chunkWriter = chunk.GetPrepared3x3SnapshotPacket();
 
                 peer.Send(chunkWriter, DeliveryMethod.Unreliable);
             }

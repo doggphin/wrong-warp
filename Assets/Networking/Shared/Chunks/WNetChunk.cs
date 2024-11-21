@@ -1,10 +1,7 @@
 using LiteNetLib.Utils;
 using Networking.Server;
+using System;
 using System.Collections.Generic;
-using System.Numerics;
-using System.Runtime.Serialization;
-using System.Xml;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Networking.Shared {
@@ -19,21 +16,25 @@ namespace Networking.Shared {
         public Vector2Int Coords { get; private set; }
 
 
-        private WSChunkSnapshotPkt snapshot = null;
-        private bool is3x3SnapshotsWritten = false;
-        private NetDataWriter writer = new();
+        private WSChunkDeltaSnapshotPkt deltaSnapshot = null;
+        private bool isDeltaSnapshot3x3PktWritten = false;
+        private NetDataWriter deltaSnapshot3x3PktWriter = new();
 
+        private NetDataWriter GetPrepared3x3WorldStatePacket() {
+            throw new NotImplementedException();
+        }
+        
 
-        public NetDataWriter GetStartedMultiPacketWith3x3Snapshot() {
-            if (is3x3SnapshotsWritten) {
+        public NetDataWriter GetPrepared3x3SnapshotPacket() {
+            if (isDeltaSnapshot3x3PktWritten) {
                 Debug.Log("Returning already written snapshot!");
-                return writer;
+                return deltaSnapshot3x3PktWriter;
             }
 
-            writer.Reset();
+            deltaSnapshot3x3PktWriter.Reset();
 
-            WNetPacketComms.StartMultiPacket(writer, WNetServer.Instance.Tick);
-            GetSnapshot().Serialize(writer);
+            WNetPacketComms.StartMultiPacket(deltaSnapshot3x3PktWriter, WNetServer.Instance.Tick);
+            GetSnapshot().Serialize(deltaSnapshot3x3PktWriter);
 
             WNetChunk[] neighbors = WNetChunkManager.GetNeighboringChunks(Coords, false, false);
             for (int i = 0; i < 8; i++) {
@@ -41,22 +42,22 @@ namespace Networking.Shared {
                     Debug.Log("A surrounding chunk was null!");
                     continue;
                 }
-                neighbors[i].GetSnapshot().Serialize(writer);
+                neighbors[i].GetSnapshot().Serialize(deltaSnapshot3x3PktWriter);
             }
 
-            is3x3SnapshotsWritten = true;
+            isDeltaSnapshot3x3PktWritten = true;
 
-            return writer;
+            return deltaSnapshot3x3PktWriter;
         }
 
 
-        public WSChunkSnapshotPkt GetSnapshot() {
-            if (snapshot != null)
-                return snapshot;
+        public WSChunkDeltaSnapshotPkt GetSnapshot() {
+            if (deltaSnapshot != null)
+                return deltaSnapshot;
 
-            snapshot = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
+            deltaSnapshot = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
 
-            return snapshot;
+            return deltaSnapshot;
         }
 
 
@@ -66,8 +67,8 @@ namespace Networking.Shared {
                 entityUpdates[i].Clear();
             }
 
-            snapshot = null;
-            is3x3SnapshotsWritten = false;
+            deltaSnapshot = null;
+            isDeltaSnapshot3x3PktWritten = false;
         }
 
 

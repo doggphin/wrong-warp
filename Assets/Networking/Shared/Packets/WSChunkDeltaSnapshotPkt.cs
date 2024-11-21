@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSChunkSnapshotPkt : INetSerializable {
+    public class WSChunkDeltaSnapshotPkt : INetSerializable {
         public List<INetSerializable>[] s_generalUpdates;
         public Dictionary<int, List<INetSerializable>>[] s_entityUpdates;
 
@@ -79,7 +79,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer) {
             // Put packet type
-            writer.Put((ushort)WPacketType.SChunkSnapshot);
+            writer.Put((ushort)WPacketType.SChunkDeltaSnapshot);
 
             // Get and store the total general packets in each tick
             // If there are any, the tick contains updates, so mark it in the flags

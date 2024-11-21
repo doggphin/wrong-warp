@@ -56,9 +56,11 @@ namespace Networking.Shared {
 
             WSEntityTransformUpdatePkt transformPacket = hasMoved || hasRotated || hasScaled ?
                 new() {
-                    position = hasMoved ? transform.position : null,
-                    rotation = hasRotated ? transform.rotation : null,
-                    scale = hasScaled ? transform.localScale : null
+                    transform = new WTransformSerializable() {
+                        position = hasMoved ? transform.position : null,
+                        rotation = hasRotated ? transform.rotation : null,
+                        scale = hasScaled ? transform.localScale : null
+                    }
                 }
                 : null;
 
@@ -90,7 +92,7 @@ namespace Networking.Shared {
             }
 
             if (WNetManager.IsServer) {
-                PushUpdate(WNetServer.Instance.Tick, new WSEntityKillUpdatePkt() { killReason = killReason });
+                PushUpdate(WNetServer.Instance.Tick, new WSEntityKillPkt() { reason = killReason });
 
                 if (isChunkLoader) {
                     WNetChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
