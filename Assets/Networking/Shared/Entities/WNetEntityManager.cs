@@ -31,7 +31,7 @@ namespace Networking.Shared {
 
             Debug.Log($"Spawned {Instance.nextEntityId}!");
             ret.gameObject.name = $"{Instance.nextEntityId:0000000000}_{prefabId}";
-            ret.InitServer(isChunkLoader);
+            ret.InitServer(Instance.nextEntityId, isChunkLoader);
 
             return ret;
         }

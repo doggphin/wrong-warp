@@ -35,7 +35,6 @@ namespace Networking.Shared {
                     continue;
                 }
                     
-
                 int numberOfGeneralUpdatesInTick = reader.GetUShort();
 
                 //Debug.Log($"In tick {c_headerTick - WNetCommon.TICKS_PER_SNAPSHOT + i}, there are {numberOfGeneralUpdatesInTick} general updates.");
@@ -53,20 +52,20 @@ namespace Networking.Shared {
 
             for (int i = 0; i < WNetCommon.TICKS_PER_SNAPSHOT; i++) {
                 // If bitflag for this tick is turned off, skip to the next one
-                if ((entityUpdatesExistFlags & (1 << i)) == 0) {
+                if ((entityUpdatesExistFlags & (1 << i)) == 0)
                     continue;
-                }
                     
-                int numberOfEntityUpdatesInTick = reader.GetUShort();
+                int numberOfEntitiesInTick = reader.GetUShort();
+                Debug.Log(numberOfEntitiesInTick);
 
                 //Debug.Log($"In tick {c_headerTick - WNetCommon.TICKS_PER_SNAPSHOT + i}, there are {numberOfEntityUpdatesInTick} entity updates.");
-
-                while (numberOfEntityUpdatesInTick-- > 0) {
+                while (numberOfEntitiesInTick-- > 0) {
                     int entityId = reader.GetInt();
-                    int amountOfUpdates = reader.GetUShort();
+                    int amountOfUpdatesForEntity = reader.GetUShort();
 
-                    while(amountOfUpdates-- > 0) {
+                    while(amountOfUpdatesForEntity-- > 0) {
                         WPacketType packetType = (WPacketType)reader.GetUShort();
+
                         c_entityHandler(
                             c_headerTick - WNetCommon.TICKS_PER_SNAPSHOT + i,
                             entityId,
@@ -79,66 +78,72 @@ namespace Networking.Shared {
 
 
         public void Serialize(NetDataWriter writer) {
+            // Put packet type
             writer.Put((ushort)WPacketType.SChunkSnapshot);
 
-            // -- Bitflags that represent which ticks have general updates
-            // For every tick in a snapshot:
-            // -- Amount of general updates in this tick (ushort)
-            //      -- General update
-            //
-            // For every tick in a snapshot:
-            // -- Total amount of updates in this tick (ushort)
-            //      -- Entity ID (int)-
-            //      -- Amount of updates
-            //          -- Entity update'
+            // Get and store the total general packets in each tick
+            // If there are any, the tick contains updates, so mark it in the flags
             int generalUpdatesExistInTickBitflags = 0;
             for(int i=0; i<WNetCommon.TICKS_PER_SNAPSHOT; i++) {
                 if (s_generalUpdates[i].Count > 0)
                     generalUpdatesExistInTickBitflags |= 1 << i;
             }
 
+            // Write the flags
             writer.Put((byte)generalUpdatesExistInTickBitflags);
 
             for(int i=0; i<WNetCommon.TICKS_PER_SNAPSHOT; i++) {
+
                 // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
                 int generalUpdatesInTick = s_generalUpdates[i].Count;
-                if (generalUpdatesInTick == 0)
+                if (generalUpdatesInTick > 0)
+                    writer.Put((ushort)generalUpdatesInTick);
+                else
                     continue;
-                writer.Put((ushort)generalUpdatesInTick);
 
+                // Write all the general updates
                 foreach (INetSerializable update in s_generalUpdates[i]) {
                     update.Serialize(writer);
                 }
             }
 
+            // Get and store the total entities in each tick
+            // If there are any, the tick contains updates, so mark it in the flags
             int tickContainsEntityUpdatesFlags = 0;
-            int[] totalNumberOfEntityUpdatesInTick = new int[WNetCommon.TICKS_PER_SNAPSHOT];
-            for(int i=0; i<WNetCommon.TICKS_PER_SNAPSHOT; i++) {
-                foreach (var updates in s_entityUpdates[i].Values) {
-                    totalNumberOfEntityUpdatesInTick[i] += updates.Count;
+            int[] totalEntitiesInTicks = new int[WNetCommon.TICKS_PER_SNAPSHOT];
+            for (int i=0; i<WNetCommon.TICKS_PER_SNAPSHOT; i++) {
+                totalEntitiesInTicks[i] = s_entityUpdates[i].Keys.Count;
+
+                if (totalEntitiesInTicks[i] > 0)
                     tickContainsEntityUpdatesFlags |= 1 << i;
-                }
             }
 
+            // Write the flags
             writer.Put((byte)tickContainsEntityUpdatesFlags);
 
             for (int i=0; i<WNetCommon.TICKS_PER_SNAPSHOT; i++) {
-                // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
-                int entityUpdatesInTick = totalNumberOfEntityUpdatesInTick[i];
-                if (entityUpdatesInTick == 0)
-                    continue;
-                writer.Put((ushort)entityUpdatesInTick);
 
+                // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
+                int entitiesInTick = totalEntitiesInTicks[i];
+                if (entitiesInTick > 0)
+                    writer.Put((ushort)entitiesInTick);
+                else
+                    continue;
+
+                // For each entity and their updates,
                 foreach(KeyValuePair<int, List<INetSerializable>> entityUpdates in s_entityUpdates[i]) {
-                    int entityId = entityUpdates.Key;
-                    int amountOfUpdates = entityUpdates.Value.Count;
+
                     // Put entity ID
+                    int entityId = entityUpdates.Key;
                     writer.Put(entityId);
+
                     // Put # of packets
+                    int amountOfUpdates = entityUpdates.Value.Count;
                     writer.Put((ushort)amountOfUpdates);
-                    // Put all updates
-                    foreach(INetSerializable update in entityUpdates.Value) {
-                        update.Serialize(writer);
+
+                    // Then put all of its updates
+                    foreach(var pkt in entityUpdates.Value) {
+                        pkt.Serialize(writer);
                     }
                 }
             }

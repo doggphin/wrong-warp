@@ -3,64 +3,64 @@
   "WorkspaceRootPath": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|c:\\users\\doggp\\documents\\projects\\wrong-warp\\assets\\spinnertest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\spinnertest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\spinnertest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|c:\\users\\doggp\\documents\\projects\\wrong-warp\\assets\\networking\\shared\\chunks\\wnetchunk.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\chunks\\wnetchunk.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\chunks\\wnetchunk.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|c:\\users\\doggp\\documents\\projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\server\\wnetserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\server\\wnetserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\connection\\wsjoindeniedpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\connection\\wsjoindeniedpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\wschunksnapshotpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wschunksnapshotpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\entities\\wsentitytransformupdatepkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\entities\\wsentitytransformupdatepkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetprefablookup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetprefablookup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetentitymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetentitymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\wnetpacketcomms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wnetpacketcomms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|c:\\users\\doggp\\documents\\projects\\wrong-warp\\assets\\networking\\client\\wnetclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\client\\wnetclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\chunks\\wnetchunkmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\chunks\\wnetchunkmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\client\\wnetclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\client\\wnetclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\wpacketcommon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wpacketcommon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|c:\\users\\doggp\\documents\\projects\\wrong-warp\\assets\\networking\\shared\\packets\\wschunksnapshotpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wschunksnapshotpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\connection\\wsjoinacceptpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\connection\\wsjoinacceptpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\entities\\wsentitytransformupdatepkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\entities\\wsentitytransformupdatepkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\connection\\wsjoindeniedpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\connection\\wsjoindeniedpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\connection\\wcjoinrequestpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\connection\\wcjoinrequestpkt.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\server\\wnetserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\server\\wnetserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetentitymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetentitymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\entities\\wnetprefablookup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\entities\\wnetprefablookup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\wnetpacketcomms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wnetpacketcomms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\packets\\wpacketcommon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|solutionrelative:assets\\networking\\shared\\packets\\wpacketcommon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{1AFCCB62-C773-16DE-6DC8-6EA0619FC7DA}|Assembly-CSharp.csproj|C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\assets\\networking\\shared\\wnetmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -85,7 +85,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 883,
+          "DockedWidth": 693,
           "SelectedChildIndex": 0,
           "Children": [
             {
@@ -109,38 +109,40 @@
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Chunks\\WNetChunk.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Chunks\\WNetChunk.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Chunks\\WNetChunk.cs",
-              "ViewState": "AgIAAFQAAAAAAAAAAAAYwGEAAAAaAAAAAAAAAA==",
+              "ViewState": "AgIAACAAAAAAAAAAAAAmwD8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-11-18T17:02:28.999Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 2,
               "Title": "WNetClient.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Client\\WNetClient.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Client\\WNetClient.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Client\\WNetClient.cs",
               "RelativeToolTip": "Assets\\Networking\\Client\\WNetClient.cs",
-              "ViewState": "AgIAAEwAAAAAAAAAAAAuwHYAAAAzAAAAAAAAAA==",
+              "ViewState": "AgIAAGcAAAAAAAAAAAAAAIkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-19T07:16:04.638Z"
+              "WhenOpened": "2024-11-19T07:16:04.638Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 3,
               "Title": "WNetChunkManager.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Chunks\\WNetChunkManager.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Chunks\\WNetChunkManager.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Chunks\\WNetChunkManager.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Chunks\\WNetChunkManager.cs",
-              "ViewState": "AgIAAHAAAAAAAAAAAAAqwJgAAAAwAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-18T23:36:48Z"
+              "WhenOpened": "2024-11-18T23:36:48Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 13,
               "Title": "WNetPacketComms.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\WNetPacketComms.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\WNetPacketComms.cs",
@@ -152,13 +154,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "WNetEntityManager.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntityManager.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Entities\\WNetEntityManager.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntityManager.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Entities\\WNetEntityManager.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAewCcAAAAbAAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAApwCYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-11-19T07:16:04.652Z"
             },
@@ -176,7 +178,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 14,
               "Title": "WPacketCommon.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\WPacketCommon.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\WPacketCommon.cs",
@@ -225,12 +227,48 @@
           ]
         },
         {
-          "DockedWidth": 394,
-          "SelectedChildIndex": 2,
+          "DockedWidth": 584,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 12,
+              "Title": "WNetPrefabLookup.cs",
+              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
+              "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
+              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
+              "RelativeToolTip": "Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-11-19T20:34:55.201Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "WNetServer.cs",
+              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Server\\WNetServer.cs",
+              "RelativeDocumentMoniker": "Assets\\Networking\\Server\\WNetServer.cs",
+              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Server\\WNetServer.cs",
+              "RelativeToolTip": "Assets\\Networking\\Server\\WNetServer.cs",
+              "ViewState": "AgIAAFUAAAAAAAAAAIAwwG8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-11-19T00:15:59.922Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "WNetEntity.cs",
+              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
+              "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
+              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
+              "RelativeToolTip": "Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
+              "ViewState": "AgIAAFIAAAAAAAAAAAAxwGwAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-11-18T17:02:29.01Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "WCJoinRequestPkt.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\Connection\\WCJoinRequestPkt.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\Connection\\WCJoinRequestPkt.cs",
@@ -243,31 +281,6 @@
             {
               "$type": "Document",
               "DocumentIndex": 7,
-              "Title": "WNetPrefabLookup.cs",
-              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
-              "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
-              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
-              "RelativeToolTip": "Assets\\Networking\\Shared\\Entities\\WNetPrefabLookup.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-19T20:34:55.201Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "WNetEntity.cs",
-              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
-              "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
-              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
-              "RelativeToolTip": "Assets\\Networking\\Shared\\Entities\\WNetEntity.cs",
-              "ViewState": "AgIAAD8AAAAAAAAAAAAlwGwAAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-18T17:02:29.01Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
               "Title": "WSJoinDeniedPkt.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinDeniedPkt.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinDeniedPkt.cs",
@@ -279,27 +292,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 4,
               "Title": "WSChunkSnapshotPkt.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\WSChunkSnapshotPkt.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\WSChunkSnapshotPkt.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\WSChunkSnapshotPkt.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Packets\\WSChunkSnapshotPkt.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAQwBQAAAA0AAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-19T10:33:09.802Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "WNetServer.cs",
-              "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Server\\WNetServer.cs",
-              "RelativeDocumentMoniker": "Assets\\Networking\\Server\\WNetServer.cs",
-              "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Server\\WNetServer.cs",
-              "RelativeToolTip": "Assets\\Networking\\Server\\WNetServer.cs",
-              "ViewState": "AgIAADIAAAAAAAAAAAAQwEwAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-11-19T00:15:59.922Z"
+              "WhenOpened": "2024-11-19T10:33:09.802Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -309,19 +311,19 @@
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\Entities\\WSEntityTransformUpdatePkt.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\Entities\\WSEntityTransformUpdatePkt.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Packets\\Entities\\WSEntityTransformUpdatePkt.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAaAAAAAAAAAA==",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAQwBEAAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-11-19T23:43:42.91Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 5,
               "Title": "WSJoinAcceptPkt.cs",
               "DocumentMoniker": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinAcceptPkt.cs",
               "RelativeDocumentMoniker": "Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinAcceptPkt.cs",
               "ToolTip": "C:\\Users\\Doggp\\Documents\\Projects\\wrong-warp\\Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinAcceptPkt.cs",
               "RelativeToolTip": "Assets\\Networking\\Shared\\Packets\\Connection\\WSJoinAcceptPkt.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAA1AAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-11-19T10:33:09.795Z"
             }

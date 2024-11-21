@@ -29,9 +29,7 @@ namespace Networking.Shared {
                 Debug.Log("Returning already written snapshot!");
                 return writer;
             }
-                
 
-            Debug.Log("Writing a new snapshot!");
             writer.Reset();
 
             WNetPacketComms.StartMultiPacket(writer, WNetServer.Instance.Tick);

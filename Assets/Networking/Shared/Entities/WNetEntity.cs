@@ -38,7 +38,8 @@ namespace Networking.Shared {
         }
 
 
-        public void InitServer(bool isChunkLoader) {
+        public void InitServer(int id, bool isChunkLoader) {
+            this.Id = id;
             ChunkPosition = WNetChunkManager.ProjectToGrid(transform.position);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WNetChunkManager.GetChunk(ChunkPosition, false);
