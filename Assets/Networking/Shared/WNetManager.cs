@@ -19,6 +19,8 @@ namespace Networking.Shared {
         public static bool IsServer { get { return Instance.WNetServer != null; } }
         public static bool IsClient { get { return Instance.WNetClient != null; } }
 
+        [SerializeField] private GameObject entitiesHolder;
+
 
         private void Awake() {
             if (Instance != null)
@@ -39,6 +41,7 @@ namespace Networking.Shared {
 
 
         public void StartClient(string address) {
+            WNetClientEntityManager.SpawnHolder = entitiesHolder;
             GameObject clientObject = Instantiate(clientPrefab);
             WNetClient = clientObject.GetComponent<WNetClient>();
             WNetClient.Connect("localhost", OnDisconnect);
@@ -47,16 +50,15 @@ namespace Networking.Shared {
         }
 
 
-        public void StartServer() {
-            Debug.Log("Test");
-
+        public void StartServer() {      
+            WNetServerEntityManager.SpawnHolder = entitiesHolder;
             GameObject serverObject = Instantiate(serverPrefab);
             WNetServer = serverObject.GetComponent<WNetServer>();
             WNetServer.StartServer();
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
 
-            WNetEntityManager.SpawnEntity(WNetPrefabId.Test, true);
+            WNetServerEntityManager.SpawnEntity(WNetPrefabId.Test, true);
         }
     }
 }

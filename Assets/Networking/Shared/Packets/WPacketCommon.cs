@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.IO.Compression;
-using System.Xml.Linq;
-using LiteNetLib;
 using LiteNetLib.Utils;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public static class NetDataExtensions {
@@ -13,6 +7,13 @@ public static class NetDataExtensions {
     }
     public static float DecompressNormalizedFloat(byte val) {
         return (val / 127.5f) - 1f;
+    }
+
+    public static byte MegaCompressNormalizedFloat(float val) {
+        return (byte)((val + 1f) * 16);
+    }
+    public static float MegaDecompressNormalizedFloat(byte val) {
+        return (val / 16f) - 1f;
     }
 
 
@@ -42,20 +43,21 @@ public static class NetDataExtensions {
     }
 
 
-    public static void PutShitQuaternion(this NetDataWriter writer, Quaternion quat) {
+    public static void PutShiternion(this NetDataWriter writer, Quaternion quat) {
         writer.Put(CompressNormalizedFloat(quat.x));
         writer.Put(CompressNormalizedFloat(quat.y));
         writer.Put(CompressNormalizedFloat(quat.z));
         writer.Put(CompressNormalizedFloat(quat.w));
     }
-    public static Quaternion GetShitQuaternion(this NetDataReader reader) {
+    public static Quaternion GetShiternion(this NetDataReader reader) {
         Quaternion rotation = new() {
-                x = DecompressNormalizedFloat(reader.GetByte()),
-                y = DecompressNormalizedFloat(reader.GetByte()),
-                z = DecompressNormalizedFloat(reader.GetByte()),
-                w = DecompressNormalizedFloat(reader.GetByte())
-            };
-        rotation.Normalize();   // Would probably look cool if this got removed
+            x = DecompressNormalizedFloat(reader.GetByte()),
+            y = DecompressNormalizedFloat(reader.GetByte()),
+            z = DecompressNormalizedFloat(reader.GetByte()),
+            w = DecompressNormalizedFloat(reader.GetByte())
+        };
+        // Not really necessary as far as I can tell
+        // rotation.Normalize();
 
         return rotation;
     }
@@ -120,7 +122,7 @@ namespace Networking.Shared {
                 position = reader.GetVector3();
             }
             if ((flags & 2) != 0) {
-                rotation = reader.GetShitQuaternion();
+                rotation = reader.GetShiternion();
             }
             if ((flags & 4) != 0) {
                 scale = reader.GetVector3();
@@ -146,7 +148,7 @@ namespace Networking.Shared {
                 writer.Put((Vector3)position);
             }
             if (rotation != null) {
-                writer.PutShitQuaternion((Quaternion)rotation);
+                writer.PutShiternion((Quaternion)rotation);
             }
             if (scale != null) {
                 writer.Put((Vector3)scale);

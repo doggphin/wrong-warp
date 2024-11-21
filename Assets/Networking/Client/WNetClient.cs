@@ -120,7 +120,10 @@ namespace Networking.Client {
                     return true;
 
                 case WPacketType.SJoinAccept:
-                    Debug.Log($"Yippee! I got in the server!!!");
+                    WSJoinAcceptPkt pkt = new();
+                    pkt.Deserialize(reader);
+
+                    Debug.Log($"Yippee! I got in the server! My name is {pkt.userName}");
                     return true;
 
                 default:

@@ -7,8 +7,8 @@ namespace Networking.Shared {
     }
 
     public class WSEntitySpawnPkt : INetSerializable {
-        WEntitySerializable entity;
-        WEntitySpawnReason reason;
+        public WEntitySerializable entity;
+        public WEntitySpawnReason reason;
 
         public void Deserialize(NetDataReader reader) {
             entity.Deserialize(reader);

@@ -1,20 +1,18 @@
 using LiteNetLib;
-using UnityEngine;
-
 using Networking.Shared;
 
 namespace Networking.Server {
-    public class WNetPlayer {
-        public static WNetPlayer FromPeer(NetPeer peer) {
-            return (WNetPlayer)peer.Tag;
+    public class WNetServerPlayer {
+        public static WNetServerPlayer FromPeer(NetPeer peer) {
+            return (WNetServerPlayer)peer.Tag;
         }
 
-        public WNetEntity Entity { get; private set; }
+        public WNetServerEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
 
         private bool isInitialized = false;
 
-        public void Init(NetPeer peer, WNetEntity entity) {
+        public void Init(NetPeer peer, WNetServerEntity entity) {
             if (isInitialized)
                 return;
 

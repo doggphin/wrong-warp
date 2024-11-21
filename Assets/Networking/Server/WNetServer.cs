@@ -5,8 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 
 using Networking.Shared;
-using System.Collections.Generic;
-using UnityEditor.PackageManager;
 
 namespace Networking.Server {
     public class WNetServer : MonoBehaviour, INetEventListener {
@@ -50,16 +48,16 @@ namespace Networking.Server {
 
 
         public void AdvanceTick() {
-            WNetEntityManager.Instance.AdvanceTick(Tick);
+            WNetServerEntityManager.AdvanceTick(Tick);
 
-            WNetChunkManager.UnloadChunksMarkedForUnloading();
+            WNetServerChunkManager.UnloadChunksMarkedForUnloading();
 
             // If this tick isn't an update tick, advance to the next one
             if (Tick++ % WNetCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
 
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
-                WNetPlayer netPlayer = WNetPlayer.FromPeer(peer);
+                WNetServerPlayer netPlayer = WNetServerPlayer.FromPeer(peer);
                 if (netPlayer == null)
                     continue;
                 // Check the current player's chunk to see if the writer has already been written
@@ -69,7 +67,7 @@ namespace Networking.Server {
                 peer.Send(chunkWriter, DeliveryMethod.Unreliable);
             }
 
-            WNetChunkManager.ResetChunkUpdatesAndSnapshots();
+            WNetServerChunkManager.ResetChunkUpdatesAndSnapshots();
         }
 
 
@@ -135,9 +133,9 @@ namespace Networking.Server {
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
             Debug.Log($"Join packet received for {joinRequest.userName}");
 
-            WNetEntity playerEntity = WNetEntityManager.SpawnEntity(WNetPrefabId.Player, true);
+            WNetServerEntity playerEntity = WNetServerEntityManager.SpawnEntity(WNetPrefabId.Player, true);
 
-            WNetPlayer netPlayer = new WNetPlayer();
+            WNetServerPlayer netPlayer = new WNetServerPlayer();
             netPlayer.Init(peer, playerEntity);
 
             peer.Tag = netPlayer;
