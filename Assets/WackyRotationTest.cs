@@ -15,10 +15,10 @@ public class WackyRotationTest : MonoBehaviour
     {
         transform.LookAt(thingToLookAt);
 
-        float x = NetDataExtensions.DecompressNormalizedFloat(NetDataExtensions.CompressNormalizedFloat(transform.rotation.x));
-        float y = NetDataExtensions.DecompressNormalizedFloat(NetDataExtensions.CompressNormalizedFloat(transform.rotation.y));
-        float z = NetDataExtensions.DecompressNormalizedFloat(NetDataExtensions.CompressNormalizedFloat(transform.rotation.z));
-        float w = NetDataExtensions.DecompressNormalizedFloat(NetDataExtensions.CompressNormalizedFloat(transform.rotation.w));
+        float x = WExtensions.DecompressNormalizedFloat(WExtensions.CompressNormalizedFloat(transform.rotation.x));
+        float y = WExtensions.DecompressNormalizedFloat(WExtensions.CompressNormalizedFloat(transform.rotation.y));
+        float z = WExtensions.DecompressNormalizedFloat(WExtensions.CompressNormalizedFloat(transform.rotation.z));
+        float w = WExtensions.DecompressNormalizedFloat(WExtensions.CompressNormalizedFloat(transform.rotation.w));
         transform.rotation = new Quaternion(x, y, z, w);
     }
 }

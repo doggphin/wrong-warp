@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Networking.Shared {
     public class WSEntityTransformUpdatePkt : INetSerializable {
+        public int entityId;
         public WTransformSerializable transform;
 
         public void Serialize(NetDataWriter writer) {

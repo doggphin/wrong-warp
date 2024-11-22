@@ -1,7 +1,9 @@
 using LiteNetLib.Utils;
+using Networking;
+using Networking.Shared;
 using UnityEngine;
 
-public static class NetDataExtensions {
+public static class WExtensions {
     public static byte CompressNormalizedFloat(float val) {
         return (byte)((val + 1) * 127.5);
     }
@@ -23,22 +25,39 @@ public static class NetDataExtensions {
 
         for(int i=0; i<5; i++) {
             byte chunk = reader.GetByte();
+            
+            if((chunk & 0b10000000) != 0) {
+                // If there's a leading 1, then remove it
+                chunk &= 0b01111111;
 
-            ret |= chunk;
-
-            if((chunk & 0b10000000) == 0)
+                ret |= chunk;
                 ret <<= 7;
-            else
-                break;
+            } else {
+                ret |= chunk;
+
+                // If there's no leading 1, stop reading
+                return ret;
+            }
         }
 
         return ret;
     }
     public static void PutVarUInt(this NetDataWriter writer, uint val)
     {
+        if(val == 0) {
+            writer.Put((byte)0);
+            return;
+        }
+            
         while(val > 0) {
-            writer.Put((byte)(val & 0b01111111));
+            byte chunk = (byte)(val & 0b01111111);
             val >>= 7;
+
+            if(val != 0) {
+                chunk |= 0b10000000;
+            }
+
+            writer.Put(chunk);
         }
     }
 
@@ -89,6 +108,21 @@ public static class NetDataExtensions {
             reader.GetFloat(),
             reader.GetFloat());
     }
+
+    public static void Put(this NetDataWriter writer, WPacketType packetType) {
+        writer.Put((ushort)packetType);
+    }
+    public static WPacketType GetPacketType(this NetDataReader reader) {
+        return (WPacketType)reader.GetUShort();
+    }
+
+
+    public static void Put(this NetDataWriter writer, WPrefabId prefabId) {
+        writer.Put((ushort)prefabId);
+    }
+    public static WPrefabId GetPrefabId(this NetDataReader reader) {
+        return (WPrefabId)reader.GetUShort();
+    }
 }
 
 namespace Networking.Shared {
@@ -104,7 +138,8 @@ namespace Networking.Shared {
         SEntityTransformUpdate,
         SEntityKill,
         SEntitySpawn,
-        SFullEntitiesSnapshot
+        SFullEntitiesSnapshot,
+        SEntitiesLoadedDelta,
     }
 
 
