@@ -21,7 +21,7 @@ namespace Networking.Client {
 
         private bool isJoined = false;
 
-        private void Awake() {
+        public void StartAsClient() {
             DontDestroyOnLoad(gameObject);
             System.Random rand = new();
             userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
@@ -34,7 +34,7 @@ namespace Networking.Client {
         }
 
 
-        private void FixedUpdate() {
+        public void AdvanceTick() {
             if(!isJoined)
                 return;
 

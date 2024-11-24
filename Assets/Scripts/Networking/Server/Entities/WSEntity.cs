@@ -2,16 +2,14 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 using Networking.Shared;
+using UnityEditor.Rendering;
 
 namespace Networking.Server {
     public class WSEntity : WEntityBase {
-        public bool updatePosition, updateRotation, updateScale;
-        private Vector3 lastPosition;
-        private Quaternion lastRotation;
-        private Vector3 lastScale;
+        public bool updatePosition, updateRotation, updateScale;   
+
         public Vector2Int ChunkPosition { get; private set; }
         public WSChunk CurrentChunk { get; private set; } = null;
-
         private bool isChunkLoader;
         public bool IsChunkLoader {
             get {
@@ -31,15 +29,16 @@ namespace Networking.Server {
 
         private bool isSerialized = false;
         private WEntitySerializable serializedEntity = new();
-
         public WEntitySerializable GetSerializedEntity() {
             if(!isSerialized) {
                 serializedEntity.entityId = Id;
                 serializedEntity.prefabId = PrefabId;
 
-                serializedEntity.transform.position = transform.position;
-                serializedEntity.transform.rotation = transform.rotation;
-                serializedEntity.transform.scale = transform.localScale;
+                serializedEntity.transform = new WTransformSerializable {
+                    position = currentPosition,
+                    rotation = currentRotation,
+                    scale = currentScale
+                };
             }
             
             isSerialized = true;
@@ -50,47 +49,61 @@ namespace Networking.Server {
         public void Init(int entityId, WPrefabId prefabId, bool isChunkLoader) {
             Id = entityId;
             PrefabId = prefabId;
-            ChunkPosition = WSChunkManager.ProjectToGrid(transform.position);
+            ChunkPosition = WSChunkManager.ProjectToGrid(currentPosition);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WSChunkManager.GetChunk(ChunkPosition, false);
         }
 
 
+        private void Update() {
+            float percentageThroughCurrentFrame = WCommon.GetPercentageTimeThroughCurrentTick();
+            
+            if(!renderPersonalPositionUpdates)
+                transform.position = previousPosition + ((currentPosition - previousPosition) * percentageThroughCurrentFrame);
+
+            if(!renderPersonalRotationUpdates)  
+                transform.rotation = Quaternion.Lerp(previousRotation, currentRotation, percentageThroughCurrentFrame);
+
+            if(!renderPersonalScaleUpdates)
+                transform.localScale = previousScale + ((currentScale - previousScale) * percentageThroughCurrentFrame);
+        }
+
         public void Poll(int tick) {
             if (!gameObject.activeInHierarchy || isDead)
                 return;
 
-            bool hasMoved = updatePosition && lastPosition != transform.position;
-            bool hasRotated = updateRotation && lastRotation != transform.rotation;
-            bool hasScaled = updateScale && lastScale != transform.localScale;
+            bool hasMoved = HasMoved;
+            bool hasRotated = HasRotated;
+            bool hasScaled = HasScaled;
 
-            WSEntityTransformUpdatePkt transformPacket = hasMoved || hasRotated || hasScaled ?
-                new() {
-                    transform = new WTransformSerializable() {
-                        position = hasMoved ? transform.position : null,
-                        rotation = hasRotated ? transform.rotation : null,
-                        scale = hasScaled ? transform.localScale : null
-                    }
+            if(!hasMoved && !hasRotated && !hasScaled)
+                return;
+
+            WSEntityTransformUpdatePkt transformPacket = new() {
+                transform = new WTransformSerializable() {
+                    position = hasMoved ? currentPosition : null,
+                    rotation = hasRotated ? currentRotation : null,
+                    scale = hasScaled ? currentScale : null
                 }
-                : null;
+            };
 
-            if (hasScaled)
-                lastScale = transform.localScale;
-            if (hasRotated)
-                lastRotation = transform.rotation;
             if (hasMoved) {
-                lastPosition = transform.position;
-                Vector2Int newChunkPosition = WSChunkManager.ProjectToGrid(transform.position);
-                if (newChunkPosition != ChunkPosition) {
+                previousPosition = currentPosition;
+
+                Vector2Int newChunkPosition = WSChunkManager.ProjectToGrid(currentPosition);
+                if (newChunkPosition != ChunkPosition)
                     CurrentChunk = WSChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
-                }
                 ChunkPosition = newChunkPosition;
             }
 
-            if(transformPacket != null) {
+            if (hasScaled)
+                previousScale = currentScale;
+
+            if (hasRotated)
+                previousRotation = currentRotation;
+
+            if(transformPacket != null)
                 PushUpdate(tick, transformPacket);
-            }
-                
         }
 
 
@@ -102,15 +115,11 @@ namespace Networking.Server {
                     break;
             }
 
-            if (WNetManager.IsServer) {
-                PushUpdate(WSNetServer.Tick, new WSEntityKillPkt() { reason = killReason });
-
-                if (isChunkLoader) {
-                    WSChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
-                }
-            }
-
+            PushUpdate(WSNetServer.Tick, new WSEntityKillPkt() { reason = killReason });
             isDead = true;
+
+            if (isChunkLoader)
+                WSChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
         }
 
 

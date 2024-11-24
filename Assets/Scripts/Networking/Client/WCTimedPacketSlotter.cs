@@ -47,7 +47,6 @@ namespace Networking.Client {
 
             foreach(var entityTransformUpdatePacket in packets.entityTransformUpdatePackets) {
                 WCEntityManager.UpdateEntityTransform(entityTransformUpdatePacket);
-                Debug.Log("Sending a transform packet!");
             }
 
         }

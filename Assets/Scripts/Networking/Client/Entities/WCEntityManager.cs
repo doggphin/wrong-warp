@@ -1,10 +1,10 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using Networking.Client;
 
 using Networking.Shared;
-using UnityEditor;
-using System.Data.Common;
+using Networking.Server;
 
 namespace Networking.Client {
     public static class WCEntityManager {
@@ -38,6 +38,7 @@ namespace Networking.Client {
 
             var gameObject = Object.Instantiate(prefabToSpawn, SpawnHolder.transform);
             var ret = gameObject.AddComponent<WCEntity>();
+
             entities[spawnPacket.entity.entityId] = ret;
 
             ret.Init(spawnPacket);

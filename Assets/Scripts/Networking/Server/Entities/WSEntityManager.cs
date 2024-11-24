@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Linq;
 
 using Networking.Shared;
+using Networking.Client;
+using UnityEngine.AI;
 
 namespace Networking.Server {
     public static class WSEntityManager {
@@ -11,17 +13,22 @@ namespace Networking.Server {
 
         public static GameObject SpawnHolder {get; set; }
 
-        public static WSEntity SpawnEntity(WPrefabId prefabId, bool updatePosition, bool updateRotation, bool updateScale, bool isChunkLoader = false) {
+        public static WSEntity SpawnEntity(WPrefabId prefabId, bool isChunkLoader = false) {
             GameObject gameObject = Object.Instantiate(WPrefabLookup.GetById(prefabId), SpawnHolder.transform);
+            
+            if(gameObject == null)
+                throw new System.Exception("Couldn't instantiate prefab!!!!");
 
             var netEntity = gameObject.AddComponent<WSEntity>();
+            
+            WPrefabTransformUpdateTypes transformUpdateTypes = WPrefabLookup.PrefabUpdateTypes[prefabId];
+            netEntity.updatePosition = transformUpdateTypes.updatePosition;
+            netEntity.updateRotation = transformUpdateTypes.updateRotation;
+            netEntity.updateScale = transformUpdateTypes.updateScale;
 
             while (!entities.TryAdd(++nextEntityId, netEntity));
 
             netEntity.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
-            netEntity.updatePosition = updatePosition;
-            netEntity.updateRotation = updateRotation;
-            netEntity.updateScale = updateScale;
 
             netEntity.Init(nextEntityId, prefabId, isChunkLoader);
 

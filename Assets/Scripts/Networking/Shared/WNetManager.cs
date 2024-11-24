@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 using Networking.Server;
 using Networking.Client;
-using Unity.VisualScripting;
+using Controllers.Shared;
 
 namespace Networking.Shared {
     public class WNetManager : MonoBehaviour {
@@ -20,6 +20,8 @@ namespace Networking.Shared {
         public static bool IsServer { get { return Instance.WNetServer != null; } }
         public static bool IsClient { get { return Instance.WNetClient != null; } }
 
+        private static WCInputsPkt[] inputPackets = new WCInputsPkt[WCommon.TICKS_PER_SNAPSHOT];
+
         [SerializeField] private GameObject entitiesHolder;
 
 
@@ -31,6 +33,16 @@ namespace Networking.Shared {
             DontDestroyOnLoad(gameObject);
 
             WPrefabLookup.Init();
+            ControlsManager.Init();
+
+            for(int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
+                inputPackets[i] = new();
+            }
+        }
+
+        private void FixedUpdate() {
+            WNetClient?.AdvanceTick();
+            WNetServer?.AdvanceTick();
         }
 
         private void OnDisconnect(DisconnectInfo info) {
@@ -45,8 +57,11 @@ namespace Networking.Shared {
 
         public void StartClient(string address) {
             WCEntityManager.SpawnHolder = entitiesHolder;
+
             GameObject clientObject = Instantiate(clientPrefab);
             WNetClient = clientObject.GetComponent<WCNetClient>();
+
+            WNetClient.StartAsClient();
             WNetClient.Connect("localhost", OnDisconnect);
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
@@ -56,13 +71,11 @@ namespace Networking.Shared {
         public void StartServer() {      
             WSEntityManager.SpawnHolder = entitiesHolder;
             GameObject serverObject = Instantiate(serverPrefab);
+
             WNetServer = serverObject.GetComponent<WSNetServer>();
             WNetServer.StartServer();
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
-
-            WSEntity entity = WSEntityManager.SpawnEntity(WPrefabId.Test, true, false, false, true);
-            entity.gameObject.AddComponent<SpinnerTest>();
         }
     }
 }

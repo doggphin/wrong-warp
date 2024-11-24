@@ -5,5 +5,6 @@ namespace Networking
         Empty = 0,
         Test = 1,
         Player = 2,
+        Spectator = 3,
     }
 }

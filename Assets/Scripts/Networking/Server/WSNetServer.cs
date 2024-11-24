@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 
 using Networking.Shared;
+using Controllers.Shared;
 
 namespace Networking.Server {
     public class WSNetServer : MonoBehaviour, INetEventListener {
@@ -34,23 +35,32 @@ namespace Networking.Server {
         private void Update() {
             ServerNetManager.PollEvents();
         }
-
-
-        public void FixedUpdate() {
-            AdvanceTick();
-        }
-
+        
 
         public void StartServer() {
             ServerNetManager.Start(WCommon.WRONGWARP_PORT);
 
             tick = 0;
             Debug.Log($"Running server on port {WCommon.WRONGWARP_PORT}!");
+
+            WSEntity entity = WSEntityManager.SpawnEntity(WPrefabId.Test, true);
+            entity.gameObject.AddComponent<SpinnerTest>();
+
+            WSEntity spectator = WSEntityManager.SpawnEntity(WPrefabId.Spectator, true);
+            SpectatorController spectatorController = spectator.GetComponent<SpectatorController>();
+
+            ControlsManager.mainControllable = spectatorController;
+            ControlsManager.mainRotatable = spectatorController;
+            
+            spectatorController.EnableRotator();
+            spectatorController.EnableController();
         }
 
 
         public void AdvanceTick() {
             WSEntityManager.AdvanceTick(Tick);
+
+            ControlsManager.Poll(null);
 
             // If this tick isn't an update tick, advance to the next one
             if (tick++ % WCommon.TICKS_PER_SNAPSHOT != 0)
@@ -149,7 +159,7 @@ namespace Networking.Server {
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
             Debug.Log($"Join packet received for {joinRequest.userName}");
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true, true, true, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
             
             WSPlayer netPlayer = new WSPlayer();
             netPlayer.Init(peer, playerEntity);
@@ -159,7 +169,7 @@ namespace Networking.Server {
             WSJoinAcceptPkt joinAcceptPacket = new() {
                 userName = joinRequest.userName,
                 playerEntityId = playerEntity.Id,
-                tick = Tick - 20
+                tick = Tick - 10
             };
 
             WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);

@@ -1,9 +1,8 @@
 using Networking.Shared;
 using UnityEngine.InputSystem;
 using UnityEngine;
-using System.Collections.Generic;
 
-namespace Controllers.Client {
+namespace Controllers.Shared {
     public static class ControlsManager {
         private static PlayerInputActions inputActions = new();
 
@@ -14,15 +13,21 @@ namespace Controllers.Client {
         private static InputFlags heldInputs = new();
         
         public static void Init() {
-            inputActions = new();
+            void InitInputAction(InputAction inputAction, InputType inputType) {
+                inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
+                inputAction.canceled += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
+            }
 
-            inputActions.Gameplay.Forward.performed += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, InputType.Forward);
-            inputActions.Gameplay.Left.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, InputType.Left);
-            inputActions.Gameplay.Back.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, InputType.Back);
-            inputActions.Gameplay.Right.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, InputType.Right);
+            inputActions = new();
+            inputActions.Gameplay.Enable();
+
+            InitInputAction(inputActions.Gameplay.Forward, InputType.Forward);
+            InitInputAction(inputActions.Gameplay.Left, InputType.Left);
+            InitInputAction(inputActions.Gameplay.Back, InputType.Back);
+            InitInputAction(inputActions.Gameplay.Right, InputType.Right);
 
             inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => { 
-                mainRotatable.AddRotationDelta(ctx.action.ReadValue<Vector2>()); 
+                mainRotatable?.AddRotationDelta(ctx.action.ReadValue<Vector2>()); 
             };
         }
 
@@ -32,29 +37,30 @@ namespace Controllers.Client {
             if(ctx.phase == InputActionPhase.Started) {
                 heldInputs.SetFlag(inputType, true);
                 finalInputs.SetFlag(inputType, true);
+            }
 
             // If RELEASING a button, unhold the button, but still keep it on in final inputs
             // This makes pressing for less than a tick still count as a keypress
-            } else if(ctx.phase == InputActionPhase.Canceled && heldInputs.GetFlag(inputType)) {
+            else if(ctx.phase == InputActionPhase.Canceled) {
                 heldInputs.SetFlag(inputType, false);
                 finalInputs.SetFlag(inputType, true);
             }
         }
 
 
-        public static WCInputsPkt Poll() {
-            if(mainControllable == null && mainRotatable == null)
-                return null;
-
-            Vector2? rotation = mainRotatable.PollRotation();
+        public static void Poll(WCInputsPkt writeTo) {
+            Vector2? rotation = mainRotatable?.PollRotation();
             finalInputs.SetFlag(InputType.Look, rotation.HasValue);
 
-            WCInputsPkt ret = new() {
-                inputFlags = finalInputs,
-                look = mainRotatable.PollRotation()
-            };
+            finalInputs.flags |= heldInputs.flags;
+            
+            writeTo ??= new();
+            writeTo.inputFlags.flags = finalInputs.flags;
+            writeTo.look = rotation;
 
-            return ret;
+            mainControllable?.Control(writeTo);
+
+            finalInputs.Reset();
         }
     }
 }

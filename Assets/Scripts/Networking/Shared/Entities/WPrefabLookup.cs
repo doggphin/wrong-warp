@@ -5,12 +5,31 @@ using System.Linq;
 using UnityEngine;
 
 namespace Networking.Shared {
+    public struct WPrefabTransformUpdateTypes {
+        public bool updatePosition;
+        public bool updateRotation;
+        public bool updateScale;
+
+        public WPrefabTransformUpdateTypes(bool updatePosition, bool updateRotation, bool updateScale) {
+            this.updatePosition = updatePosition;
+            this.updateRotation = updateRotation;
+            this.updateScale = updateScale;
+        }
+    }
+
+
     public static class WPrefabLookup {
+        public static Dictionary<WPrefabId, WPrefabTransformUpdateTypes> PrefabUpdateTypes {get; private set;} = new() {
+            { WPrefabId.Empty, new WPrefabTransformUpdateTypes(false, false, false) },
+            { WPrefabId.Test, new WPrefabTransformUpdateTypes(true, false, false) },
+            { WPrefabId.Player, new WPrefabTransformUpdateTypes(true, true, false) },
+            { WPrefabId.Spectator, new WPrefabTransformUpdateTypes(true, true, false) }
+        };
 
-        static Dictionary<WPrefabId, GameObject> idToNetPrefabs = null;
+        private static Dictionary<WPrefabId, GameObject> idToNetPrefabs = null;
 
-        static readonly string shortNetPrefabPath = Path.Combine("NetPrefabs");
-        static readonly string netPrefabPath = Path.Combine(".", "Assets", "Resources", "NetPrefabs");
+        private static readonly string shortNetPrefabPath = Path.Combine("NetPrefabs");
+        private static readonly string netPrefabPath = Path.Combine(".", "Assets", "Resources", "NetPrefabs");
 
         public static void Init() {
             idToNetPrefabs = new();

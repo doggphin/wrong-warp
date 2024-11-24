@@ -3,64 +3,64 @@ using Networking.Shared;
 
 namespace Networking.Client {
     public class WCEntity : WEntityBase {
-        public Vector3 positionFrom;
-        public Quaternion rotationFrom;
-        public Vector3 scaleFrom;
-
-        public WTransformSerializable transformTo;
-
         private void Update() {
             float percentageThroughCurrentFrame = WCommon.GetPercentageTimeThroughCurrentTick();
             
-            if(transformTo.position.HasValue)
-                transform.position = positionFrom + (transformTo.position.Value - positionFrom) * percentageThroughCurrentFrame;
+            if(HasMoved && !renderPersonalPositionUpdates)
+                transform.position = previousPosition + (currentPosition - previousPosition) * percentageThroughCurrentFrame;
 
-            if(transformTo.rotation.HasValue)
-                transform.rotation = Quaternion.Lerp(rotationFrom, transformTo.rotation.Value, percentageThroughCurrentFrame);
-
-            if(transformTo.scale.HasValue)
-                transform.localScale = positionFrom + (transformTo.scale.Value - scaleFrom) * percentageThroughCurrentFrame;
+            if(HasRotated && !renderPersonalRotationUpdates)
+                transform.rotation = Quaternion.Lerp(previousRotation, currentRotation, percentageThroughCurrentFrame);
+            
+            if(HasScaled && !renderPersonalScaleUpdates)
+                transform.localScale = previousScale + (currentScale - previousScale) * percentageThroughCurrentFrame;
         }
-
         
+
         public void AdvanceTick() {
-            if(transformTo.position.HasValue) {
-                transform.position = transformTo.position.Value;
-                transformTo.position = null;
-                positionFrom = transform.position;
+            if(HasMoved && !renderPersonalPositionUpdates) {
+                transform.position = currentPosition;
+                previousPosition = transform.position;
             }
-                
-            if(transformTo.rotation.HasValue) {
-                transform.rotation = transformTo.rotation.Value;
-                transformTo.rotation = null;
-                rotationFrom = transform.rotation;
+            
+            if(HasRotated && !renderPersonalRotationUpdates) {
+                transform.rotation = currentRotation;
+                previousRotation = transform.rotation;
             }
 
-            if(transformTo.scale.HasValue) {
-                transform.localScale = transformTo.scale.Value;
-                transformTo.scale = null;
-                scaleFrom = transform.localScale;
+            if(HasScaled && !renderPersonalScaleUpdates) {
+                transform.localScale = currentScale;
+                previousScale = transform.localScale;
             }
         }
+
 
         public void UpdateTransform(WTransformSerializable nextTransform) {
-            transformTo = nextTransform;
+            if (nextTransform.position != null)
+                currentPosition = nextTransform.position.Value;
+
+            if (nextTransform.rotation != null)
+                currentRotation = nextTransform.rotation.Value;
+
+            if (nextTransform.scale != null)
+                currentScale = nextTransform.scale.Value; 
         }
 
 
         public void Init(WSEntitySpawnPkt spawnPkt) {
             Id = spawnPkt.entity.entityId;
 
-            transform.position = spawnPkt.entity.transform.position.GetValueOrDefault(Vector3.zero);
-            transform.rotation = spawnPkt.entity.transform.rotation.GetValueOrDefault(Quaternion.identity);
-            transform.localScale = spawnPkt.entity.transform.scale.GetValueOrDefault(Vector3.one);
+            currentPosition = spawnPkt.entity.transform.position.GetValueOrDefault(Vector3.zero);
+            currentRotation = spawnPkt.entity.transform.rotation.GetValueOrDefault(Quaternion.identity);
+            currentScale = spawnPkt.entity.transform.scale.GetValueOrDefault(Vector3.one);
 
-            positionFrom = transform.position;
-            rotationFrom = transform.rotation;
-            scaleFrom = transform.localScale;
+            previousPosition = transform.position;
+            previousRotation = transform.rotation;
+            previousScale = transform.localScale;
         }
 
         public override void Kill(WEntityKillReason reason) {
+            Debug.Log("RIP!!!!!");
             Destroy(gameObject);
         }
     }
