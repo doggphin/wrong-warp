@@ -6,14 +6,13 @@ namespace Controllers.Shared {
     public static class ControlsManager {
         private static PlayerInputActions inputActions = new();
 
-        public static IRotatable mainRotatable = null;
-        public static IControllable mainControllable = null;
+        public static IPlayer player = null;
 
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
         
         public static void Init() {
-            void InitInputAction(InputAction inputAction, InputType inputType) {
+            void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
                 inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
                 inputAction.canceled += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
             }
@@ -21,13 +20,15 @@ namespace Controllers.Shared {
             inputActions = new();
             inputActions.Gameplay.Enable();
 
-            InitInputAction(inputActions.Gameplay.Forward, InputType.Forward);
-            InitInputAction(inputActions.Gameplay.Left, InputType.Left);
-            InitInputAction(inputActions.Gameplay.Back, InputType.Back);
-            InitInputAction(inputActions.Gameplay.Right, InputType.Right);
+            BindInputActionToInputType(inputActions.Gameplay.Forward, InputType.Forward);
+            BindInputActionToInputType(inputActions.Gameplay.Left, InputType.Left);
+            BindInputActionToInputType(inputActions.Gameplay.Back, InputType.Back);
+            BindInputActionToInputType(inputActions.Gameplay.Right, InputType.Right);
+            BindInputActionToInputType(inputActions.Gameplay.Jump, InputType.Jump);
+            BindInputActionToInputType(inputActions.Gameplay.Crouch, InputType.Crouch);
 
             inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => { 
-                mainRotatable?.AddRotationDelta(ctx.action.ReadValue<Vector2>()); 
+                player?.AddRotationDelta(ctx.action.ReadValue<Vector2>()); 
             };
         }
 
@@ -49,7 +50,7 @@ namespace Controllers.Shared {
 
 
         public static void Poll(WCInputsPkt writeTo) {
-            Vector2? rotation = mainRotatable?.PollRotation();
+            Vector2? rotation = player?.PollLook();
             finalInputs.SetFlag(InputType.Look, rotation.HasValue);
 
             finalInputs.flags |= heldInputs.flags;
@@ -58,7 +59,7 @@ namespace Controllers.Shared {
             writeTo.inputFlags.flags = finalInputs.flags;
             writeTo.look = rotation;
 
-            mainControllable?.Control(writeTo);
+            player?.Control(writeTo);
 
             finalInputs.Reset();
         }

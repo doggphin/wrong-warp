@@ -12,5 +12,7 @@ namespace Networking.Shared
 
         public const int TICKS_PER_SNAPSHOT = 5;
         public const ushort WRONGWARP_PORT = 1972;
+
+        public static int GetTickOffset(int tick) => tick % TICKS_PER_SNAPSHOT;
     }
 }

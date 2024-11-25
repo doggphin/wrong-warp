@@ -47,6 +47,11 @@ namespace Networking.Client {
         }
 
 
+        public static WCEntity GetEntityById(int id) {
+            return entities.GetValueOrDefault(id, null);
+        }
+
+        
         public static void UpdateEntityTransform(WSEntityTransformUpdatePkt transformPacket) {
             if(!entities.TryGetValue(transformPacket.entityId, out WCEntity entity))
                 return;

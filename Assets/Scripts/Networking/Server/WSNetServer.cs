@@ -17,24 +17,6 @@ namespace Networking.Server {
         public static int Tick => Instance.tick;
 
         public static WSNetServer Instance { get; private set; }
-
-        private void Awake() {
-            if(Instance != null)
-                Destroy(gameObject);
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            ServerNetManager = new NetManager(this) {
-                AutoRecycle = true,
-                IPv6Enabled = false
-            };
-        }
-
-
-        private void Update() {
-            ServerNetManager.PollEvents();
-        }
         
 
         public void StartServer() {
@@ -46,14 +28,11 @@ namespace Networking.Server {
             WSEntity entity = WSEntityManager.SpawnEntity(WPrefabId.Test, true);
             entity.gameObject.AddComponent<SpinnerTest>();
 
-            WSEntity spectator = WSEntityManager.SpawnEntity(WPrefabId.Spectator, true);
-            SpectatorController spectatorController = spectator.GetComponent<SpectatorController>();
-
-            ControlsManager.mainControllable = spectatorController;
-            ControlsManager.mainRotatable = spectatorController;
-            
-            spectatorController.EnableRotator();
-            spectatorController.EnableController();
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
+            playerEntity.renderPersonalRotationUpdates = true;
+            IPlayer player = playerEntity.GetComponent<IPlayer>();
+            ControlsManager.player = player;
+            ControlsManager.player.EnablePlayer();
         }
 
 
@@ -97,22 +76,6 @@ namespace Networking.Server {
         }
 
 
-        public void OnConnectionRequest(ConnectionRequest request) {
-            Debug.unityLogger.Log("Received a connection request!");
-            request.AcceptIfKey("WW 0.01");
-        }
-
-
-        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
-            Debug.Log($"Network error: {socketError}");
-        }
-
-
-        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
-
-        }
-
-
         private bool ProcessPacketFromReader(
             NetPeer peer,
             NetDataReader reader,
@@ -133,26 +96,6 @@ namespace Networking.Server {
                     Debug.Log($"Could not handle packet of type {packetType}!");
                     return false;
             }
-        }
-
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            WPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
-        }
-
-
-        public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) { }
-
-
-        public void OnPeerConnected(NetPeer peer) {
-            Debug.Log($"Player connected: {peer.Address}!");
-        }
-
-
-        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-            Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
-
-            //WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
-            //WNetEntityManager.KillEntity(netPlayer.Entity.Id);
         }
 
 
@@ -180,9 +123,63 @@ namespace Networking.Server {
             peer.Send(writer, DeliveryMethod.ReliableUnordered);
         }
 
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            WPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
+        }
+
+
+        public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) { }
+
+
+        public void OnPeerConnected(NetPeer peer) {
+            Debug.Log($"Player connected: {peer.Address}!");
+        }
+
+
+        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+            Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
+
+            //WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
+            //WNetEntityManager.KillEntity(netPlayer.Entity.Id);
+        }
+
+
+        public void OnConnectionRequest(ConnectionRequest request) {
+            Debug.unityLogger.Log("Received a connection request!");
+            request.AcceptIfKey("WW 0.01");
+        }
+
+
+        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
+            Debug.Log($"Network error: {socketError}");
+        }
+
+
+        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
+
+        }
 
         private void OnDestroy() {
             ServerNetManager.Stop();
+        }
+
+        
+        private void Awake() {
+            if(Instance != null)
+                Destroy(gameObject);
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            ServerNetManager = new NetManager(this) {
+                AutoRecycle = true,
+                IPv6Enabled = false
+            };
+        }
+
+
+        private void Update() {
+            ServerNetManager.PollEvents();
         }
     }
 }

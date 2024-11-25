@@ -6,6 +6,9 @@ using System.Net.Sockets;
 using UnityEngine;
 
 using Networking.Shared;
+using System.Xml;
+using Controllers.Shared;
+using Unity.VisualScripting;
 
 namespace Networking.Client {
     public class WCNetClient : MonoBehaviour, INetEventListener {
@@ -17,20 +20,41 @@ namespace Networking.Client {
         private string userName;
         private NetDataWriter writer = new();
         public int Ping { get; private set; }
-        public int Tick { get; private set; }
+
+        private int tick;
+        public int Tick => tick;
 
         private bool isJoined = false;
+
+        private int? myEntityId = null;
+        private WCEntity myEntity = null;
+        private IPlayer myPlayer = null;
+        private WCInputsPkt[] inputs;
+
+        public WCNetClient Instance { get; private set; }
+        private void Awake() {
+            if(Instance != null)
+                Destroy(gameObject);
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
 
         public void StartAsClient() {
             DontDestroyOnLoad(gameObject);
             System.Random rand = new();
             userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
-
+            
             netManager = new NetManager(this) {
                 AutoRecycle = true,
                 IPv6Enabled = false
             };
             netManager.Start();
+
+            inputs = new WCInputsPkt[WCommon.TICKS_PER_SNAPSHOT];
+            for(int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
+                inputs[i] = new();
+            }
         }
 
 
@@ -38,7 +62,26 @@ namespace Networking.Client {
             if(!isJoined)
                 return;
 
-            Tick++;
+            tick++;
+
+            ControlsManager.Poll(inputs[WCommon.GetTickOffset(tick)]);
+            
+            if(WCommon.GetTickOffset(tick) == 0) {
+                // Send controls
+            }
+
+            if(myEntityId != null) {
+                Debug.Log("Checking for my entity!");
+                
+                WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
+
+                if(entity != null) {
+                    myEntityId = null;
+                    myEntity = entity; 
+                    myPlayer = myEntity.GetComponent<IPlayer>();
+                    myPlayer.EnablePlayer();
+                }
+            }
 
             WCEntityManager.AdvanceTick();
             WCTimedPacketSlotter.AdvanceTick();
@@ -109,7 +152,8 @@ namespace Networking.Client {
                     WSJoinAcceptPkt pkt = new();
                     pkt.Deserialize(reader);
                     Debug.Log($"Yippee! I got in the server! My name is {pkt.userName}, and I'm starting at tick {pkt.tick}");
-                    Tick = pkt.tick;
+                    myEntityId = pkt.playerEntityId;
+                    tick = pkt.tick;
                     WCTimedPacketSlotter.Init(Tick);
                     isJoined = true;
 
@@ -149,6 +193,7 @@ namespace Networking.Client {
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            Debug.Log("Received packet!");
             WPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
 
