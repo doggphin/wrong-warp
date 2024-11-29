@@ -37,12 +37,12 @@ namespace Networking.Shared {
             foreach (string filePath in Directory.GetFileSystemEntries(netPrefabPath, "*.prefab")) {
                 string fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
 
-                string[] split = fileName.Split('_');
-                if(split.Length != 2) {
+                string[] splitFileName = fileName.Split('_');
+                if(splitFileName.Length != 2) {
                     continue;
                 }
 
-                int id = int.Parse(split[0]);
+                int id = int.Parse(splitFileName[0]);
                 string gameObjectPath = Path.Combine(shortNetPrefabPath, fileName).Split('.')[0];
 
                 idToNetPrefabs[(WPrefabId)id] = Resources.Load<GameObject>(gameObjectPath);

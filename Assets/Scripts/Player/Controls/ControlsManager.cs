@@ -49,7 +49,7 @@ namespace Controllers.Shared {
         }
 
 
-        public static void Poll(WCInputsPkt writeTo) {
+        public static void Poll(WInputsSerializable writeTo) {
             Vector2? rotation = player?.PollLook();
             finalInputs.SetFlag(InputType.Look, rotation.HasValue);
 

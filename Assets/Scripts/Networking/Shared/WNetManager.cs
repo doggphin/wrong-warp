@@ -20,7 +20,7 @@ namespace Networking.Shared {
         public static bool IsServer { get { return Instance.WNetServer != null; } }
         public static bool IsClient { get { return Instance.WNetClient != null; } }
 
-        private static WCInputsPkt[] inputPackets = new WCInputsPkt[WCommon.TICKS_PER_SNAPSHOT];
+        private static WInputsSerializable[] inputPackets = new WInputsSerializable[WCommon.TICKS_PER_SNAPSHOT];
 
         [SerializeField] private GameObject entitiesHolder;
 
@@ -61,7 +61,7 @@ namespace Networking.Shared {
             GameObject clientObject = Instantiate(clientPrefab);
             WNetClient = clientObject.GetComponent<WCNetClient>();
 
-            WNetClient.StartAsClient();
+            WNetClient.Init();
             WNetClient.Connect("localhost", OnDisconnect);
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
@@ -69,13 +69,12 @@ namespace Networking.Shared {
 
 
         public void StartServer() {      
-            WSEntityManager.SpawnHolder = entitiesHolder;
-            GameObject serverObject = Instantiate(serverPrefab);
-
-            WNetServer = serverObject.GetComponent<WSNetServer>();
-            WNetServer.StartServer();
-
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
+
+            GameObject serverObject = Instantiate(serverPrefab);
+            WNetServer = serverObject.GetComponent<WSNetServer>();
+            WSEntityManager.SpawnHolder = entitiesHolder;
+            WNetServer.Init();
         }
     }
 }

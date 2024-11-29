@@ -4,6 +4,77 @@ using Networking;
 using Networking.Shared;
 using UnityEngine;
 
+
+namespace Networking.Shared {
+    public enum WPacketType : ushort {
+        Unimplemented,
+
+        CJoinRequest,
+        CInputs,
+        CGroupedInputs,
+
+        SJoinAccept,
+        SJoinDenied,
+
+        SChunkDeltaSnapshot,
+        SEntityTransformUpdate,
+        SEntityKill,
+        SEntitySpawn,
+        SFullEntitiesSnapshot,
+        SEntitiesLoadedDelta,
+    }
+
+
+    public struct WTransformSerializable : INetSerializable
+    {
+        public Vector3? position;
+        public Quaternion? rotation;
+        public Vector3? scale;
+        
+        public void Deserialize(NetDataReader reader)
+        {
+            byte flags = reader.GetByte();
+
+            if ((flags & 1) != 0) {
+                position = reader.GetVector3();
+            }
+            if ((flags & 2) != 0) {
+                rotation = reader.GetShiternion();
+            }
+            if ((flags & 4) != 0) {
+                scale = reader.GetVector3();
+            }
+        }
+
+        public void Serialize(NetDataWriter writer)
+        {
+            byte flags = 0;
+            if (position != null) {
+                flags |= 1;
+            }
+            if (rotation != null) {
+                flags |= 2;
+            }
+            if (scale != null) {
+                flags |= 4;
+            }
+
+            writer.Put(flags);
+
+            if (position != null) {
+                writer.Put((Vector3)position);
+            }
+            if (rotation != null) {
+                writer.PutShiternion((Quaternion)rotation);
+            }
+            if (scale != null) {
+                writer.Put((Vector3)scale);
+            }
+        }
+    }
+}
+
+
 public static class WExtensions {
     public static byte CompressNormalizedFloat(float val) {
         return (byte)((val + 1) * 127.5);
@@ -101,18 +172,9 @@ public static class WExtensions {
         writer.Put(vector.y);
     }
     public static Vector3 GetVector2(this NetDataReader reader) {
-        return new Vector2(
-            reader.GetFloat(),
-            reader.GetFloat());
+        return new Vector2(reader.GetFloat(), reader.GetFloat());
     }
 
-
-    public static void Put(this NetDataWriter writer, InputFlags inputFlags) {
-        writer.Put(inputFlags.flags);
-    }
-    public static InputFlags GetInputFlags(this NetDataReader reader) {
-        return new InputFlags { flags = reader.GetLong() };
-    }
 
     public static void Put(this NetDataWriter writer, Quaternion quat) {
         writer.Put(quat.x);
@@ -141,73 +203,5 @@ public static class WExtensions {
     }
     public static WPrefabId GetPrefabId(this NetDataReader reader) {
         return (WPrefabId)reader.GetUShort();
-    }
-}
-
-namespace Networking.Shared {
-    public enum WPacketType : ushort {
-        Unimplemented,
-
-        CJoinRequest,
-        CInputs,
-
-        SJoinAccept,
-        SJoinDenied,
-
-        SChunkDeltaSnapshot,
-        SEntityTransformUpdate,
-        SEntityKill,
-        SEntitySpawn,
-        SFullEntitiesSnapshot,
-        SEntitiesLoadedDelta,
-    }
-
-
-    public struct WTransformSerializable : INetSerializable
-    {
-        public Vector3? position;
-        public Quaternion? rotation;
-        public Vector3? scale;
-        
-        public void Deserialize(NetDataReader reader)
-        {
-            byte flags = reader.GetByte();
-
-            if ((flags & 1) != 0) {
-                position = reader.GetVector3();
-            }
-            if ((flags & 2) != 0) {
-                rotation = reader.GetShiternion();
-            }
-            if ((flags & 4) != 0) {
-                scale = reader.GetVector3();
-            }
-        }
-
-        public void Serialize(NetDataWriter writer)
-        {
-            byte flags = 0;
-            if (position != null) {
-                flags |= 1;
-            }
-            if (rotation != null) {
-                flags |= 2;
-            }
-            if (scale != null) {
-                flags |= 4;
-            }
-
-            writer.Put(flags);
-
-            if (position != null) {
-                writer.Put((Vector3)position);
-            }
-            if (rotation != null) {
-                writer.PutShiternion((Quaternion)rotation);
-            }
-            if (scale != null) {
-                writer.Put((Vector3)scale);
-            }
-        }
     }
 }

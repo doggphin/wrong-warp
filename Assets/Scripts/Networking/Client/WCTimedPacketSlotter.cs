@@ -12,7 +12,6 @@ namespace Networking.Client {
     }
 
     public static class WCTimedPacketSlotter {
-        private static int tick = 0;
         private static Dictionary<int, WCPacketSlots> receivedPackets = new();
 
         public static WCPacketSlots GetPacketSlots(int tick) {
@@ -24,12 +23,9 @@ namespace Networking.Client {
 
             return newPacketSlots;
         }
+        
 
-        public static void Init(int tick) {
-            WCTimedPacketSlotter.tick = tick;
-        }
-
-        public static void AdvanceTick() {
+        public static void ApplyTick(int tick) {
             receivedPackets.Remove(tick - 20);
             tick++;
 

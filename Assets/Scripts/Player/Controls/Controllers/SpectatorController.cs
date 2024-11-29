@@ -12,7 +12,7 @@ namespace Controllers.Shared {
         private BoundedRotator rotator;
         private WEntityBase entity;
 
-        public void Control(WCInputsPkt inputs)
+        public void Control(WInputsSerializable inputs)
         {
             if(entity == null) {
                 Debug.LogError("No entity to control!");
@@ -46,13 +46,15 @@ namespace Controllers.Shared {
             entity.currentPosition += velocity * Time.fixedDeltaTime;
         }
 
+        public void ServerInit() {
+            entity = GetComponent<WEntityBase>();
+        }
 
         public void EnablePlayer()
         {
             Debug.Log("Enabled spectator controller!");
             cam.enabled = true;
             cam.GetComponent<AudioListener>().enabled = true;
-            entity = GetComponent<WEntityBase>();
             entity.renderPersonalRotationUpdates = true;
             rotator = new();
         }
@@ -62,7 +64,6 @@ namespace Controllers.Shared {
         {
             cam.enabled = false;
             cam.GetComponent<AudioListener>().enabled = false;
-            entity = null;
         }
 
 

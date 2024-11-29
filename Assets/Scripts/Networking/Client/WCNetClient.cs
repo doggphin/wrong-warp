@@ -6,30 +6,23 @@ using System.Net.Sockets;
 using UnityEngine;
 
 using Networking.Shared;
-using System.Xml;
 using Controllers.Shared;
-using Unity.VisualScripting;
 
 namespace Networking.Client {
     public class WCNetClient : MonoBehaviour, INetEventListener {
         private NetPeer server;
         private NetManager netManager;
-
         private Action<DisconnectInfo> onDisconnected;
-
-        private string userName;
         private NetDataWriter writer = new();
         public int Ping { get; private set; }
 
-        private int tick;
-        public int Tick => tick;
-
+        
+        private string userName;
         private bool isJoined = false;
-
         private int? myEntityId = null;
         private WCEntity myEntity = null;
         private IPlayer myPlayer = null;
-        private WCInputsPkt[] inputs;
+        private WInputsSerializable[] inputs;
 
         public WCNetClient Instance { get; private set; }
         private void Awake() {
@@ -40,7 +33,7 @@ namespace Networking.Client {
             DontDestroyOnLoad(gameObject);
         }
 
-        public void StartAsClient() {
+        public void Init() {
             DontDestroyOnLoad(gameObject);
             System.Random rand = new();
             userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
@@ -51,26 +44,39 @@ namespace Networking.Client {
             };
             netManager.Start();
 
-            inputs = new WCInputsPkt[WCommon.TICKS_PER_SNAPSHOT];
-            for(int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
+            inputs = new WInputsSerializable[WCommon.TICKS_PER_SECOND];
+            for(int i=0; i<inputs.Length; i++) {
                 inputs[i] = new();
             }
         }
 
 
+        public const int STARTING_TICK_OFFSET = 5;
+        public int DesiredTickOffset {get; private set;} = 0;
+        public int AppliedTickOffsets {get; private set;} = 0;
+        public int Tick {get; private set;}
         public void AdvanceTick() {
             if(!isJoined)
                 return;
 
-            tick++;
+            Debug.Log(Tick);
+            Tick++;
 
-            ControlsManager.Poll(inputs[WCommon.GetTickOffset(tick)]);
-            
-            if(WCommon.GetTickOffset(tick) == 0) {
-                // Send controls
+            // If i'm too far ahead, skip this tick
+            if(AppliedTickOffsets > DesiredTickOffset) {
+                Debug.Log("Skipping a tick!");
+                AppliedTickOffsets -= 1;
+                return;
             }
 
-            if(myEntityId != null) {
+            ControlsManager.Poll(inputs[WCommon.GetTickModuloPerSecond(Tick)]);
+
+            WCGroupedInputsPkt inputsToSend = new() {
+                inputsSerialized = new WInputsSerializable[] { inputs[WCommon.GetTickModuloPerSecond(Tick)] },
+            };
+            WPacketComms.SendSingle(writer, server, Tick, inputsToSend, DeliveryMethod.Unreliable);
+
+            /*if(myEntity == null && myEntityId != null) {
                 Debug.Log("Checking for my entity!");
                 
                 WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
@@ -81,10 +87,16 @@ namespace Networking.Client {
                     myPlayer = myEntity.GetComponent<IPlayer>();
                     myPlayer.EnablePlayer();
                 }
-            }
+            }*/
 
-            WCEntityManager.AdvanceTick();
-            WCTimedPacketSlotter.AdvanceTick();
+            WCEntityManager.ApplyTick();
+            WCTimedPacketSlotter.ApplyTick(Tick - AppliedTickOffsets * 2);
+
+            if(AppliedTickOffsets < DesiredTickOffset) {
+                Debug.Log("Fast forwarding a tick!");
+                AppliedTickOffsets += 1;
+                AdvanceTick();
+            }
         }
 
 
@@ -123,16 +135,18 @@ namespace Networking.Client {
             WCPacketSlots slots = WCTimedPacketSlotter.GetPacketSlots(tick);
 
             switch(packetType) {
-                case WPacketType.SEntityTransformUpdate:
+                case WPacketType.SEntityTransformUpdate: {
                     WSEntityTransformUpdatePkt entityTransformUpdate = new();
                     entityTransformUpdate.Deserialize(reader);
                     entityTransformUpdate.entityId = entityId;
                     slots.entityTransformUpdatePackets.Add(entityTransformUpdate);
                     return true;
+                }
 
-                default:
+                default: {
                     Debug.Log($"Unrecognized entity update packet type {packetType}!");
                     break;
+                }
             }
 
             return false;
@@ -148,46 +162,54 @@ namespace Networking.Client {
             WCPacketSlots slots = WCTimedPacketSlotter.GetPacketSlots(tick);
 
             switch (packetType) {
-                case WPacketType.SJoinAccept:
+                case WPacketType.SJoinAccept: {
                     WSJoinAcceptPkt pkt = new();
                     pkt.Deserialize(reader);
-                    Debug.Log($"Yippee! I got in the server! My name is {pkt.userName}, and I'm starting at tick {pkt.tick}");
                     myEntityId = pkt.playerEntityId;
-                    tick = pkt.tick;
-                    WCTimedPacketSlotter.Init(Tick);
+
+                    this.Tick = pkt.tick;
+                    DesiredTickOffset = STARTING_TICK_OFFSET;
+
                     isJoined = true;
-
                     return true;
-
-                case WPacketType.SChunkDeltaSnapshot:
+                }
+                    
+                case WPacketType.SChunkDeltaSnapshot: {
                     WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
                         startTick = tick,
                         c_entityHandler = ConsumeEntityUpdate,
                         c_generalHandler = ConsumeGeneralUpdate
                     };
                     chunkSnapshotPkt.Deserialize(reader);
-                    return true;
 
-                case WPacketType.SEntitiesLoadedDelta:
+                    return true;
+                }
+
+                case WPacketType.SEntitiesLoadedDelta: {
                     WSEntitiesLoadedDeltaPkt entitiesLoadedDelta = new();
                     entitiesLoadedDelta.Deserialize(reader);
+
                     foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
                         slots.entityKillPackets.Add(new WSEntityKillPkt() {
                             entityId = entityId,
                             reason = WEntityKillReason.Unload,
                         });
                     }
+
                     foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
                         slots.entitySpawnPackets.Add(new WSEntitySpawnPkt() {
                             entity = entity,
                             reason = WEntitySpawnReason.Load
                         });
                     }
-                    return true;
 
-                default:
+                    return true;
+                }
+
+                default: {
                     Debug.Log($"Received an (unimplemented) {packetType} packet!");
                     return false;
+                }
             }
         }
 

@@ -22,7 +22,7 @@ namespace Networking.Client {
         }
 
 
-        public static void AdvanceTick() {
+        public static void ApplyTick() {
             foreach (WCEntity entity in entities.Values) {
                 entity.AdvanceTick();
             }

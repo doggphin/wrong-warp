@@ -13,7 +13,7 @@ public class DefaultController : MonoBehaviour, IPlayer
         private CharacterController characterController;
         private BoundedRotator boundedRotator;
 
-        WEntityBase entity = null;
+        WEntityBase entity;
 
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
@@ -28,13 +28,17 @@ public class DefaultController : MonoBehaviour, IPlayer
 
         InputFlags lastFrameInputs = new();
 
+        public void ServerInit() {
+            characterController = GetComponent<CharacterController>();
+            entity = GetComponent<WEntityBase>();
+        }
+
         public void EnablePlayer()
         {
             boundedRotator = new();
-            characterController = GetComponent<CharacterController>();
             cam.enabled = true;
             cam.gameObject.GetComponent<AudioListener>().enabled = true;
-            entity = GetComponent<WEntityBase>();
+            entity ??= GetComponent<WEntityBase>();
             entity.renderPersonalRotationUpdates = true;
         }
 
@@ -47,7 +51,7 @@ public class DefaultController : MonoBehaviour, IPlayer
         }
 
 
-        public void Control(WCInputsPkt inputs) {
+        public void Control(WInputsSerializable inputs) {
             if(entity == null)
                 return;
 

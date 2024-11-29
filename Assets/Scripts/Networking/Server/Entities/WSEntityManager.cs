@@ -3,8 +3,6 @@ using UnityEngine;
 using System.Linq;
 
 using Networking.Shared;
-using Networking.Client;
-using UnityEngine.AI;
 
 namespace Networking.Server {
     public static class WSEntityManager {
@@ -20,6 +18,7 @@ namespace Networking.Server {
                 throw new System.Exception("Couldn't instantiate prefab!!!!");
 
             var netEntity = gameObject.AddComponent<WSEntity>();
+
             
             WPrefabTransformUpdateTypes transformUpdateTypes = WPrefabLookup.PrefabUpdateTypes[prefabId];
             netEntity.updatePosition = transformUpdateTypes.updatePosition;
