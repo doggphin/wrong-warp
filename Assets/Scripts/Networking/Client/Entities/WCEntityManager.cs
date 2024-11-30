@@ -22,9 +22,9 @@ namespace Networking.Client {
         }
 
 
-        public static void ApplyTick() {
+        public static void ReadyForNextTick() {
             foreach (WCEntity entity in entities.Values) {
-                entity.AdvanceTick();
+                entity.ApplyPreviousTransform();
             }
         }
 

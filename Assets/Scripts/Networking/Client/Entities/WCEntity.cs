@@ -4,7 +4,7 @@ using Networking.Shared;
 namespace Networking.Client {
     public class WCEntity : WEntityBase {
         private void Update() {
-            float percentageThroughCurrentFrame = WCommon.GetPercentageTimeThroughCurrentTick();
+            float percentageThroughCurrentFrame = WCNetClient.PercentageThroughTick;
             
             if(HasMoved && !renderPersonalPositionUpdates)
                 transform.position = previousPosition + (currentPosition - previousPosition) * percentageThroughCurrentFrame;
@@ -17,21 +17,15 @@ namespace Networking.Client {
         }
         
 
-        public void AdvanceTick() {
-            if(HasMoved && !renderPersonalPositionUpdates) {
-                transform.position = currentPosition;
-                previousPosition = transform.position;
-            }
+        public void ApplyPreviousTransform() {
+            if(HasMoved && !renderPersonalPositionUpdates)
+                previousPosition = currentPosition;
             
-            if(HasRotated && !renderPersonalRotationUpdates) {
-                transform.rotation = currentRotation;
-                previousRotation = transform.rotation;
-            }
+            if(HasRotated && !renderPersonalRotationUpdates)
+                previousRotation = currentRotation;
 
-            if(HasScaled && !renderPersonalScaleUpdates) {
-                transform.localScale = currentScale;
-                previousScale = transform.localScale;
-            }
+            if(HasScaled && !renderPersonalScaleUpdates)
+                previousScale = currentScale;
         }
 
 

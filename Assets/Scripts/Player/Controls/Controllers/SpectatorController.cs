@@ -7,7 +7,7 @@ namespace Controllers.Shared {
         [SerializeField] private Camera cam;
         private Vector3 velocity = Vector3.zero;
         Vector2 lastReceivedLook = Vector2.zero;
-        float speed = 3;
+        float speed = 10;
 
         private BoundedRotator rotator;
         private WEntityBase entity;
@@ -39,12 +39,14 @@ namespace Controllers.Shared {
 
             Quaternion rotation = Quaternion.Euler(lastReceivedLook.y, lastReceivedLook.x, 0);
 
+            velocity *= (float)Math.Pow(0.5f, WCommon.SECONDS_PER_TICK);
+
             Vector3 acceleration = rotation * movementInput * speed;
-            velocity += acceleration * Time.deltaTime;
-            velocity *= (float)Math.Pow(0.01, Time.fixedDeltaTime);
+            velocity += acceleration * WCommon.SECONDS_PER_TICK;
             
-            entity.currentPosition += velocity * Time.fixedDeltaTime;
+            entity.currentPosition += velocity * WCommon.SECONDS_PER_TICK;
         }
+
 
         public void ServerInit() {
             entity = GetComponent<WEntityBase>();
@@ -74,7 +76,9 @@ namespace Controllers.Shared {
             if(entity.renderPersonalRotationUpdates) {
                 Debug.Log("Changing rotation directly!");
                 transform.rotation = rotator.QuatRotation;
-            } 
+            }
+
+            entity.currentRotation = rotator.QuatRotation;
         }
 
 

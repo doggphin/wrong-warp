@@ -56,7 +56,8 @@ namespace Networking.Server {
 
 
         private void Update() {
-            float percentageThroughCurrentFrame = WCommon.GetPercentageTimeThroughCurrentTick();
+            float percentageThroughCurrentFrame = WSNetServer.PercentageThroughTick;
+            //print(percentageThroughCurrentFrame);
             
             if(!renderPersonalPositionUpdates)
                 transform.position = previousPosition + ((currentPosition - previousPosition) * percentageThroughCurrentFrame);

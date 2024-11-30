@@ -21,6 +21,5 @@ namespace Networking.Server {
 
             isInitialized = true;
         }
-
     }
 }

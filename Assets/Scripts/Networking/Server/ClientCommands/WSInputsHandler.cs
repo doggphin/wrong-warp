@@ -18,7 +18,7 @@ namespace Networking.Server {
 
         
         public static WInputsSerializable GetInputsOfPlayer(int tick, int playerId) {
-            WInputsSerializable ret = playerCycledInputs[playerId][tick % WCommon.TICKS_PER_SECOND];
+            WInputsSerializable ret = playerCycledInputs[playerId][WCommon.GetModuloTPS(tick)];
             playerCycledInputs[playerId][tick % WCommon.TICKS_PER_SECOND] = null;
             
             return ret;
@@ -27,7 +27,7 @@ namespace Networking.Server {
 
         // Returns if there was already an inputs packet for this tick
         public static void SetInputsOfPlayer(int tick, int playerId, WInputsSerializable inputsPkt) {
-            playerCycledInputs[playerId][tick % WCommon.TICKS_PER_SECOND] = inputsPkt;
+            playerCycledInputs[playerId][WCommon.GetModuloTPS(tick)] = inputsPkt;
             //Debug.Log($"Inputs are being set to {inputsPkt.inputFlags.flags}");
         }
 

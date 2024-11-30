@@ -40,11 +40,6 @@ namespace Networking.Shared {
             }
         }
 
-        private void FixedUpdate() {
-            WNetClient?.AdvanceTick();
-            WNetServer?.AdvanceTick();
-        }
-
         private void OnDisconnect(DisconnectInfo info) {
             Debug.Log($"Disconnected: {info.Reason}");
 

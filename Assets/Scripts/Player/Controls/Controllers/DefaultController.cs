@@ -73,8 +73,8 @@ public class DefaultController : MonoBehaviour, IPlayer
 
             bool isGrounded = Physics.Raycast(entity.currentPosition, Vector3.down, 1.1f);
             
-            float gravityAcceleration = isGrounded ? 0 : -gravity * Time.fixedDeltaTime;
-            float drag = isGrounded ? Mathf.Pow(0.00002f, Time.fixedDeltaTime) : Mathf.Pow(0.5f, Time.fixedDeltaTime);
+            float gravityAcceleration = isGrounded ? 0 : -gravity * WCommon.SECONDS_PER_TICK;
+            float drag = isGrounded ? Mathf.Pow(0.00002f, WCommon.SECONDS_PER_TICK) : Mathf.Pow(0.5f, WCommon.SECONDS_PER_TICK);
             float movementAccelerationFactor = isGrounded ? groundedAcceleration : aerialAcceleration;
             float maxSpeed = isGrounded ? groundedMaxSpeed : aerialMaxSpeed;
 
@@ -83,7 +83,7 @@ public class DefaultController : MonoBehaviour, IPlayer
             Vector2 xzVelocity = new Vector2(velocity.x, velocity.z);
             float xzSpeed = xzVelocity.magnitude;
 
-            Vector3 movement = rotation * (wasdInput * movementAccelerationFactor * Time.fixedDeltaTime);
+            Vector3 movement = rotation * (wasdInput * movementAccelerationFactor * WCommon.SECONDS_PER_TICK);
             Vector2 xzMovement = new Vector2(movement.x, movement.z);
             Vector2 xzVelocityAfterMovement = xzVelocity + xzMovement;
             float xzSpeedAfterMovement = xzVelocityAfterMovement.magnitude;
@@ -125,15 +125,17 @@ public class DefaultController : MonoBehaviour, IPlayer
                 }
             }
 
+            Vector3 originalPosition = transform.position;
+
             // Calculate distance cc wants to move
             transform.position = entity.currentPosition;
-            characterController.Move(velocity * Time.fixedDeltaTime);
+            characterController.Move(velocity * WCommon.SECONDS_PER_TICK);
             Vector3 difference = transform.position - entity.currentPosition;
 
             entity.currentPosition += difference;
 
             // Visual position will be set before next frame is shown, not important to set here
-
+            transform.position = originalPosition;  // Setting it anyway
             lastFrameInputs = inputs.inputFlags;
         }
 

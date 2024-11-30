@@ -9,31 +9,44 @@ using Controllers.Shared;
 
 namespace Networking.Server {
     public class WSNetServer : MonoBehaviour, INetEventListener {
-        public NetManager ServerNetManager { get; private set; }
+        public static NetManager ServerNetManager { get; private set; }
 
-        private NetDataWriter writer = new();
+        private static NetDataWriter writer = new();
 
-        private int tick;
-        public static int Tick => Instance.tick;
+        private static int tick;
+        public static int Tick => tick;
+        private static WWatch watch;
+        public static float PercentageThroughTick => watch.GetPercentageThroughTick();
 
         public static WSNetServer Instance { get; private set; }
-        
-
         public void Init() {
             ServerNetManager.Start(WCommon.WRONGWARP_PORT);
 
             tick = 0;
-            Debug.Log($"Running server on port {WCommon.WRONGWARP_PORT}!");
+            print($"Running server on port {WCommon.WRONGWARP_PORT}!");
 
             /*WSEntity entity = WSEntityManager.SpawnEntity(WPrefabId.Test, true);
             entity.gameObject.AddComponent<SpinnerTest>();*/
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Spectator, true);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
             player.ServerInit();
             
             ControlsManager.player = player;
             ControlsManager.player.EnablePlayer();
+
+            watch = new();
+            watch.Start();
+        }
+
+
+        private void Update() {
+            ServerNetManager.PollEvents();
+
+            while(PercentageThroughTick > 1) {
+                watch.AdvanceTick();
+                AdvanceTick();
+            }
         }
 
 
@@ -75,7 +88,6 @@ namespace Networking.Server {
                 }
             }
 
-            Debug.Log(tick);
             if (tick++ % WCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
 
@@ -104,19 +116,21 @@ namespace Networking.Server {
                 }
 
                 case WPacketType.CGroupedInputs: {
+                    print($"Received inputs for tick {tick}. Server is on {Tick}. {tick - Tick} ticks in the future.");
+                    //print($"Received a tick {tick - Tick} ticks in the future");
                     if(peer.Tag == null)
                         return false;
 
                     WCGroupedInputsPkt groupedInputsPkt = new();
                     groupedInputsPkt.Deserialize(reader);
 
-                    WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(Tick, peer.Id, groupedInputsPkt);
+                    WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputsPkt);
                     
                     return true;
                 }
 
                 default: {
-                    Debug.Log($"Could not handle packet of type {packetType}!");
+                    print($"Could not handle packet of type {packetType}!");
                     return false;
                 }
             }
@@ -124,7 +138,7 @@ namespace Networking.Server {
 
 
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
-            Debug.Log($"Join packet received for {joinRequest.userName}");
+            print($"Join packet received for {joinRequest.userName}");
 
             WsPlayerInputsSlotter.AddPlayer(peer.Id);
 
@@ -143,6 +157,7 @@ namespace Networking.Server {
                 playerEntityId = playerEntity.Id,
                 tick = Tick
             };
+            Debug.Log($"Telling them to start at {joinAcceptPacket.tick}!");
 
             WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
             
@@ -162,12 +177,12 @@ namespace Networking.Server {
 
 
         public void OnPeerConnected(NetPeer peer) {
-            Debug.Log($"Player connected: {peer.Address}!");
+            print($"Player connected: {peer.Address}!");
         }
 
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-            Debug.Log($"Player disconnected: {disconnectInfo.Reason}!");
+            print($"Player disconnected: {disconnectInfo.Reason}!");
 
             //WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
             //WNetEntityManager.KillEntity(netPlayer.Entity.Id);
@@ -175,13 +190,13 @@ namespace Networking.Server {
 
 
         public void OnConnectionRequest(ConnectionRequest request) {
-            Debug.unityLogger.Log("Received a connection request!");
+            UnityEngine.Debug.unityLogger.Log("Received a connection request!");
             request.AcceptIfKey("WW 0.01");
         }
 
 
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
-            Debug.Log($"Network error: {socketError}");
+            print($"Network error: {socketError}");
         }
 
 
@@ -205,11 +220,6 @@ namespace Networking.Server {
                 AutoRecycle = true,
                 IPv6Enabled = false
             };
-        }
-
-
-        private void Update() {
-            ServerNetManager.PollEvents();
         }
     }
 }
