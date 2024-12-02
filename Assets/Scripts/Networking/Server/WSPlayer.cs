@@ -4,7 +4,7 @@ using Networking.Shared;
 namespace Networking.Server {
     public class WSPlayer {
         public static WSPlayer FromPeer(NetPeer peer) {
-            return (WSPlayer)peer.Tag;
+            return peer.Tag == null ? null : (WSPlayer)peer.Tag;
         }
         public WSChunk previousChunk = null;
         public WSEntity Entity { get; private set; }

@@ -8,7 +8,9 @@ namespace Controllers.Shared {
         private Vector2 oldRotation = Vector3.zero;
         public Vector2 rotation = Vector3.zero;
 
-        public Quaternion QuatRotation => Quaternion.Euler(new Vector3(rotation.y, rotation.x, 0));
+        public Quaternion CameraQuatRotation => Quaternion.Euler(new Vector3(rotation.y, 0, 0));
+        public Quaternion BodyQuatRotation => Quaternion.Euler(new Vector3(0, rotation.x, 0));
+        public Quaternion FullQuatRotation => Quaternion.Euler(new Vector3(rotation.y, rotation.x, 0));
 
 
         public void AddRotationDelta(Vector2 delta)

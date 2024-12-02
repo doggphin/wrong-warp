@@ -1,3 +1,4 @@
+using LiteNetLib.Utils;
 using Networking.Shared;
 using UnityEngine;
 
@@ -8,8 +9,9 @@ namespace Controllers.Shared {
         public void DisablePlayer();
         public void ServerInit();
 
-        public void Control(WInputsSerializable inputs);
+        public void Control(WInputsSerializable inputs, int onTick);
         public void AddRotationDelta(Vector2 delta);
         public Vector2? PollLook();
+        public void RollbackToTick(int tick);
     }
 }

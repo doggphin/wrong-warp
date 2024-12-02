@@ -3,54 +3,63 @@ using Networking.Shared;
 
 namespace Networking.Client {
     public class WCEntity : WEntityBase {
+        public CircularTickBuffer<int> lastReceivedPositionUpdateTicks = new();
+        public CircularTickBuffer<int> lastReceivedRotationUpdateTicks = new();
+        public CircularTickBuffer<int> lastReceivedScaleUpdateTicks = new();   
+
         private void Update() {
-            float percentageThroughCurrentFrame = WCNetClient.PercentageThroughTick;
+            float percentageThroughTick = WCNetClient.PercentageThroughTick;
             
-            if(HasMoved && !renderPersonalPositionUpdates)
-                transform.position = previousPosition + (currentPosition - previousPosition) * percentageThroughCurrentFrame;
-
-            if(HasRotated && !renderPersonalRotationUpdates)
-                transform.rotation = Quaternion.Lerp(previousRotation, currentRotation, percentageThroughCurrentFrame);
+            // If updatePositionsLocally, don't update it automatically
+            if(!updatePositionsLocally) {
+                // If received an update on this tick,
+                Debug.Log($"{lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick]}, {WCNetClient.ObservingTick}");
+                if(lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick] == WCNetClient.ObservingTick) {
+                    // If the last received position exists, lerp between that-
+                    // Otherwise, teleport to the new position, since we have no idea how far to go. There's probably better ways to do this
+                    transform.position = (lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick - 1] == WCNetClient.ObservingTick - 1) ?
+                        LerpBufferedPositions(WCNetClient.ObservingTick, percentageThroughTick) :
+                        positionsBuffer[WCNetClient.ObservingTick];
+                }
+            }
+                
+            // Update these
+            if(!updateRotationsLocally)
+                transform.rotation = LerpBufferedRotations(WCNetClient.ObservingTick, percentageThroughTick);
             
-            if(HasScaled && !renderPersonalScaleUpdates)
-                transform.localScale = previousScale + (currentScale - previousScale) * percentageThroughCurrentFrame;
+            if(!updateScalesLocally)
+                transform.localScale = LerpBufferedScales(WCNetClient.ObservingTick, percentageThroughTick);
         }
-        
 
-        public void ApplyPreviousTransform() {
-            if(HasMoved && !renderPersonalPositionUpdates)
-                previousPosition = currentPosition;
-            
-            if(HasRotated && !renderPersonalRotationUpdates)
-                previousRotation = currentRotation;
+        public void SetTransformForTick(int tick, WTransformSerializable transform) {
+            if (transform.position != null) {
+                Debug.Log($"Setting transform for {tick} to {transform.position.Value}");
+                positionsBuffer[tick] = transform.position.Value;
+                lastReceivedPositionUpdateTicks[tick] = tick;
+            }     
 
-            if(HasScaled && !renderPersonalScaleUpdates)
-                previousScale = currentScale;
-        }
+            if (transform.rotation != null) {
+                rotationsBuffer[tick] = transform.rotation.Value;
+                lastReceivedRotationUpdateTicks[tick] = tick;
+            }         
 
-
-        public void UpdateTransform(WTransformSerializable nextTransform) {
-            if (nextTransform.position != null)
-                currentPosition = nextTransform.position.Value;
-
-            if (nextTransform.rotation != null)
-                currentRotation = nextTransform.rotation.Value;
-
-            if (nextTransform.scale != null)
-                currentScale = nextTransform.scale.Value; 
+            if (transform.scale != null) {
+                scalesBuffer[tick] = transform.scale.Value;
+                lastReceivedScaleUpdateTicks[tick] = tick;
+            }
         }
 
 
         public void Init(WSEntitySpawnPkt spawnPkt) {
             Id = spawnPkt.entity.entityId;
 
-            currentPosition = spawnPkt.entity.transform.position.GetValueOrDefault(Vector3.zero);
-            currentRotation = spawnPkt.entity.transform.rotation.GetValueOrDefault(Quaternion.identity);
-            currentScale = spawnPkt.entity.transform.scale.GetValueOrDefault(Vector3.one);
+            positionsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.position.GetValueOrDefault(Vector3.zero);
+            rotationsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.rotation.GetValueOrDefault(Quaternion.identity);
+            scalesBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.scale.GetValueOrDefault(Vector3.one);
 
-            previousPosition = transform.position;
-            previousRotation = transform.rotation;
-            previousScale = transform.localScale;
+            positionsBuffer[WCNetClient.ObservingTick - 1] = positionsBuffer[WCNetClient.ObservingTick];
+            rotationsBuffer[WCNetClient.ObservingTick - 1] = rotationsBuffer[WCNetClient.ObservingTick];
+            scalesBuffer[WCNetClient.ObservingTick - 1] = scalesBuffer[WCNetClient.ObservingTick];
         }
 
         public override void Kill(WEntityKillReason reason) {

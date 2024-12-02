@@ -5,31 +5,31 @@ using UnityEngine;
 namespace Controllers.Shared {
     public class SpectatorController : MonoBehaviour, IPlayer {
         [SerializeField] private Camera cam;
-        private Vector3 velocity = Vector3.zero;
-        Vector2 lastReceivedLook = Vector2.zero;
-        float speed = 10;
-
-        private BoundedRotator rotator;
         private WEntityBase entity;
 
-        public void Control(WInputsSerializable inputs)
+        private BoundedRotator boundedRotator;
+        private Vector3 velocity = Vector3.zero;
+        float speed = 10;
+        
+
+        public void RollbackToTick(int tick)
+        {
+            Debug.LogError("Not implemented");
+        }
+
+        public void Control(WInputsSerializable inputs, int onTick)
         {
             if(entity == null) {
                 Debug.LogError("No entity to control!");
                 return;
             }
 
-            if(inputs.inputFlags.GetFlag(InputType.Look) && inputs.look.HasValue) {
-                lastReceivedLook.x = inputs.look.Value.x;
-                lastReceivedLook.y = inputs.look.Value.y;
-            }
-
             float forward = (inputs.inputFlags.GetFlag(InputType.Forward) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Back) ? 1f : 0f);
-            float left = (inputs.inputFlags.GetFlag(InputType.Right) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Left) ? 1f : 0f);
+            float right = (inputs.inputFlags.GetFlag(InputType.Right) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Left) ? 1f : 0f);
             float up = (inputs.inputFlags.GetFlag(InputType.Jump) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Crouch) ? 1f : 0f);
-            Vector3 movementInput = new(left, up, forward);
+            Vector3 movementInput = new(right, up, forward);
             
-            int axes = (forward != 0 ? 1 : 0) + (left != 0 ? 1 : 0) + (up != 0 ? 1 : 0);
+            int axes = (forward != 0 ? 1 : 0) + (right != 0 ? 1 : 0) + (up != 0 ? 1 : 0);
             if(axes == 2)
                 movementInput *= 0.707f;
             else if (axes == 3)
@@ -37,14 +37,14 @@ namespace Controllers.Shared {
             
             // =====
 
-            Quaternion rotation = Quaternion.Euler(lastReceivedLook.y, lastReceivedLook.x, 0);
+            Quaternion rotation = boundedRotator.FullQuatRotation;
 
             velocity *= (float)Math.Pow(0.5f, WCommon.SECONDS_PER_TICK);
 
             Vector3 acceleration = rotation * movementInput * speed;
             velocity += acceleration * WCommon.SECONDS_PER_TICK;
             
-            entity.currentPosition += velocity * WCommon.SECONDS_PER_TICK;
+            entity.positionsBuffer[onTick] += velocity * WCommon.SECONDS_PER_TICK;
         }
 
 
@@ -57,8 +57,8 @@ namespace Controllers.Shared {
             Debug.Log("Enabled spectator controller!");
             cam.enabled = true;
             cam.GetComponent<AudioListener>().enabled = true;
-            entity.renderPersonalRotationUpdates = true;
-            rotator = new();
+            entity.updateRotationsLocally = true;
+            boundedRotator = new();
         }
 
 
@@ -71,20 +71,21 @@ namespace Controllers.Shared {
 
         public void AddRotationDelta(Vector2 delta)
         {
-            rotator.AddRotationDelta(delta);
+            boundedRotator.AddRotationDelta(delta);
 
-            if(entity.renderPersonalRotationUpdates) {
-                Debug.Log("Changing rotation directly!");
-                transform.rotation = rotator.QuatRotation;
-            }
+            if(!entity.updateRotationsLocally)
+                return;
+            
+            entity.transform.rotation = boundedRotator.BodyQuatRotation;
+            cam.transform.localRotation = boundedRotator.CameraQuatRotation;
 
-            entity.currentRotation = rotator.QuatRotation;
+            //entity.rotationsBuffer[onTick] = rotator.QuatRotation;
         }
 
 
         public Vector2? PollLook()
         {
-            return rotator.PollLook();
+            return boundedRotator.PollLook();
         }
     }
 }

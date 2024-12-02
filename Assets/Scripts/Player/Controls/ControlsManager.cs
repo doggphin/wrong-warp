@@ -1,6 +1,7 @@
 using Networking.Shared;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Controllers.Shared {
     public static class ControlsManager {
@@ -8,10 +9,15 @@ namespace Controllers.Shared {
 
         public static IPlayer player = null;
 
+        public static CircularTickBuffer<WInputsSerializable> inputs = new();
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
         
         public static void Init() {
+            for(int i=0; i<inputs.buffer.Length; i++) {
+                inputs.buffer[i] = new();
+            }
+
             void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
                 inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
                 inputAction.canceled += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
@@ -49,7 +55,7 @@ namespace Controllers.Shared {
         }
 
 
-        public static void Poll(WInputsSerializable writeTo) {
+        public static void PollInputs(WInputsSerializable writeTo, int onTick) {
             Vector2? rotation = player?.PollLook();
             finalInputs.SetFlag(InputType.Look, rotation.HasValue);
 
@@ -59,7 +65,7 @@ namespace Controllers.Shared {
             writeTo.inputFlags.flags = finalInputs.flags;
             writeTo.look = rotation;
 
-            player?.Control(writeTo);
+            player?.Control(writeTo, onTick);
 
             finalInputs.Reset();
         }

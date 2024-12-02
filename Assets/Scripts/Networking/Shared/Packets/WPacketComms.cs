@@ -1,6 +1,7 @@
 using LiteNetLib.Utils;
 using LiteNetLib;
 using System;
+using UnityEngine;
 
 
 namespace Networking.Shared {
@@ -10,8 +11,8 @@ namespace Networking.Shared {
             NetPeer peer, 
             int tick,  
             T packet, 
-            DeliveryMethod deliveryMethod) where T : INetSerializable {
-
+            DeliveryMethod deliveryMethod) where T : INetSerializable
+        {
             if (peer == null)
                 return;
 

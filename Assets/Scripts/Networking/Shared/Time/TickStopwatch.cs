@@ -13,12 +13,12 @@ namespace Networking.Shared {
 
         
         public float GetPercentageThroughTick() {
-            return (float)(sw.ElapsedMilliseconds - msTicked) / WCommon.MS_IN_TICK;
+            return (sw.ElapsedMilliseconds - msTicked) * WCommon.TICKS_PER_MS;
         }
 
 
         public void AdvanceTick() {
-            msTicked += WCommon.MS_IN_TICK;
+            msTicked += WCommon.MS_PER_TICK;
         }
     }
 }

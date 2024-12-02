@@ -6,66 +6,63 @@ using Networking.Shared;
 
 namespace Networking.Client {
     public class WCPacketSlots {
+        public int tick = -1;
         public bool applied = false;
         public List<WSEntityKillPkt> entityKillPackets = new();
         public List<WSEntitySpawnPkt> entitySpawnPackets = new();
         public List<WSEntityTransformUpdatePkt> entityTransformUpdatePackets = new();
+
+        public void Reset(int tick) {
+            this.tick = tick;
+            applied = false;
+            entityKillPackets.Clear();
+            entitySpawnPackets.Clear();
+            entityTransformUpdatePackets.Clear();
+        }
     }
 
     public static class WCTimedPacketSlotter {
-        private static Dictionary<int, WCPacketSlots> receivedPackets = new();
-
-        private static WCPacketSlots GetPacketSlots(int tick) {
-            if(receivedPackets.TryGetValue(tick, out var packetSlots))
-                return packetSlots;
-
-            WCPacketSlots newPacketSlots = new();
-            receivedPackets[tick] = newPacketSlots;
-
-            return newPacketSlots;
+        private static CircularTickBuffer<WCPacketSlots> slots = new();
+        public static void Init() {
+            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
+                slots[i] = new();
+            }
         }
-        
+        private static bool CheckSlotsForSlotPacket(int tick) {
+            WCPacketSlots slotsToCheck = slots[tick];
+            
+            if(slotsToCheck.tick > tick || slotsToCheck.applied)
+                return false;
+
+            if(tick > slotsToCheck.tick)
+                slotsToCheck.Reset(tick);
+            
+            return true;
+        }
         public static void SlotPacket(int tick, WSEntityKillPkt pkt) {
-            WCPacketSlots slots = GetPacketSlots(tick);
-            if(slots.applied)
-                ApplyPacket(pkt);
-            else
-                slots.entityKillPackets.Add(pkt);
+            if(CheckSlotsForSlotPacket(tick))
+                slots[tick].entityKillPackets.Add(pkt);
         }
         public static void SlotPacket(int tick, WSEntitySpawnPkt pkt) {
-            WCPacketSlots slots = GetPacketSlots(tick);
-            if(slots.applied)
-                ApplyPacket(pkt);
-            else
-                slots.entitySpawnPackets.Add(pkt);
+            if(CheckSlotsForSlotPacket(tick))
+                slots[tick].entitySpawnPackets.Add(pkt);
         }
         public static void SlotPacket(int tick, WSEntityTransformUpdatePkt pkt) {
-            WCPacketSlots slots = GetPacketSlots(tick);
-            if(slots.applied)
-                ApplyPacket(pkt);
-            else
-                slots.entityTransformUpdatePackets.Add(pkt);
+            if(CheckSlotsForSlotPacket(tick))
+                slots[tick].entityTransformUpdatePackets.Add(pkt);
         }
-        
 
-        public static void ApplyTick(int tick) {
-            receivedPackets.Remove(tick - WCommon.TICKS_PER_SECOND);
 
-            if(!receivedPackets.TryGetValue(tick, out var packets)) {
+        public static void ApplySlottedPacketsFromTick(int tick) {
+            WCPacketSlots slotsToApply = slots[tick];
+
+            if(slotsToApply.tick != tick) {
                 return;
             }
 
-            foreach(var pkt in packets.entityKillPackets) {
-                ApplyPacket(pkt);
-            }
-
-            foreach(var pkt in packets.entitySpawnPackets) {
-                ApplyPacket(pkt);
-            }
-
-            foreach(var pkt in packets.entityTransformUpdatePackets) {
-                ApplyPacket(pkt);
-            }
+            slotsToApply.entityKillPackets.ForEach((pkt) => ApplyPacket(pkt));
+            slotsToApply.entitySpawnPackets.ForEach((pkt) => ApplyPacket(pkt));
+            slotsToApply.entityTransformUpdatePackets.ForEach((pkt) => ApplyPacket(tick, pkt));
         }
         private static void ApplyPacket(WSEntityKillPkt pkt) {
             WCEntityManager.KillEntity(pkt);
@@ -73,8 +70,8 @@ namespace Networking.Client {
         private static void ApplyPacket(WSEntitySpawnPkt pkt) {
             WCEntityManager.Spawn(pkt);
         }
-        private static void ApplyPacket(WSEntityTransformUpdatePkt pkt) {
-            WCEntityManager.UpdateEntityTransform(pkt);
+        private static void ApplyPacket(int tick, WSEntityTransformUpdatePkt pkt) {
+            WCEntityManager.SetEntityTransformForTick(tick, pkt);
         }
     }
 }

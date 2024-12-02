@@ -11,7 +11,7 @@ namespace Networking.Server {
 
         public static GameObject SpawnHolder {get; set; }
 
-        public static WSEntity SpawnEntity(WPrefabId prefabId, bool isChunkLoader = false) {
+        public static WSEntity SpawnEntity(WPrefabId prefabId, int tick, bool isChunkLoader = false) {
             GameObject gameObject = Object.Instantiate(WPrefabLookup.GetById(prefabId), SpawnHolder.transform);
             
             if(gameObject == null)
@@ -50,10 +50,9 @@ namespace Networking.Server {
         }
 
 
-        public static void AdvanceTick(int tick) {
-            // TODO: This could be done more efficiently
+        public static void PollFinalizeAdvanceEntities() {
             foreach (WSEntity netEntity in entities.Values.ToList()) {
-                netEntity.Poll(tick);
+                netEntity.PollAndFinalizeTransform();
             }
         }
     }

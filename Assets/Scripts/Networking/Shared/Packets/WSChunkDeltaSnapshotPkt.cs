@@ -109,7 +109,6 @@ namespace Networking.Shared {
             int[] totalEntitiesInTicks = new int[WCommon.TICKS_PER_SNAPSHOT];
             for (int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
                 totalEntitiesInTicks[i] = s_entityUpdates[i].Keys.Count;
-
                 if (totalEntitiesInTicks[i] > 0)
                     tickContainsEntityUpdatesFlags |= 1 << i;
             }

@@ -21,14 +21,13 @@ namespace Networking.Server {
         public static WSNetServer Instance { get; private set; }
         public void Init() {
             ServerNetManager.Start(WCommon.WRONGWARP_PORT);
-
-            tick = 0;
             print($"Running server on port {WCommon.WRONGWARP_PORT}!");
 
-            /*WSEntity entity = WSEntityManager.SpawnEntity(WPrefabId.Test, true);
-            entity.gameObject.AddComponent<SpinnerTest>();*/
+            // Start one second ahead to keep circular buffers from ever trying to index negative numbers
+            tick = WCommon.TICKS_PER_SECOND;
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Spectator, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, tick, true);
+            playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
             player.ServerInit();
             
@@ -45,52 +44,58 @@ namespace Networking.Server {
 
             while(PercentageThroughTick > 1) {
                 watch.AdvanceTick();
-                AdvanceTick();
+                StartNextTick();
             }
         }
 
 
         private readonly WInputsSerializable noInputs = new();
-        public void AdvanceTick() {
-            WSEntityManager.AdvanceTick(tick);
-            
-            ControlsManager.Poll(null);
-
-            // If this tick isn't an update tick, advance to the next one
+        public void StartNextTick() {
+            tick += 1;
+            // Run server player inputs
+            ControlsManager.PollInputs(null, tick);
+            // Run inputs of each client
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WSPlayer netPlayer = WSPlayer.FromPeer(peer);
                 if (netPlayer == null)
                     continue;
                 
-                WInputsSerializable inputs = WsPlayerInputsSlotter.GetInputsOfPlayer(tick, peer.Id) ?? noInputs;
-                netPlayer.Entity.GetComponent<IPlayer>().Control(inputs);
+                WInputsSerializable inputs = WsPlayerInputsSlotter.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
 
-                if (tick % WCommon.TICKS_PER_SNAPSHOT == 0) {
-                    if(netPlayer.previousChunk != null) {
-                        WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
-                            netPlayer.previousChunk.Coords,
-                            netPlayer.Entity.ChunkPosition);
-
-                        if(entitiesLoadedDeltaPkt != null) {
-                            writer.Reset();
-                            WPacketComms.StartMultiPacket(writer, tick);
-                            WPacketComms.AddToMultiPacket(writer, entitiesLoadedDeltaPkt);
-
-                            peer.Send(writer, DeliveryMethod.ReliableUnordered);
-                        }
-                    }
-
-                    WSChunk chunk = netPlayer.Entity.CurrentChunk;
-                    NetDataWriter chunkWriter = chunk.GetPrepared3x3SnapshotPacket();
-                    peer.Send(chunkWriter, DeliveryMethod.Unreliable);
-
-                    netPlayer.previousChunk = chunk;
-                }
+                netPlayer.Entity.GetComponent<IPlayer>().Control(inputs, tick);
             }
-
-            if (tick++ % WCommon.TICKS_PER_SNAPSHOT != 0)
+            // Finalize entities
+            WSEntityManager.PollFinalizeAdvanceEntities();
+            // Only run further code if it's time for a snapshot
+            if (tick % WCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
+            // Get and send snapshots of all chunks players are in to all players in those chunks
+            foreach (var peer in ServerNetManager.ConnectedPeerList) {
+                WSPlayer netPlayer = WSPlayer.FromPeer(peer);
+                if (netPlayer == null)
+                    continue;
 
+                if(netPlayer.previousChunk != null) {
+                    WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
+                        netPlayer.previousChunk.Coords,
+                        netPlayer.Entity.ChunkPosition);
+
+                    if(entitiesLoadedDeltaPkt != null) {
+                        writer.Reset();
+                        WPacketComms.StartMultiPacket(writer, tick);
+                        WPacketComms.AddToMultiPacket(writer, entitiesLoadedDeltaPkt);
+
+                        peer.Send(writer, DeliveryMethod.ReliableUnordered);
+                    }
+                }
+
+                WSChunk chunk = netPlayer.Entity.CurrentChunk;
+                NetDataWriter chunkWriter = chunk.GetPrepared3x3SnapshotPacket();
+                peer.Send(chunkWriter, DeliveryMethod.Unreliable);
+
+                netPlayer.previousChunk = chunk;
+            }
+            // Unload + reset chunks
             WSChunkManager.UnloadChunksMarkedForUnloading();
             WSChunkManager.ResetChunkUpdatesAndSnapshots();
         }
@@ -116,8 +121,6 @@ namespace Networking.Server {
                 }
 
                 case WPacketType.CGroupedInputs: {
-                    print($"Received inputs for tick {tick}. Server is on {Tick}. {tick - Tick} ticks in the future.");
-                    //print($"Received a tick {tick - Tick} ticks in the future");
                     if(peer.Tag == null)
                         return false;
 
@@ -140,24 +143,31 @@ namespace Networking.Server {
         private void OnJoinReceived(WCJoinRequestPkt joinRequest, NetPeer peer) {
             print($"Join packet received for {joinRequest.userName}");
 
+            if(!joinRequest.s_isValid || !TryAddPlayer(peer, joinRequest.userName)) {
+                Debug.Log("Invalid join packet!");
+                peer.Disconnect();
+            }
+        }
+        private bool TryAddPlayer(NetPeer peer, string userName) {
+            if(WSPlayer.FromPeer(peer) != null)
+                return false;
+
             WsPlayerInputsSlotter.AddPlayer(peer.Id);
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
-            playerEntity.currentPosition = new Vector3(5, 5, 5);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, Tick, true);
 
             IPlayer playerPlayer = playerEntity.GetComponent<IPlayer>();
             playerPlayer.ServerInit();
 
-            WSPlayer netPlayer = new WSPlayer();
+            WSPlayer netPlayer = new();
             netPlayer.Init(peer, playerEntity);
             peer.Tag = netPlayer;
 
             WSJoinAcceptPkt joinAcceptPacket = new() {
-                userName = joinRequest.userName,
+                userName = userName,
                 playerEntityId = playerEntity.Id,
                 tick = Tick
             };
-            Debug.Log($"Telling them to start at {joinAcceptPacket.tick}!");
 
             WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
             
@@ -165,6 +175,19 @@ namespace Networking.Server {
             WPacketComms.AddToMultiPacket(writer, joinAcceptPacket);
             WPacketComms.AddToMultiPacket(writer, entitiesLoadPacket);
             peer.Send(writer, DeliveryMethod.ReliableUnordered);
+
+            return true;
+        }
+        private bool TryRemovePlayer(NetPeer peer) {
+            WSPlayer player = WSPlayer.FromPeer(peer);
+            if(player == null)
+                return false;
+
+            WSEntityManager.KillEntity(player.Entity.Id);
+            
+            WsPlayerInputsSlotter.RemovePlayer(peer.Id);
+
+            return true;
         }
 
 
@@ -184,8 +207,7 @@ namespace Networking.Server {
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
             print($"Player disconnected: {disconnectInfo.Reason}!");
 
-            //WNetPlayer netPlayer = (WNetPlayer)peer.Tag;
-            //WNetEntityManager.KillEntity(netPlayer.Entity.Id);
+            TryRemovePlayer(peer);
         }
 
 

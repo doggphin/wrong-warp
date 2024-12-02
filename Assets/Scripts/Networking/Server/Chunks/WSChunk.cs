@@ -1,33 +1,34 @@
 using LiteNetLib.Utils;
-using Networking.Server;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 using Networking.Shared;
-using Unity.Mathematics;
 
 namespace Networking.Server {
     public class WSChunk {
         private HashSet<WSEntity> presentLoaders = new();
         public HashSet<WSEntity> PresentEntities { get; private set; } = new();
-
-        List<INetSerializable>[] generalUpdates;
-        Dictionary<int, List<INetSerializable>>[] entityUpdates;
-
-        private bool isLoaded;
+        List<INetSerializable>[] generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
+        Dictionary<int, List<INetSerializable>>[] entityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
+        private bool isLoaded = false;
         public Vector2Int Coords { get; private set; }
+
+        public void Load(Vector2Int coords) {
+            isLoaded = true;
+
+            for (int i = 0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
+                generalUpdates[i] = new();
+                entityUpdates[i] = new();
+            }
+
+            Coords = coords;
+        }
 
 
         private WSChunkDeltaSnapshotPkt deltaSnapshot = null;
         private bool isDeltaSnapshot3x3PktWritten = false;
         private NetDataWriter deltaSnapshot3x3PktWriter = new();
-
-        private NetDataWriter GetPrepared3x3WorldStatePacket() {
-            throw new NotImplementedException();
-        }
-        
-
         public NetDataWriter GetPrepared3x3SnapshotPacket() {
             if (isDeltaSnapshot3x3PktWritten) {
                 Debug.Log("Returning already written snapshot!");
@@ -52,8 +53,6 @@ namespace Networking.Server {
 
             return deltaSnapshot3x3PktWriter;
         }
-
-
         public WSChunkDeltaSnapshotPkt GetSnapshot() {
             if (deltaSnapshot != null)
                 return deltaSnapshot;
@@ -75,20 +74,6 @@ namespace Networking.Server {
         }
 
 
-        public void Load(Vector2Int coords) {
-            isLoaded = true;
-            generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
-            entityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
-
-            for (int i = 0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
-                generalUpdates[i] = new();
-                entityUpdates[i] = new();
-            }
-
-            Coords = coords;
-        }
-
-
         /// <summary>
         /// 
         /// </summary>
@@ -100,8 +85,8 @@ namespace Networking.Server {
             if (!isLoaded)
                 return false;
 
-            // Ticks will be offset by 1 if this isn't done, and using -1 makes this start at a negative
-            int insertAt = ((tick - 1) % WCommon.TICKS_PER_SNAPSHOT + WCommon.TICKS_PER_SNAPSHOT) % WCommon.TICKS_PER_SNAPSHOT;
+            // Want insertAt to start at 0, not 1. Need to do add ticksPerSnapshot - 1 to make it start at 0
+            int insertAt = (tick + WCommon.TICKS_PER_SNAPSHOT - 1) % WCommon.TICKS_PER_SNAPSHOT;
 
             if (!entityUpdates[insertAt].TryGetValue(id, out var entityUpdatesList)) {
                 List<INetSerializable> newEntityUpdatesList = new();
@@ -126,7 +111,7 @@ namespace Networking.Server {
             if (!isLoaded)
                 return false;
 
-            generalUpdates[tick].Add(update);
+            generalUpdates[tick % WCommon.TICKS_PER_SNAPSHOT].Add(update);
 
             return true;
         }

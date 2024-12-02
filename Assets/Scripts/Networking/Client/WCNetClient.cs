@@ -19,27 +19,26 @@ namespace Networking.Client {
         private string userName;
         private bool isJoined = false;
         private int? myEntityId = null;
-        private WCEntity myEntity = null;
-        private IPlayer myPlayer = null;
-        private WInputsSerializable[] inputs;
+        public static WCEntity PlayerEntity {get; private set;} = null;
+        public static IPlayer Player {get; private set;} = null;
 
         private static WWatch watch;
         public static float PercentageThroughTick => watch.GetPercentageThroughTick();
-        public int Tick {get; private set;}
+        public static int Tick {get; set;}
         // Later, server should be able to tell if a client is overcompensating or undercompensating,
         // And either:
         // If client is sending stuff too late (ping is better than they're pretending it is), lower window + skip a couple ticks
         // If client is sending stuff too early (ping is worse than they're pretending it is), increase window + wait a couple ticks
         // This should be done by temporarily increasing the watch AdvanceTick speed.
         //private static int TickOffsetWindow = WCommon.TICKS_PER_SNAPSHOT + 1;
-        private int windowSize = 5;
+        private static int windowSize = WCommon.TICKS_PER_SNAPSHOT * 2;
         //private int DesiredTickOffset = -TickOffsetWindow * 2; // Initially want to start in the future
-        public int ObservingTick => Tick - windowSize;
-        public int SendingTick => Tick + windowSize;
+        public static int ObservingTick => Tick - windowSize;
+        public static int SendingTick => Tick + windowSize;
         private WCTickDifferenceTracker tickDifferenceTracker = new();
         private int necessaryTickCompensation = 0;
 
-        public WCNetClient Instance { get; private set; }
+        public static WCNetClient Instance { get; private set; }
         private void Awake() {
             if(Instance != null)
                 Destroy(gameObject);
@@ -59,11 +58,7 @@ namespace Networking.Client {
             };
             netManager.Start();
 
-            inputs = new WInputsSerializable[WCommon.TICKS_PER_SECOND];
-            for(int i=0; i<inputs.Length; i++) {
-                inputs[i] = new();
-            }
-
+            WCTimedPacketSlotter.Init();
             watch = new();
             watch.Start();
         }
@@ -83,13 +78,40 @@ namespace Networking.Client {
             if(!isJoined)
                 return;
 
-            Tick++;
+            Tick += 1;
 
+            CheckForTickCompensation();
+
+            //WCEntityManager.SetEntitiesToTick(Tick);
+            WCTimedPacketSlotter.ApplySlottedPacketsFromTick(ObservingTick);
+
+            // If i'm too far ahead, skip this tick
+            if(necessaryTickCompensation < 0) {
+                Debug.Log("Slowing down a tick!");
+                necessaryTickCompensation += 1;
+                Tick -= 1;
+                return;
+            }
+
+            TryFindPlayer();
+            ControlsManager.PollInputs(ControlsManager.inputs[Tick], Tick);
+
+            WPacketComms.SendSingle(writer, server, SendingTick,
+                new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ControlsManager.inputs[Tick]} },
+                DeliveryMethod.Unreliable);
+
+            if(necessaryTickCompensation > 0) {
+                Debug.Log("Speeding up a tick!");
+                necessaryTickCompensation -= 1;
+                AdvanceTick();
+            }
+        }
+        private void CheckForTickCompensation() {
             if(necessaryTickCompensation == 0) {
                 if(tickDifferenceTracker.ReadingsCount > 60) {
                     int requestedDifference = (int)Mathf.Round(tickDifferenceTracker.GetRequiredCompensation());
 
-                    if(Mathf.Abs(requestedDifference) > 1) {
+                    if(Math.Abs(requestedDifference) > 1) {
                         necessaryTickCompensation = requestedDifference;
                         print($"Setting tick compensation to {necessaryTickCompensation}");
                     }
@@ -99,43 +121,18 @@ namespace Networking.Client {
             } else {
                 tickDifferenceTracker.ClearTickDifferencesBuffer();
             }  
-
-            WCEntityManager.ReadyForNextTick();
-            WCTimedPacketSlotter.ApplyTick(ObservingTick);
-
-            // If i'm too far ahead, skip this tick
-            if(necessaryTickCompensation < 0) {
-                Debug.Log("Slowing down a tick!");
-                necessaryTickCompensation += 1;
-                Tick--;
-                return;
-            }
-
-            ControlsManager.Poll(inputs[WCommon.GetModuloTPS(Tick)]);
-
-            WCGroupedInputsPkt inputsToSend = new() {
-                inputsSerialized = new WInputsSerializable[] { inputs[WCommon.GetModuloTPS(Tick)] },
-            };
-
-            WPacketComms.SendSingle(writer, server, SendingTick, inputsToSend, DeliveryMethod.Unreliable);
-
-            if(myEntity == null && myEntityId != null) {
-                
+        }
+        private void TryFindPlayer() {
+            if(PlayerEntity == null && myEntityId != null) {
                 WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
 
                 if(entity != null) {
 
                     myEntityId = null;
-                    myEntity = entity; 
-                    myPlayer = myEntity.GetComponent<IPlayer>();
-                    myPlayer.EnablePlayer();
+                    PlayerEntity = entity; 
+                    Player = PlayerEntity.GetComponent<IPlayer>();
+                    Player.EnablePlayer();
                 }
-            }
-
-            if(necessaryTickCompensation > 0) {
-                Debug.Log("Speeding up a tick!");
-                necessaryTickCompensation -= 1;
-                AdvanceTick();
             }
         }
 
@@ -166,9 +163,6 @@ namespace Networking.Client {
             int entityId,
             WPacketType packetType,
             NetDataReader reader) {
-
-            //Debug.Log($"Consuming update for {tick - ObservingTick} ticks in the future (Reading tick is {ObservingTick}, tick received is {tick})");
-
 
             switch(packetType) {
                 case WPacketType.SEntityTransformUpdate: {
@@ -203,7 +197,7 @@ namespace Networking.Client {
                     pkt.Deserialize(reader);
                     myEntityId = pkt.playerEntityId;
 
-                    this.Tick = pkt.tick;
+                    Tick = pkt.tick;
                     Debug.Log($"Being told to start at tick {pkt.tick}!");
 
                     isJoined = true;

@@ -1,20 +1,36 @@
 using System.Data.Common;
+using LiteNetLib.Utils;
 using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-public class DefaultController : MonoBehaviour, IPlayer
-    {
-        [SerializeField] private Camera cam;
+    public class DefaultControllerStateSerializable : INetSerializable {
+        public Vector3 velocity;
+        public bool canDoubleJump;
+        public WInputsSerializable previousInputs;
+        public Vector2 boundedRotatorRotation;
 
-        private Vector3 velocity = Vector3.zero;
-        Vector2 lastReceivedLook = Vector2.zero;
+        public void Deserialize(NetDataReader reader)
+        {
+            velocity = reader.GetVector3();
+            canDoubleJump = reader.GetBool();
+            previousInputs = new WInputsSerializable();
+            previousInputs.Deserialize(reader);
+            boundedRotatorRotation = reader.GetVector2();
+        }
 
-        private CharacterController characterController;
-        private BoundedRotator boundedRotator;
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put((byte)ControllerType.Default);
 
-        WEntityBase entity;
+            writer.Put(velocity);
+            writer.Put(canDoubleJump);
+            writer.Put(previousInputs);
+            writer.Put(boundedRotatorRotation);
+        }
+    }
 
+    public class DefaultController : MonoBehaviour, IPlayer {
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
         const float groundedAcceleration = 55f;
@@ -23,56 +39,49 @@ public class DefaultController : MonoBehaviour, IPlayer
         const float groundedJumpForce = 5.5f;
         const float aerialJumpForce = 6.5f;
 
-        float yLook = 0;
-        bool canDoubleJump = false;
-
-        InputFlags lastFrameInputs = new();
+        [SerializeField] private Camera cam;
+        WEntityBase entity;
+        private CharacterController characterController;
 
         public void ServerInit() {
+            boundedRotator ??= new();
             characterController = GetComponent<CharacterController>();
             entity = GetComponent<WEntityBase>();
         }
 
-        public void EnablePlayer()
+        private BoundedRotator boundedRotator;
+        private Vector3 velocity = Vector3.zero;
+        bool canDoubleJump = false;
+        InputFlags previousInputs = new();
+
+        public void RollbackToTick(int tick)
         {
-            boundedRotator = new();
-            cam.enabled = true;
-            cam.gameObject.GetComponent<AudioListener>().enabled = true;
-            entity ??= GetComponent<WEntityBase>();
-            entity.renderPersonalRotationUpdates = true;
+            var state = WCRollbackManager.defaultControllerStates[tick];
+
+            velocity = state.velocity;
+            canDoubleJump = state.canDoubleJump;
+            previousInputs = state.previousInputs.inputFlags;
+            boundedRotator.rotation = state.boundedRotatorRotation;
         }
 
-
-        public void DisablePlayer()
-        {
-            cam.enabled = false;
-            cam.gameObject.GetComponent<AudioListener>().enabled = false;
-            entity.renderPersonalRotationUpdates = false;
-        }
-
-
-        public void Control(WInputsSerializable inputs) {
+        public void Control(WInputsSerializable inputs, int onTick) {
             if(entity == null)
                 return;
 
-            if(inputs.inputFlags.GetFlag(InputType.Look) && inputs.look.HasValue) {
-                lastReceivedLook.x = inputs.look.Value.x;
-                lastReceivedLook.y = inputs.look.Value.y;
-            }
-
-            Quaternion rotation = Quaternion.Euler(0, lastReceivedLook.x, 0);
+            Quaternion rotation = boundedRotator.BodyQuatRotation;
 
             float forward = (inputs.inputFlags.GetFlag(InputType.Forward) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Back) ? 1f : 0f);
-            float left = (inputs.inputFlags.GetFlag(InputType.Right) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Left) ? 1f : 0f);
+            float right = (inputs.inputFlags.GetFlag(InputType.Right) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Left) ? 1f : 0f);
 
-            Vector3 wasdInput = new(left, 0, forward);
-            if(forward != 0 && left != 0)
+            Vector3 wasdInput = new(right, 0, forward);
+            if(forward != 0 && right != 0)
                 wasdInput *= .7071f;
 
             // ===========
 
-            bool isGrounded = Physics.Raycast(entity.currentPosition, Vector3.down, 1.1f);
+            bool isGrounded = Physics.Raycast(entity.positionsBuffer[onTick], Vector3.down, 1.1f);
             
+            // Set constants dependent on being grounded or not
             float gravityAcceleration = isGrounded ? 0 : -gravity * WCommon.SECONDS_PER_TICK;
             float drag = isGrounded ? Mathf.Pow(0.00002f, WCommon.SECONDS_PER_TICK) : Mathf.Pow(0.5f, WCommon.SECONDS_PER_TICK);
             float movementAccelerationFactor = isGrounded ? groundedAcceleration : aerialAcceleration;
@@ -94,7 +103,7 @@ public class DefaultController : MonoBehaviour, IPlayer
             if(isMovingBelowMaxSpeed) {
                 // If trying to move faster than maxWalkingSpeed, cap it
                 if(xzSpeedAfterMovement > maxSpeed) {
-                    xzVelocityToUse = (xzVelocityAfterMovement / xzSpeedAfterMovement) * maxSpeed * 0.99f;
+                    xzVelocityToUse = maxSpeed * 0.99f * (xzVelocityAfterMovement / xzSpeedAfterMovement);
                 }
                 // If walking within maxWalkingSpeed, allow it
                 else {
@@ -102,7 +111,7 @@ public class DefaultController : MonoBehaviour, IPlayer
                 }
             } else {
                 // Allow the player to influence movement, but not accelerate faster than their current speed
-                xzVelocityToUse = (xzVelocityAfterMovement / xzSpeedAfterMovement) * xzSpeed;
+                xzVelocityToUse = xzSpeed * (xzVelocityAfterMovement / xzSpeedAfterMovement);
             }
 
             velocity = new Vector3(xzVelocityToUse.x, velocity.y + gravityAcceleration, xzVelocityToUse.y);
@@ -110,7 +119,7 @@ public class DefaultController : MonoBehaviour, IPlayer
             if(isGrounded)
                 canDoubleJump = true;
 
-            if(inputs.inputFlags.GetFlag(InputType.Jump) && !lastFrameInputs.GetFlag(InputType.Jump)) {
+            if(inputs.inputFlags.GetFlag(InputType.Jump) && !previousInputs.GetFlag(InputType.Jump)) {
                 if(isGrounded) {
                     velocity.y = groundedJumpForce;
                     isGrounded = false;
@@ -125,34 +134,45 @@ public class DefaultController : MonoBehaviour, IPlayer
                 }
             }
 
-            Vector3 originalPosition = transform.position;
-
             // Calculate distance cc wants to move
-            transform.position = entity.currentPosition;
+            transform.position = entity.positionsBuffer[onTick];
             characterController.Move(velocity * WCommon.SECONDS_PER_TICK);
-            Vector3 difference = transform.position - entity.currentPosition;
+            Vector3 difference = transform.position - entity.positionsBuffer[onTick];
 
-            entity.currentPosition += difference;
+            entity.positionsBuffer[onTick] += difference;
+            transform.position = entity.positionsBuffer[onTick];
 
             // Visual position will be set before next frame is shown, not important to set here
-            transform.position = originalPosition;  // Setting it anyway
-            lastFrameInputs = inputs.inputFlags;
+            previousInputs = inputs.inputFlags;
         }
 
 
         public void AddRotationDelta(Vector2 delta) {
-            boundedRotator.AddRotationDelta(new Vector2(delta.x, 0));
+            boundedRotator.AddRotationDelta(new Vector2(delta.x, delta.y));
 
-            if(!entity.renderPersonalRotationUpdates)
+            if(!entity.updateRotationsLocally)
                 return;
             
-            yLook -= delta.y;
-            yLook = Mathf.Clamp(yLook, -90f, 90f);
-            entity.transform.rotation = boundedRotator.QuatRotation;
+            entity.transform.rotation = boundedRotator.BodyQuatRotation;
+            cam.transform.localRotation = boundedRotator.CameraQuatRotation;
+        }
 
-            Vector3 cameraEulerAngles = cam.transform.eulerAngles;
-            cameraEulerAngles.x = yLook;
-            cam.transform.eulerAngles = cameraEulerAngles;
+
+        public void EnablePlayer()
+        {
+            boundedRotator = new();
+            cam.enabled = true;
+            cam.gameObject.GetComponent<AudioListener>().enabled = true;
+            entity ??= GetComponent<WEntityBase>();
+            entity.updateRotationsLocally = true;
+        }
+
+
+        public void DisablePlayer()
+        {
+            cam.enabled = false;
+            cam.gameObject.GetComponent<AudioListener>().enabled = false;
+            entity.updateRotationsLocally = false;
         }
 
 

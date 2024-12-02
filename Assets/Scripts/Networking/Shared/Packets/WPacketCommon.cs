@@ -22,6 +22,8 @@ namespace Networking.Shared {
         SEntitySpawn,
         SFullEntitiesSnapshot,
         SEntitiesLoadedDelta,
+
+        SDefaultControllerState
     }
 
 
