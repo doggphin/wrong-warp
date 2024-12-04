@@ -309,6 +309,8 @@ namespace Networking.Client {
 
             Tick -= tickDifference;
             necessaryTickCompensation += tickDifference;
+
+            AdvanceTick();
         }
     }
 }
