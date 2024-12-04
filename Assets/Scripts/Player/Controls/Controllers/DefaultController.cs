@@ -4,32 +4,6 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public class DefaultControllerStateSerializable : INetSerializable {
-        public Vector3 velocity;
-        public bool canDoubleJump;
-        public WInputsSerializable previousInputs;
-        public Vector2 boundedRotatorRotation;
-
-        public void Deserialize(NetDataReader reader)
-        {
-            velocity = reader.GetVector3();
-            canDoubleJump = reader.GetBool();
-            previousInputs = new WInputsSerializable();
-            previousInputs.Deserialize(reader);
-            boundedRotatorRotation = reader.GetVector2();
-        }
-
-        public void Serialize(NetDataWriter writer)
-        {
-            writer.Put((byte)ControllerType.Default);
-
-            writer.Put(velocity);
-            writer.Put(canDoubleJump);
-            writer.Put(previousInputs);
-            writer.Put(boundedRotatorRotation);
-        }
-    }
-
     public class DefaultController : MonoBehaviour, IPlayer {
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
@@ -42,8 +16,7 @@ namespace Controllers.Shared {
         [SerializeField] private Camera cam;
         WEntityBase entity;
         private CharacterController characterController;
-
-        public void ServerInit() {
+        public void InitAsControllable() {
             boundedRotator ??= new();
             characterController = GetComponent<CharacterController>();
             entity = GetComponent<WEntityBase>();
@@ -51,23 +24,37 @@ namespace Controllers.Shared {
 
         private BoundedRotator boundedRotator;
         private Vector3 velocity = Vector3.zero;
-        bool canDoubleJump = false;
-        InputFlags previousInputs = new();
-
+        private bool canDoubleJump = false;
+        private WInputsSerializable previousInputs = new();
         public void RollbackToTick(int tick)
         {
+            Debug.Log($"Trying to roll back to {tick}!");
             var state = WCRollbackManager.defaultControllerStates[tick];
 
             velocity = state.velocity;
             canDoubleJump = state.canDoubleJump;
-            previousInputs = state.previousInputs.inputFlags;
+            previousInputs = state.previousInputs;
             boundedRotator.rotation = state.boundedRotatorRotation;
+            entity.positionsBuffer[tick] = state.position;
+        }
+        public WSDefaultControllerStatePkt GetSerializableState() {
+            return new WSDefaultControllerStatePkt() {
+                velocity = velocity,
+                canDoubleJump = canDoubleJump,
+                previousInputs = previousInputs,
+                boundedRotatorRotation = boundedRotator.rotation
+            };
         }
 
         public void Control(WInputsSerializable inputs, int onTick) {
             if(entity == null)
                 return;
 
+            if(!entity.updateRotationsLocally && inputs.inputFlags.GetFlag(InputType.Look))
+                boundedRotator.rotation = inputs.look.Value;
+
+            //entity.transform.rotation = boundedRotator.BodyQuatRotation;
+            //cam.transform.localRotation = boundedRotator.CameraQuatRotation;
             Quaternion rotation = boundedRotator.BodyQuatRotation;
 
             float forward = (inputs.inputFlags.GetFlag(InputType.Forward) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Back) ? 1f : 0f);
@@ -119,7 +106,7 @@ namespace Controllers.Shared {
             if(isGrounded)
                 canDoubleJump = true;
 
-            if(inputs.inputFlags.GetFlag(InputType.Jump) && !previousInputs.GetFlag(InputType.Jump)) {
+            if(inputs.inputFlags.GetFlag(InputType.Jump) && !previousInputs.inputFlags.GetFlag(InputType.Jump)) {
                 if(isGrounded) {
                     velocity.y = groundedJumpForce;
                     isGrounded = false;
@@ -140,10 +127,18 @@ namespace Controllers.Shared {
             Vector3 difference = transform.position - entity.positionsBuffer[onTick];
 
             entity.positionsBuffer[onTick] += difference;
-            transform.position = entity.positionsBuffer[onTick];
+            // This is for client-ended units - probably remove 12/02/24
+            entity.positionsBuffer[onTick + 1] = entity.positionsBuffer[onTick];
+            transform.position = entity.positionsBuffer[onTick];        // consider deleting this
 
             // Visual position will be set before next frame is shown, not important to set here
-            previousInputs = inputs.inputFlags;
+            previousInputs = inputs;
+
+            if(WNetManager.IsClient) {
+                var state = GetSerializableState();
+                WCRollbackManager.defaultControllerStates[onTick] = state;
+            }
+                
         }
 
 
@@ -165,6 +160,7 @@ namespace Controllers.Shared {
             cam.gameObject.GetComponent<AudioListener>().enabled = true;
             entity ??= GetComponent<WEntityBase>();
             entity.updateRotationsLocally = true;
+            entity.updatePositionsLocally = true;
         }
 
 
@@ -173,6 +169,7 @@ namespace Controllers.Shared {
             cam.enabled = false;
             cam.gameObject.GetComponent<AudioListener>().enabled = false;
             entity.updateRotationsLocally = false;
+            entity.updatePositionsLocally = false;
         }
 
 

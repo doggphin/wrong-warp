@@ -29,7 +29,7 @@ namespace Networking.Server {
             WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, tick, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
-            player.ServerInit();
+            player.InitAsControllable();
             
             ControlsManager.player = player;
             ControlsManager.player.EnablePlayer();
@@ -52,8 +52,10 @@ namespace Networking.Server {
         private readonly WInputsSerializable noInputs = new();
         public void StartNextTick() {
             tick += 1;
+
             // Run server player inputs
-            ControlsManager.PollInputs(null, tick);
+            ControlsManager.PollAndControl(tick);
+
             // Run inputs of each client
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WSPlayer netPlayer = WSPlayer.FromPeer(peer);
@@ -64,37 +66,51 @@ namespace Networking.Server {
 
                 netPlayer.Entity.GetComponent<IPlayer>().Control(inputs, tick);
             }
+
             // Finalize entities
             WSEntityManager.PollFinalizeAdvanceEntities();
+
             // Only run further code if it's time for a snapshot
             if (tick % WCommon.TICKS_PER_SNAPSHOT != 0)
                 return;
-            // Get and send snapshots of all chunks players are in to all players in those chunks
+
+            // For every player,
             foreach (var peer in ServerNetManager.ConnectedPeerList) {
                 WSPlayer netPlayer = WSPlayer.FromPeer(peer);
                 if (netPlayer == null)
                     continue;
 
+                // Get the initial snapshot packet from the chunk the player is in
+                WSChunk chunk = netPlayer.Entity.CurrentChunk;
+                writer = chunk.GetPrepared3x3SnapshotPacket();
+
+                // Save the position of the writer for this chunk for later use
+                int writerPositionBeforeModification = writer.Length;
+                
+                // If the player changed chunks, append a packet for changed entities
                 if(netPlayer.previousChunk != null) {
                     WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
                         netPlayer.previousChunk.Coords,
                         netPlayer.Entity.ChunkPosition);
 
-                    if(entitiesLoadedDeltaPkt != null) {
-                        writer.Reset();
-                        WPacketComms.StartMultiPacket(writer, tick);
-                        WPacketComms.AddToMultiPacket(writer, entitiesLoadedDeltaPkt);
-
-                        peer.Send(writer, DeliveryMethod.ReliableUnordered);
-                    }
+                    if(entitiesLoadedDeltaPkt != null)
+                        WPacketCommunication.AddToMultiPacket(writer, entitiesLoadedDeltaPkt);
                 }
-
-                WSChunk chunk = netPlayer.Entity.CurrentChunk;
-                NetDataWriter chunkWriter = chunk.GetPrepared3x3SnapshotPacket();
-                peer.Send(chunkWriter, DeliveryMethod.Unreliable);
-
                 netPlayer.previousChunk = chunk;
+                
+                // Write player controller state
+                INetSerializable controllerState = null;
+                if(netPlayer.Entity.TryGetComponent(out DefaultController defaultController)) {
+                    controllerState = defaultController.GetSerializableState();
+                } // else if spectator, etc.
+                if(controllerState != null)
+                    WPacketCommunication.AddToMultiPacket(writer, controllerState);
+
+                // Send full snapshot to the player, then reset the writer from the chunk to before it was personalized
+                peer.Send(writer, DeliveryMethod.Unreliable);
+                writer.Reset(writerPositionBeforeModification);
             }
+
             // Unload + reset chunks
             WSChunkManager.UnloadChunksMarkedForUnloading();
             WSChunkManager.ResetChunkUpdatesAndSnapshots();
@@ -157,7 +173,7 @@ namespace Networking.Server {
             WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, Tick, true);
 
             IPlayer playerPlayer = playerEntity.GetComponent<IPlayer>();
-            playerPlayer.ServerInit();
+            playerPlayer.InitAsControllable();
 
             WSPlayer netPlayer = new();
             netPlayer.Init(peer, playerEntity);
@@ -171,9 +187,9 @@ namespace Networking.Server {
 
             WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
             
-            WPacketComms.StartMultiPacket(writer, tick);
-            WPacketComms.AddToMultiPacket(writer, joinAcceptPacket);
-            WPacketComms.AddToMultiPacket(writer, entitiesLoadPacket);
+            WPacketCommunication.StartMultiPacket(writer, tick);
+            WPacketCommunication.AddToMultiPacket(writer, joinAcceptPacket);
+            WPacketCommunication.AddToMultiPacket(writer, entitiesLoadPacket);
             peer.Send(writer, DeliveryMethod.ReliableUnordered);
 
             return true;
@@ -192,7 +208,7 @@ namespace Networking.Server {
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            WPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
+            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
 
 

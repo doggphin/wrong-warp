@@ -5,35 +5,40 @@ namespace Networking.Client {
     public class WCEntity : WEntityBase {
         public CircularTickBuffer<int> lastReceivedPositionUpdateTicks = new();
         public CircularTickBuffer<int> lastReceivedRotationUpdateTicks = new();
-        public CircularTickBuffer<int> lastReceivedScaleUpdateTicks = new();   
+        public CircularTickBuffer<int> lastReceivedScaleUpdateTicks = new();
+
+        public bool isMyPlayer;
 
         private void Update() {
             float percentageThroughTick = WCNetClient.PercentageThroughTick;
-            
-            // If updatePositionsLocally, don't update it automatically
-            if(!updatePositionsLocally) {
-                // If received an update on this tick,
-                Debug.Log($"{lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick]}, {WCNetClient.ObservingTick}");
-                if(lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick] == WCNetClient.ObservingTick) {
-                    // If the last received position exists, lerp between that-
-                    // Otherwise, teleport to the new position, since we have no idea how far to go. There's probably better ways to do this
-                    transform.position = (lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick - 1] == WCNetClient.ObservingTick - 1) ?
-                        LerpBufferedPositions(WCNetClient.ObservingTick, percentageThroughTick) :
-                        positionsBuffer[WCNetClient.ObservingTick];
+
+            if(!isMyPlayer) {
+                // If updatePositionsLocally, don't update it automatically
+                if(!updatePositionsLocally) {
+                    // If received an update on this tick,
+                    if(lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick] == WCNetClient.ObservingTick) {
+                        // If the last received position exists, lerp between that-
+                        // Otherwise, teleport to the new position, since we have no idea how far to go. There's probably better ways to do this
+                        transform.position = (lastReceivedPositionUpdateTicks[WCNetClient.ObservingTick - 1] == WCNetClient.ObservingTick - 1) ?
+                            LerpBufferedPositions(WCNetClient.ObservingTick, percentageThroughTick) :
+                            positionsBuffer[WCNetClient.ObservingTick];
+                    }
                 }
+                if(!updateRotationsLocally)
+                    transform.rotation = LerpBufferedRotations(WCNetClient.ObservingTick, percentageThroughTick);
+                if(!updateScalesLocally)
+                    transform.localScale = LerpBufferedScales(WCNetClient.ObservingTick, percentageThroughTick);
             }
-                
-            // Update these
-            if(!updateRotationsLocally)
-                transform.rotation = LerpBufferedRotations(WCNetClient.ObservingTick, percentageThroughTick);
             
-            if(!updateScalesLocally)
-                transform.localScale = LerpBufferedScales(WCNetClient.ObservingTick, percentageThroughTick);
+            else {
+                transform.position = LerpBufferedPositions(WCNetClient.SendingTick, percentageThroughTick);
+                // Never do rotations. These are always done by the client
+                transform.localScale = LerpBufferedScales(WCNetClient.SendingTick, percentageThroughTick);
+            }
         }
 
         public void SetTransformForTick(int tick, WTransformSerializable transform) {
             if (transform.position != null) {
-                Debug.Log($"Setting transform for {tick} to {transform.position.Value}");
                 positionsBuffer[tick] = transform.position.Value;
                 lastReceivedPositionUpdateTicks[tick] = tick;
             }     

@@ -7,7 +7,7 @@ namespace Controllers.Shared {
     {
         public void EnablePlayer();
         public void DisablePlayer();
-        public void ServerInit();
+        public void InitAsControllable();
 
         public void Control(WInputsSerializable inputs, int onTick);
         public void AddRotationDelta(Vector2 delta);

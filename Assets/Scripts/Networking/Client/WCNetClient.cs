@@ -94,14 +94,14 @@ namespace Networking.Client {
             }
 
             TryFindPlayer();
-            ControlsManager.PollInputs(ControlsManager.inputs[Tick], Tick);
+            ControlsManager.PollAndControl(SendingTick);
 
-            WPacketComms.SendSingle(writer, server, SendingTick,
-                new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ControlsManager.inputs[Tick]} },
+            WPacketCommunication.SendSingle(writer, server, SendingTick,
+                new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ ControlsManager.inputs[SendingTick] } },
                 DeliveryMethod.Unreliable);
 
             if(necessaryTickCompensation > 0) {
-                Debug.Log("Speeding up a tick!");
+                Debug.Log($"Speeding up a tick on sending tick tick {SendingTick}!");
                 necessaryTickCompensation -= 1;
                 AdvanceTick();
             }
@@ -127,11 +127,13 @@ namespace Networking.Client {
                 WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
 
                 if(entity != null) {
-
                     myEntityId = null;
-                    PlayerEntity = entity; 
+                    PlayerEntity = entity;
                     Player = PlayerEntity.GetComponent<IPlayer>();
+                    Player.InitAsControllable();
                     Player.EnablePlayer();
+                    ControlsManager.player = Player;
+                    entity.isMyPlayer = true;
                 }
             }
         }
@@ -165,21 +167,13 @@ namespace Networking.Client {
             NetDataReader reader) {
 
             switch(packetType) {
-                case WPacketType.SEntityTransformUpdate: {
-                    WSEntityTransformUpdatePkt entityTransformUpdate = new();
-                    entityTransformUpdate.Deserialize(reader);
-                    entityTransformUpdate.entityId = entityId;
-                    WCTimedPacketSlotter.SlotPacket(tick, entityTransformUpdate);
+                case WPacketType.SEntityTransformUpdate:
+                    HandleEntityTransformUpdate(tick, entityId, reader);
                     return true;
-                }
-
-                default: {
+                default:
                     Debug.Log($"Unrecognized entity update packet type {packetType}!");
-                    break;
-                }
+                    return false;
             }
-
-            return false;
         }
 
 
@@ -192,56 +186,18 @@ namespace Networking.Client {
             tickDifferenceTracker.AddTickDifferenceReading(tick - ObservingTick, windowSize);
 
             switch (packetType) {
-                case WPacketType.SJoinAccept: {
-                    WSJoinAcceptPkt pkt = new();
-                    pkt.Deserialize(reader);
-                    myEntityId = pkt.playerEntityId;
-
-                    Tick = pkt.tick;
-                    Debug.Log($"Being told to start at tick {pkt.tick}!");
-
-                    isJoined = true;
+                case WPacketType.SJoinAccept:
+                    HandleJoinAccept(reader);
+                    return true;          
+                case WPacketType.SChunkDeltaSnapshot:
+                    HandleChunkUpdateSnapshot(tick, reader);
                     return true;
-                }
-                    
-                case WPacketType.SChunkDeltaSnapshot: {
-                    WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
-                        startTick = tick,
-                        c_entityHandler = ConsumeEntityUpdate,
-                        c_generalHandler = ConsumeGeneralUpdate
-                    };
-                    chunkSnapshotPkt.Deserialize(reader);
-
+                case WPacketType.SEntitiesLoadedDelta:
+                    HandleEntitiesLoadedDelta(tick, reader);
                     return true;
-                }
-
-                case WPacketType.SEntitiesLoadedDelta: {
-                    WSEntitiesLoadedDeltaPkt entitiesLoadedDelta = new();
-                    entitiesLoadedDelta.Deserialize(reader);
-
-                    foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
-                        WCTimedPacketSlotter.SlotPacket(
-                            tick,
-                            new WSEntityKillPkt() {
-                                entityId = entityId,
-                                reason = WEntityKillReason.Unload,
-                            }
-                        );
-                    }
-
-                    foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
-                        WCTimedPacketSlotter.SlotPacket(
-                            tick,
-                            new WSEntitySpawnPkt() {
-                                entity = entity,
-                                reason = WEntitySpawnReason.Load
-                            }
-                        );
-                    }
-
+                case WPacketType.SDefaultControllerState:
+                    HandleDefaultControllerState(tick, reader);
                     return true;
-                }
-
                 default: {
                     Debug.Log($"Received an (unimplemented) {packetType} packet!");
                     return false;
@@ -251,7 +207,7 @@ namespace Networking.Client {
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            WPacketComms.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
+            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
         }
 
 
@@ -263,7 +219,7 @@ namespace Networking.Client {
             
             Debug.Log($"Sending join packet with username {joinRequest.userName}");
 
-            WPacketComms.SendSingle(writer, server, Tick, joinRequest, DeliveryMethod.ReliableOrdered);
+            WPacketCommunication.SendSingle(writer, server, Tick, joinRequest, DeliveryMethod.ReliableOrdered);
         }
 
 
@@ -280,5 +236,79 @@ namespace Networking.Client {
 
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
+
+
+        private void HandleChunkUpdateSnapshot(int tick, NetDataReader reader) {
+            WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
+                startTick = tick,
+                c_entityHandler = ConsumeEntityUpdate,
+                c_generalHandler = ConsumeGeneralUpdate
+            };
+            chunkSnapshotPkt.Deserialize(reader);
+        }
+
+
+        private void HandleEntitiesLoadedDelta(int tick, NetDataReader reader) {
+            WSEntitiesLoadedDeltaPkt entitiesLoadedDelta = new();
+            entitiesLoadedDelta.Deserialize(reader);
+
+            foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
+                WCTimedPacketSlotter.SlotPacket(
+                    tick,
+                    new WSEntityKillPkt() {
+                        entityId = entityId,
+                        reason = WEntityKillReason.Unload,
+                    }
+                );
+            }
+
+            foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
+                WCTimedPacketSlotter.SlotPacket(
+                    tick,
+                    new WSEntitySpawnPkt() {
+                        entity = entity,
+                        reason = WEntitySpawnReason.Load
+                    }
+                );
+            }
+        }
+
+
+        private void HandleJoinAccept(NetDataReader reader) {
+            WSJoinAcceptPkt pkt = new();
+            pkt.Deserialize(reader);
+            myEntityId = pkt.playerEntityId;
+
+            Tick = pkt.tick;
+            Debug.Log($"Being told to start at tick {pkt.tick}!");
+
+            isJoined = true;
+        }
+
+
+        private void HandleEntityTransformUpdate(int tick, int entityId, NetDataReader reader) {
+            WSEntityTransformUpdatePkt entityTransformUpdate = new();
+            entityTransformUpdate.Deserialize(reader);
+            entityTransformUpdate.entityId = entityId;
+            WCTimedPacketSlotter.SlotPacket(tick, entityTransformUpdate);
+        }
+
+        private void HandleDefaultControllerState(int tick, NetDataReader reader) {
+            WSDefaultControllerStatePkt confirmedControllerState = new();
+            confirmedControllerState.Deserialize(reader);
+
+            //Debug.Log($"Received a default controller state for tick {tick}! Observing tick is {ObservingTick}! Sending tick is {SendingTick}");
+            bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(tick, confirmedControllerState);
+            if(isInSync)
+                return;
+
+            //Debug.Log($"You're out of sync! Running it back from {tick}.");
+            WCRollbackManager.Rollback(SendingTick, tick, confirmedControllerState);
+
+            int tickDifference = SendingTick - tick;
+
+            Tick -= tickDifference;
+            necessaryTickCompensation += tickDifference;
+        }
     }
 }

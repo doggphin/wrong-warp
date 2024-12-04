@@ -37,7 +37,7 @@ namespace Networking.Server {
 
             deltaSnapshot3x3PktWriter.Reset();
 
-            WPacketComms.StartMultiPacket(deltaSnapshot3x3PktWriter, WSNetServer.Tick);
+            WPacketCommunication.StartMultiPacket(deltaSnapshot3x3PktWriter, WSNetServer.Tick);
             GetSnapshot().Serialize(deltaSnapshot3x3PktWriter);
 
             WSChunk[] neighbors = WSChunkManager.GetNeighboringChunks(Coords, false, false);

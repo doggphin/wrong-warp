@@ -35,13 +35,11 @@ namespace Networking.Shared {
             writer.Put(WPacketType.SEntitiesLoadedDelta);
 
             writer.PutVarUInt((uint)entityIdsToRemove.Count);
-            
             foreach(int entityId in entityIdsToRemove) {
                 writer.Put(entityId);
             }
 
             writer.PutVarUInt((uint)entitiesToAdd.Count);
-
             foreach(WEntitySerializable entity in entitiesToAdd) {
                 entity.Serialize(writer);
             }

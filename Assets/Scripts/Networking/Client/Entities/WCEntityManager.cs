@@ -8,15 +8,7 @@ namespace Networking.Client {
     public static class WCEntityManager {
         private static Dictionary<int, WCEntity> entities = new();
 
-        public static GameObject SpawnHolder {get; set; }
-
-
-        // public static void SetEntitiesToTick(int tick) {
-        //     foreach (WCEntity entity in entities.Values) {
-        //         entity.SetTick(tick);
-        //     }
-        // }
-
+        public static GameObject SpawnHolder {get; set;}
 
         public static void KillEntity(WSEntityKillPkt killPacket, bool isPredicted = false) {
             if (!entities.TryGetValue(killPacket.entityId, out WCEntity entity)) {

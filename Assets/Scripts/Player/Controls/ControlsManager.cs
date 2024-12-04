@@ -9,7 +9,7 @@ namespace Controllers.Shared {
 
         public static IPlayer player = null;
 
-        public static CircularTickBuffer<WInputsSerializable> inputs = new();
+        public static TimestampedCircularTickBuffer<WInputsSerializable> inputs = new();
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
         
@@ -55,19 +55,22 @@ namespace Controllers.Shared {
         }
 
 
-        public static void PollInputs(WInputsSerializable writeTo, int onTick) {
-            Vector2? rotation = player?.PollLook();
-            finalInputs.SetFlag(InputType.Look, rotation.HasValue);
+        public static void PollAndControl(int onTick) {
+            if(inputs.CheckTickIsMoreRecent(onTick)) {
+                Vector2? rotation = player?.PollLook();
+                finalInputs.SetFlag(InputType.Look, rotation.HasValue);
+                finalInputs.flags |= heldInputs.flags;
 
-            finalInputs.flags |= heldInputs.flags;
-            
-            writeTo ??= new();
-            writeTo.inputFlags.flags = finalInputs.flags;
-            writeTo.look = rotation;
+                inputs[onTick].inputFlags.flags = finalInputs.flags;
+                inputs[onTick].look = rotation;
+                inputs.SetTimestamp(onTick);
 
-            player?.Control(writeTo, onTick);
+                player?.Control(inputs[onTick], onTick);
 
-            finalInputs.Reset();
+                finalInputs.Reset();
+            } else {
+                player?.Control(inputs[onTick], onTick);
+            }
         }
     }
 }

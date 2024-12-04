@@ -48,7 +48,7 @@ namespace Controllers.Shared {
         }
 
 
-        public void ServerInit() {
+        public void InitAsControllable() {
             entity = GetComponent<WEntityBase>();
         }
 
