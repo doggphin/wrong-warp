@@ -7,7 +7,6 @@ using UnityEngine;
 
 using Networking.Shared;
 using Controllers.Shared;
-using Unity.VisualScripting;
 
 namespace Networking.Client {
     public class WCNetClient : MonoBehaviour, INetEventListener {
@@ -18,25 +17,25 @@ namespace Networking.Client {
         public int Ping { get; private set; }
         private string userName;
         private bool isJoined = false;
-        private int? myEntityId = null;
+        /// <summary> If this is set to a value, search for a player entity with this ID. </summary>
+        private int? playerEntityIdToFind = null;
         public static WCEntity PlayerEntity {get; private set;} = null;
         public static IPlayer Player {get; private set;} = null;
 
         private static WWatch watch;
         public static float PercentageThroughTick => watch.GetPercentageThroughTick();
-        public static int Tick {get; set;}
-        // Later, server should be able to tell if a client is overcompensating or undercompensating,
-        // And either:
         // If client is sending stuff too late (ping is better than they're pretending it is), lower window + skip a couple ticks
         // If client is sending stuff too early (ping is worse than they're pretending it is), increase window + wait a couple ticks
         // This should be done by temporarily increasing the watch AdvanceTick speed.
         //private static int TickOffsetWindow = WCommon.TICKS_PER_SNAPSHOT + 1;
+        public static int CentralTimingTick {get; set;}
         private static int windowSize = WCommon.TICKS_PER_SNAPSHOT * 2;
         //private int DesiredTickOffset = -TickOffsetWindow * 2; // Initially want to start in the future
-        public static int ObservingTick => Tick - windowSize;
-        public static int SendingTick => Tick + windowSize;
+        public static int ObservingTick => CentralTimingTick - windowSize;
+        public static int SendingTick => CentralTimingTick + windowSize;
         private WCTickDifferenceTracker tickDifferenceTracker = new();
         private int necessaryTickCompensation = 0;
+        
 
         public static WCNetClient Instance { get; private set; }
         private void Awake() {
@@ -69,43 +68,56 @@ namespace Networking.Client {
 
             if(PercentageThroughTick > 1) {
                 watch.AdvanceTick();
-                AdvanceTick();
+                AdvanceTick(true);
             }
         }
 
 
-        public void AdvanceTick() {
+        private int mostRecentlySentTick = 0;
+        public void AdvanceTick(bool allowTickCompensation = false) {
             if(!isJoined)
                 return;
 
-            Tick += 1;
+            // Only check for tick compensation if speedup/slowdown is not already being done
+            if(CentralTimingTick > mostRecentlySentTick) {
+                CheckForTickCompensation();
+            }
 
-            CheckForTickCompensation();
-
-            //WCEntityManager.SetEntitiesToTick(Tick);
             WCTimedPacketSlotter.ApplySlottedPacketsFromTick(ObservingTick);
 
-            // If i'm too far ahead, skip this tick
-            if(necessaryTickCompensation < 0) {
-                Debug.Log("Slowing down a tick!");
+            // If client is too far ahead, skip this tick
+            if(allowTickCompensation && necessaryTickCompensation < 0) {
                 necessaryTickCompensation += 1;
-                Tick -= 1;
                 return;
             }
 
+            // This should be done in a better way...
             TryFindPlayer();
             ControlsManager.PollAndControl(SendingTick);
 
-            WPacketCommunication.SendSingle(writer, server, SendingTick,
-                new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ ControlsManager.inputs[SendingTick] } },
-                DeliveryMethod.Unreliable);
+            // Send inputs to the server
+            if(CentralTimingTick > mostRecentlySentTick) {
+                //Debug.Log($"Sending inputs for {SendingTick}!");
+                WPacketCommunication.SendSingle(
+                    writer, 
+                    server, 
+                    SendingTick,
+                    new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ ControlsManager.inputs[SendingTick] } },
+                    DeliveryMethod.Unreliable);
+                mostRecentlySentTick = CentralTimingTick;
+            }
+            
+            CentralTimingTick += 1;
 
-            if(necessaryTickCompensation > 0) {
-                Debug.Log($"Speeding up a tick on sending tick tick {SendingTick}!");
+            // If client is too far ahead, run another tick
+            if(allowTickCompensation && necessaryTickCompensation > 0) {
                 necessaryTickCompensation -= 1;
                 AdvanceTick();
             }
         }
+
+
+        // Checks most recently received packets. Tries to 
         private void CheckForTickCompensation() {
             if(necessaryTickCompensation == 0) {
                 if(tickDifferenceTracker.ReadingsCount > 60) {
@@ -122,15 +134,17 @@ namespace Networking.Client {
                 tickDifferenceTracker.ClearTickDifferencesBuffer();
             }  
         }
+
+
+        // Tries to initialize a player from the entity with ID myEntityId.
         private void TryFindPlayer() {
-            if(PlayerEntity == null && myEntityId != null) {
-                WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
+            if(PlayerEntity == null && playerEntityIdToFind != null) {
+                WCEntity entity = WCEntityManager.GetEntityById(playerEntityIdToFind.Value);
 
                 if(entity != null) {
-                    myEntityId = null;
+                    playerEntityIdToFind = null;
                     PlayerEntity = entity;
                     Player = PlayerEntity.GetComponent<IPlayer>();
-                    Player.InitAsControllable();
                     Player.EnablePlayer();
                     ControlsManager.player = Player;
                     entity.isMyPlayer = true;
@@ -196,6 +210,8 @@ namespace Networking.Client {
                     HandleEntitiesLoadedDelta(tick, reader);
                     return true;
                 case WPacketType.SDefaultControllerState:
+                    // ControllerState is sent at the end of grouped packets; increase tick accordingly
+                    // TODO: Not certain this is the reason this is going on.....
                     HandleDefaultControllerState(tick, reader);
                     return true;
                 default: {
@@ -219,7 +235,7 @@ namespace Networking.Client {
             
             Debug.Log($"Sending join packet with username {joinRequest.userName}");
 
-            WPacketCommunication.SendSingle(writer, server, Tick, joinRequest, DeliveryMethod.ReliableOrdered);
+            WPacketCommunication.SendSingle(writer, server, CentralTimingTick, joinRequest, DeliveryMethod.ReliableOrdered);
         }
 
 
@@ -277,40 +293,65 @@ namespace Networking.Client {
         private void HandleJoinAccept(NetDataReader reader) {
             WSJoinAcceptPkt pkt = new();
             pkt.Deserialize(reader);
-            myEntityId = pkt.playerEntityId;
+            playerEntityIdToFind = pkt.playerEntityId;
 
-            Tick = pkt.tick;
+            CentralTimingTick = pkt.tick;
             Debug.Log($"Being told to start at tick {pkt.tick}!");
 
             isJoined = true;
         }
 
 
-        private void HandleEntityTransformUpdate(int tick, int entityId, NetDataReader reader) {
+        private void HandleEntityTransformUpdate(int receivedTick, int entityId, NetDataReader reader) {
+            if(receivedTick < CentralTimingTick - WCommon.TICKS_PER_SECOND) {
+
+            }
+
             WSEntityTransformUpdatePkt entityTransformUpdate = new();
             entityTransformUpdate.Deserialize(reader);
             entityTransformUpdate.entityId = entityId;
-            WCTimedPacketSlotter.SlotPacket(tick, entityTransformUpdate);
+            WCTimedPacketSlotter.SlotPacket(receivedTick, entityTransformUpdate);
         }
 
-        private void HandleDefaultControllerState(int tick, NetDataReader reader) {
+        private void HandleDefaultControllerState(int receivedTick, NetDataReader reader) {
             WSDefaultControllerStatePkt confirmedControllerState = new();
             confirmedControllerState.Deserialize(reader);
 
+            if(WCommon.IsTickOld(SendingTick, receivedTick)) {
+                Debug.Log("Received an old rollback!");
+            } else {
+                Debug.Log("Received a modern rollback!");
+            }
+
             //Debug.Log($"Received a default controller state for tick {tick}! Observing tick is {ObservingTick}! Sending tick is {SendingTick}");
-            bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(tick, confirmedControllerState);
+            bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(receivedTick, confirmedControllerState);
             if(isInSync)
                 return;
 
-            //Debug.Log($"You're out of sync! Running it back from {tick}.");
-            WCRollbackManager.Rollback(SendingTick, tick, confirmedControllerState);
+            // Save rotation before rollback to set player back to later
+            Vector2 originalRotation = Player.GetRotation();
 
-            int tickDifference = SendingTick - tick;
+            // Roll the player back and resimulate ticks from the tick received
+            WCRollbackManager.RollbackDefaultController(SendingTick, receivedTick, confirmedControllerState);
+            ResimulateTicks(receivedTick);
 
-            Tick -= tickDifference;
-            necessaryTickCompensation += tickDifference;
+            // Reset the player's rotation to before the rollback
+            Player.SetRotation(originalRotation);
+        }
 
-            AdvanceTick();
+
+        private void ResimulateTicks(int fromTick) {
+            // Subtract one since we don't want to resimulate the received tick
+            int tickDifference = SendingTick - fromTick - 1;
+            //Debug.Log($"Need to resimulate from {fromTick}... Turning back from {SendingTick} to {SendingTick - tickDifference}");
+            CentralTimingTick -= tickDifference;
+
+            for(int i=0; i<tickDifference; i++) {
+                //Debug.Log($"Resimulating {SendingTick}");
+                AdvanceTick(false);
+            }
+
+            //Debug.Log($"Ended on {SendingTick}");
         }
     }
 }

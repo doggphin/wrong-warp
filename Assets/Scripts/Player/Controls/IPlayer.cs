@@ -7,11 +7,15 @@ namespace Controllers.Shared {
     {
         public void EnablePlayer();
         public void DisablePlayer();
-        public void InitAsControllable();
 
         public void Control(WInputsSerializable inputs, int onTick);
+
         public void AddRotationDelta(Vector2 delta);
         public Vector2? PollLook();
+
+        public void SetRotation(Vector2 look);
+        public Vector2 GetRotation();
+
         public void RollbackToTick(int tick);
     }
 }

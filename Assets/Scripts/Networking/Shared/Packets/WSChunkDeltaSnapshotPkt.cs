@@ -139,7 +139,8 @@ namespace Networking.Shared {
 
                     // Then put all of its updates
                     foreach(var entityUpdatePacket in entityIdAndUpdates.Value) {
-                        Vector3 position = ((WSEntityTransformUpdatePkt)entityUpdatePacket).transform.position.GetValueOrDefault(Vector3.zero);
+                        // what the fuck is this little line of code? consider deleting 12/26/24
+                        //Vector3 position = ((WSEntityTransformUpdatePkt)entityUpdatePacket).transform.position.GetValueOrDefault(Vector3.zero);
                         
                         entityUpdatePacket.Serialize(writer);
                     }

@@ -9,7 +9,7 @@ namespace Networking.Shared
     public static class WCommon {
         public static float GetPercentageTimeThroughCurrentTick() => (Time.time % SECONDS_PER_TICK) * TICKS_PER_SECOND;
 
-        public const int TICKS_PER_SNAPSHOT = 2;
+        public const int TICKS_PER_SNAPSHOT = 3;
         public const int TICKS_PER_SECOND = 15;
         public const int MAX_PING_MS = 300;
         public const float SECONDS_PER_TICK = 1f / TICKS_PER_SECOND;
@@ -19,6 +19,8 @@ namespace Networking.Shared
 
         public static int GetModuloSnapshotLength(int tick) => tick % TICKS_PER_SNAPSHOT;
         public static int GetModuloTPS(int tick) => tick % TICKS_PER_SECOND;
+
+        public static bool IsTickOld(int tick, int pastTick) => tick % TICKS_PER_SECOND != pastTick % TICKS_PER_SECOND;
     }
 
 
@@ -45,6 +47,7 @@ namespace Networking.Shared
         }
     }
 
+
     public class TimestampedCircularTickBuffer<T> {
         public T[] buffer = new T[WCommon.TICKS_PER_SECOND];
         public int[] timestamps = new int[WCommon.TICKS_PER_SECOND];
@@ -70,8 +73,20 @@ namespace Networking.Shared
             timestamps[WCommon.GetModuloTPS(tick)] = tick;
         }
 
+
         public void SetTimestamp(int tick) {
             timestamps[WCommon.GetModuloTPS(tick)] = tick;
+        }
+        
+
+        public bool TryGetByTick(int tick, out T value) {
+            if(timestamps[WCommon.GetModuloTPS(tick)] == tick) {
+                value = buffer[WCommon.GetModuloTPS(tick)];
+                return true;
+            } else {
+                value = default;
+                return false;
+            }
         }
     }
 }

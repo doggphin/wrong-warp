@@ -31,9 +31,9 @@ namespace Networking.Client {
             }
             
             else {
-                transform.position = LerpBufferedPositions(WCNetClient.SendingTick, percentageThroughTick);
+                transform.position = LerpBufferedPositions(WCNetClient.SendingTick - 1, percentageThroughTick);
                 // Never do rotations. These are always done by the client
-                transform.localScale = LerpBufferedScales(WCNetClient.SendingTick, percentageThroughTick);
+                transform.localScale = LerpBufferedScales(WCNetClient.SendingTick - 1, percentageThroughTick);
             }
         }
 

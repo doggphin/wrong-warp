@@ -3,14 +3,15 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public class SpectatorController : MonoBehaviour, IPlayer {
-        [SerializeField] private Camera cam;
-        private WEntityBase entity;
+    public class SpectatorController : BaseController, IPlayer {
 
-        private BoundedRotator boundedRotator;
         private Vector3 velocity = Vector3.zero;
         float speed = 10;
         
+        
+        void Awake() {
+            entity = GetComponent<WEntityBase>();
+        }
 
         public void RollbackToTick(int tick)
         {
@@ -45,47 +46,6 @@ namespace Controllers.Shared {
             velocity += acceleration * WCommon.SECONDS_PER_TICK;
             
             entity.positionsBuffer[onTick] += velocity * WCommon.SECONDS_PER_TICK;
-        }
-
-
-        public void InitAsControllable() {
-            entity = GetComponent<WEntityBase>();
-        }
-
-        public void EnablePlayer()
-        {
-            Debug.Log("Enabled spectator controller!");
-            cam.enabled = true;
-            cam.GetComponent<AudioListener>().enabled = true;
-            entity.updateRotationsLocally = true;
-            boundedRotator = new();
-        }
-
-
-        public void DisablePlayer()
-        {
-            cam.enabled = false;
-            cam.GetComponent<AudioListener>().enabled = false;
-        }
-
-
-        public void AddRotationDelta(Vector2 delta)
-        {
-            boundedRotator.AddRotationDelta(delta);
-
-            if(!entity.updateRotationsLocally)
-                return;
-            
-            entity.transform.rotation = boundedRotator.BodyQuatRotation;
-            cam.transform.localRotation = boundedRotator.CameraQuatRotation;
-
-            //entity.rotationsBuffer[onTick] = rotator.QuatRotation;
-        }
-
-
-        public Vector2? PollLook()
-        {
-            return boundedRotator.PollLook();
         }
     }
 }

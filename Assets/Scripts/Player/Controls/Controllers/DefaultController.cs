@@ -1,10 +1,11 @@
 using System.Data.Common;
 using LiteNetLib.Utils;
+using Networking.Server;
 using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public class DefaultController : MonoBehaviour, IPlayer {
+    public class DefaultController : BaseController, IPlayer {
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
         const float groundedAcceleration = 55f;
@@ -13,22 +14,22 @@ namespace Controllers.Shared {
         const float groundedJumpForce = 5.5f;
         const float aerialJumpForce = 6.5f;
 
-        [SerializeField] private Camera cam;
-        WEntityBase entity;
         private CharacterController characterController;
-        public void InitAsControllable() {
-            boundedRotator ??= new();
+
+        private void Awake() {
+            boundedRotator = new();
             characterController = GetComponent<CharacterController>();
+        }
+
+        void Start() {
             entity = GetComponent<WEntityBase>();
         }
 
-        private BoundedRotator boundedRotator;
         private Vector3 velocity = Vector3.zero;
         private bool canDoubleJump = false;
         private WInputsSerializable previousInputs = new();
         public void RollbackToTick(int tick)
         {
-            Debug.Log($"Trying to roll back to {tick}!");
             var state = WCRollbackManager.defaultControllerStates[tick];
 
             velocity = state.velocity;
@@ -36,13 +37,16 @@ namespace Controllers.Shared {
             previousInputs = state.previousInputs;
             boundedRotator.rotation = state.boundedRotatorRotation;
             entity.positionsBuffer[tick] = state.position;
+            // Prep position for next tick as well
+            entity.positionsBuffer[tick + 1] = state.position;
         }
-        public WSDefaultControllerStatePkt GetSerializableState() {
+        public WSDefaultControllerStatePkt GetSerializableState(int tick) {
             return new WSDefaultControllerStatePkt() {
                 velocity = velocity,
                 canDoubleJump = canDoubleJump,
                 previousInputs = previousInputs,
-                boundedRotatorRotation = boundedRotator.rotation
+                boundedRotatorRotation = boundedRotator.rotation,
+                position = entity.positionsBuffer[tick]
             };
         }
 
@@ -53,8 +57,6 @@ namespace Controllers.Shared {
             if(!entity.updateRotationsLocally && inputs.inputFlags.GetFlag(InputType.Look))
                 boundedRotator.rotation = inputs.look.Value;
 
-            //entity.transform.rotation = boundedRotator.BodyQuatRotation;
-            //cam.transform.localRotation = boundedRotator.CameraQuatRotation;
             Quaternion rotation = boundedRotator.BodyQuatRotation;
 
             float forward = (inputs.inputFlags.GetFlag(InputType.Forward) ? 1f : 0f) - (inputs.inputFlags.GetFlag(InputType.Back) ? 1f : 0f);
@@ -76,11 +78,11 @@ namespace Controllers.Shared {
 
             velocity *= drag;
 
-            Vector2 xzVelocity = new Vector2(velocity.x, velocity.z);
+            Vector2 xzVelocity = new(velocity.x, velocity.z);
             float xzSpeed = xzVelocity.magnitude;
 
-            Vector3 movement = rotation * (wasdInput * movementAccelerationFactor * WCommon.SECONDS_PER_TICK);
-            Vector2 xzMovement = new Vector2(movement.x, movement.z);
+            Vector3 movement = rotation * (movementAccelerationFactor * WCommon.SECONDS_PER_TICK * wasdInput);
+            Vector2 xzMovement = new(movement.x, movement.z);
             Vector2 xzVelocityAfterMovement = xzVelocity + xzMovement;
             float xzSpeedAfterMovement = xzVelocityAfterMovement.magnitude;
 
@@ -122,60 +124,28 @@ namespace Controllers.Shared {
             }
 
             // Calculate distance cc wants to move
+            characterController.enabled = false;
             transform.position = entity.positionsBuffer[onTick];
+            characterController.enabled = true;
+
             characterController.Move(velocity * WCommon.SECONDS_PER_TICK);
+
             Vector3 difference = transform.position - entity.positionsBuffer[onTick];
 
             entity.positionsBuffer[onTick] += difference;
-            // This is for client-ended units - probably remove 12/02/24
             entity.positionsBuffer[onTick + 1] = entity.positionsBuffer[onTick];
+            entity.rotationsBuffer[onTick] = boundedRotator.BodyQuatRotation;
+            characterController.enabled = false;
             transform.position = entity.positionsBuffer[onTick];        // consider deleting this
+            characterController.enabled = true;
 
             // Visual position will be set before next frame is shown, not important to set here
             previousInputs = inputs;
 
             if(WNetManager.IsClient) {
-                var state = GetSerializableState();
+                var state = GetSerializableState(onTick);
                 WCRollbackManager.defaultControllerStates[onTick] = state;
-            }
-                
-        }
-
-
-        public void AddRotationDelta(Vector2 delta) {
-            boundedRotator.AddRotationDelta(new Vector2(delta.x, delta.y));
-
-            if(!entity.updateRotationsLocally)
-                return;
-            
-            entity.transform.rotation = boundedRotator.BodyQuatRotation;
-            cam.transform.localRotation = boundedRotator.CameraQuatRotation;
-        }
-
-
-        public void EnablePlayer()
-        {
-            boundedRotator = new();
-            cam.enabled = true;
-            cam.gameObject.GetComponent<AudioListener>().enabled = true;
-            entity ??= GetComponent<WEntityBase>();
-            entity.updateRotationsLocally = true;
-            entity.updatePositionsLocally = true;
-        }
-
-
-        public void DisablePlayer()
-        {
-            cam.enabled = false;
-            cam.gameObject.GetComponent<AudioListener>().enabled = false;
-            entity.updateRotationsLocally = false;
-            entity.updatePositionsLocally = false;
-        }
-
-
-        public Vector2? PollLook()
-        {
-            return boundedRotator.PollLook();
+            }         
         }
     }
 }

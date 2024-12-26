@@ -29,7 +29,6 @@ namespace Networking.Server {
             WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, tick, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
-            player.InitAsControllable();
             
             ControlsManager.player = player;
             ControlsManager.player.EnablePlayer();
@@ -99,12 +98,18 @@ namespace Networking.Server {
                 netPlayer.previousChunk = chunk;
                 
                 // Write player controller state
-                INetSerializable controllerState = null;
+                INetSerializable genericControllerState = null;
                 if(netPlayer.Entity.TryGetComponent(out DefaultController defaultController)) {
-                    controllerState = defaultController.GetSerializableState();
+                    var defaultControllerState = defaultController.GetSerializableState(tick);
+                    genericControllerState = defaultControllerState;
+                    //Debug.Log($"Client rotation on {tick} was {defaultControllerState.boundedRotatorRotation}");
+                    Debug.Log($"Client position on {tick} was {defaultControllerState.position}");
                 } // else if spectator, etc.
-                if(controllerState != null)
-                    WPacketCommunication.AddToMultiPacket(writer, controllerState);
+
+                if(genericControllerState != null) {
+                    WPacketCommunication.AddToMultiPacket(writer, genericControllerState);
+                }
+                    
 
                 // Send full snapshot to the player, then reset the writer from the chunk to before it was personalized
                 peer.Send(writer, DeliveryMethod.Unreliable);
@@ -171,9 +176,6 @@ namespace Networking.Server {
             WsPlayerInputsSlotter.AddPlayer(peer.Id);
 
             WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, Tick, true);
-
-            IPlayer playerPlayer = playerEntity.GetComponent<IPlayer>();
-            playerPlayer.InitAsControllable();
 
             WSPlayer netPlayer = new();
             netPlayer.Init(peer, playerEntity);

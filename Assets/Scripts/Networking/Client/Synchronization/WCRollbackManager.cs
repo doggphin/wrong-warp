@@ -2,28 +2,26 @@ using UnityEngine;
 using Controllers.Shared;
 using Mono.Cecil.Cil;
 using Networking.Shared;
+using System;
 
 public static class WCRollbackManager {
-    public static CircularTickBuffer<WSDefaultControllerStatePkt> defaultControllerStates = new();
+    public static TimestampedCircularTickBuffer<WSDefaultControllerStatePkt> defaultControllerStates = new();
 
     // Rolls the player back from currentTick to rollbackTo.
-    public static void Rollback(int currentTick, int rollbackToThisTick, WSDefaultControllerStatePkt confirmedPacket) {
-        Debug.Log($"Rolling back from {currentTick} to {rollbackToThisTick}");
-        // Replace the predicted controller state with the confirmed one
-        defaultControllerStates[rollbackToThisTick] = confirmedPacket;
+    public static void RollbackDefaultController(int currentTick, int rollbackToTick, WSDefaultControllerStatePkt confirmedPacket) {
+        Debug.Log($"Rolling back from {currentTick} to {rollbackToTick}");
 
         // Null out all controller states after the confirmed state since they're all invalid
-        for(int i=currentTick; i > rollbackToThisTick; i--) {
+        // How necessary is this?
+        for(int i=currentTick; i > rollbackToTick; i--) {
             defaultControllerStates[i] = null;
         }
 
-        // Roll the player back to this tick
-        ControlsManager.player?.RollbackToTick(rollbackToThisTick);
-    }
+        // Replace the predicted controller state with the confirmed one
+        defaultControllerStates[rollbackToTick] = confirmedPacket;
 
-
-    public static void SetDefaultControllerState(int tick, WSDefaultControllerStatePkt controllerState) {
-        defaultControllerStates[tick] = controllerState;
+        // Roll the player back
+        ControlsManager.player?.RollbackToTick(rollbackToTick);
     }
 
 
@@ -44,6 +42,17 @@ public static class WCRollbackManager {
             predictedState.velocity == confirmedState.previousInputs.look &&
             predictedState.position == confirmedState.position;
 
+        if(isSameDefaultControllerState) {
+            Debug.Log("Same controller state!");
+        } else {
+            Debug.Log("Different controller state!");
+            //Debug.Log($"Predicted rotation for tick {tick} was {predictedState.boundedRotatorRotation}, received {confirmedState.boundedRotatorRotation}");
+            //Debug.Log($"Predicted look for tick {tick} was {predictedState.previousInputs.look}, received {confirmedState.previousInputs.look}");
+            Debug.Log($"+1 Predicted position for tick {tick + 1} was {defaultControllerStates[tick - 1].position}");
+            Debug.Log($"== Predicted position for tick {tick} was {predictedState.position}, received {confirmedState.position}");
+            Debug.Log($"-1 Predicted position for tick {tick - 1} was {defaultControllerStates[tick - 1].position}");
+            Debug.Log($"-2 Predicted position for tick {tick - 2} was {defaultControllerStates[tick - 2].position}");
+        }
         return isSameDefaultControllerState;
     }
 }
