@@ -39,7 +39,7 @@ public static class WCRollbackManager {
             predictedState.canDoubleJump == confirmedState.canDoubleJump &&
             predictedState.previousInputs.inputFlags.flags == confirmedState.previousInputs.inputFlags.flags &&
             predictedState.previousInputs.look == confirmedState.previousInputs.look &&
-            predictedState.velocity == confirmedState.previousInputs.look &&
+            predictedState.velocity == confirmedState.velocity &&
             predictedState.position == confirmedState.position;
 
         if(isSameDefaultControllerState) {
@@ -48,7 +48,6 @@ public static class WCRollbackManager {
             Debug.Log("Different controller state!");
             //Debug.Log($"Predicted rotation for tick {tick} was {predictedState.boundedRotatorRotation}, received {confirmedState.boundedRotatorRotation}");
             //Debug.Log($"Predicted look for tick {tick} was {predictedState.previousInputs.look}, received {confirmedState.previousInputs.look}");
-            Debug.Log($"+1 Predicted position for tick {tick + 1} was {defaultControllerStates[tick - 1].position}");
             Debug.Log($"== Predicted position for tick {tick} was {predictedState.position}, received {confirmedState.position}");
             Debug.Log($"-1 Predicted position for tick {tick - 1} was {defaultControllerStates[tick - 1].position}");
             Debug.Log($"-2 Predicted position for tick {tick - 2} was {defaultControllerStates[tick - 2].position}");

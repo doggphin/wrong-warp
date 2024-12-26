@@ -34,7 +34,7 @@ namespace Controllers.Shared {
             BindInputActionToInputType(inputActions.Gameplay.Crouch, InputType.Crouch);
 
             inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => { 
-                player?.AddRotationDelta(ctx.action.ReadValue<Vector2>()); 
+                player?.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
         }
 

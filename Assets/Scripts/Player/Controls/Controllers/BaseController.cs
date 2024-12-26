@@ -5,6 +5,7 @@ namespace Controllers.Shared {
     public class BaseController : MonoBehaviour {
         [SerializeField] protected Camera cam;
         protected WEntityBase entity;
+        
         protected BoundedRotator boundedRotator;
 
         public void SetRotation(Vector2 look)

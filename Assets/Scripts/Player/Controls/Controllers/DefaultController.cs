@@ -16,6 +16,10 @@ namespace Controllers.Shared {
 
         private CharacterController characterController;
 
+        private Vector3 velocity = Vector3.zero;
+        private bool canDoubleJump = false;
+        private WInputsSerializable previousInputs = new();
+
         private void Awake() {
             boundedRotator = new();
             characterController = GetComponent<CharacterController>();
@@ -25,9 +29,6 @@ namespace Controllers.Shared {
             entity = GetComponent<WEntityBase>();
         }
 
-        private Vector3 velocity = Vector3.zero;
-        private bool canDoubleJump = false;
-        private WInputsSerializable previousInputs = new();
         public void RollbackToTick(int tick)
         {
             var state = WCRollbackManager.defaultControllerStates[tick];
