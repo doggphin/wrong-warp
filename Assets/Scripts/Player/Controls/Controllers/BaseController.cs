@@ -20,6 +20,7 @@ namespace Controllers.Shared {
         public virtual void EnablePlayer() {
             boundedRotator = new();
             cam.enabled = true;
+            cam.gameObject.tag = "MainCamera";
             cam.GetComponent<AudioListener>().enabled = true;
 
             entity = GetComponent<WEntityBase>();
@@ -31,6 +32,7 @@ namespace Controllers.Shared {
 
         public virtual void DisablePlayer() {
             cam.enabled = false;
+            cam.gameObject.tag = "Untagged";
             cam.gameObject.GetComponent<AudioListener>().enabled = false;
 
             entity.updateRotationsLocally = false;

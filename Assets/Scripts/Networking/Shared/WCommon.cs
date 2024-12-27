@@ -1,5 +1,6 @@
 using Networking;
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices.WindowsRuntime;
 using TMPro;
 using UnityEngine;
@@ -9,8 +10,8 @@ namespace Networking.Shared
     public static class WCommon {
         public static float GetPercentageTimeThroughCurrentTick() => (Time.time % SECONDS_PER_TICK) * TICKS_PER_SECOND;
 
-        public const int TICKS_PER_SNAPSHOT = 3;
-        public const int TICKS_PER_SECOND = 15;
+        public const int TICKS_PER_SNAPSHOT = 2;
+        public const int TICKS_PER_SECOND = 20;
         public const int MAX_PING_MS = 300;
         public const float SECONDS_PER_TICK = 1f / TICKS_PER_SECOND;
         public const int MS_PER_TICK = (int)(1000 * (1f / TICKS_PER_SECOND));
@@ -20,13 +21,13 @@ namespace Networking.Shared
         public static int GetModuloSnapshotLength(int tick) => tick % TICKS_PER_SNAPSHOT;
         public static int GetModuloTPS(int tick) => tick % TICKS_PER_SECOND;
 
-        public static bool IsTickOld(int tick, int pastTick) => tick % TICKS_PER_SECOND != pastTick % TICKS_PER_SECOND;
+        // I have no idea if this -1 is necessary
+        public static bool IsTickOld(int tick, int pastTick) => tick - pastTick > WCommon.TICKS_PER_SECOND - 1;
     }
 
 
     public class CircularTickBuffer<T> {
         public T[] buffer = new T[WCommon.TICKS_PER_SECOND];
-
 
         public T this[int tick] {
             get {
@@ -68,9 +69,9 @@ namespace Networking.Shared
         }
 
 
-        public void SetValueAndTimestamp(T value, int tick) {
-            buffer[WCommon.GetModuloTPS(tick)] = value;
-            timestamps[WCommon.GetModuloTPS(tick)] = tick;
+        public void SetValueAndTimestamp(T value, int tickTimestamp) {
+            buffer[WCommon.GetModuloTPS(tickTimestamp)] = value;
+            timestamps[WCommon.GetModuloTPS(tickTimestamp)] = tickTimestamp;
         }
 
 
@@ -79,14 +80,29 @@ namespace Networking.Shared
         }
         
 
-        public bool TryGetByTick(int tick, out T value) {
-            if(timestamps[WCommon.GetModuloTPS(tick)] == tick) {
-                value = buffer[WCommon.GetModuloTPS(tick)];
+        public bool TryGetByTimestamp(int timestamp, out T value) {
+            if(timestamps[WCommon.GetModuloTPS(timestamp)] == timestamp) {
+                value = buffer[WCommon.GetModuloTPS(timestamp)];
                 return true;
             } else {
                 value = default;
                 return false;
             }
         }
+
+        public TimestampedCircularTickBuffer(T defaultValue, int? initialTimestamp) {
+            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
+                buffer[i] = defaultValue;
+            }
+
+            if(initialTimestamp == null)
+                return;
+
+            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
+                timestamps[i] = initialTimestamp.Value;
+            }
+        }
+
+        public TimestampedCircularTickBuffer() {}
     }
 }

@@ -8,7 +8,7 @@ using Networking.Shared;
 using Controllers.Shared;
 
 namespace Networking.Server {
-    public class WSNetServer : MonoBehaviour, INetEventListener {
+    public class WSNetServer : MonoBehaviour, INetEventListener, ITicker {
         public static NetManager ServerNetManager { get; private set; }
 
         private static NetDataWriter writer = new();
@@ -16,12 +16,18 @@ namespace Networking.Server {
         private static int tick;
         public static int Tick => tick;
         private static WWatch watch;
-        public static float PercentageThroughTick => watch.GetPercentageThroughTick();
+
+        public int GetTick() {
+            return tick;
+        }
+        public float GetPercentageThroughTick() {
+            return watch.GetPercentageThroughTick();
+        }
 
         public static WSNetServer Instance { get; private set; }
-        public void Init() {
-            ServerNetManager.Start(WCommon.WRONGWARP_PORT);
-            print($"Running server on port {WCommon.WRONGWARP_PORT}!");
+        public void Init(ushort port) {
+            ServerNetManager.Start(port);
+            print($"Running server on port {port}!");
 
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = WCommon.TICKS_PER_SECOND;
@@ -41,7 +47,7 @@ namespace Networking.Server {
         private void Update() {
             ServerNetManager.PollEvents();
 
-            while(PercentageThroughTick > 1) {
+            while(GetPercentageThroughTick() > 1) {
                 watch.AdvanceTick();
                 StartNextTick();
             }
@@ -102,8 +108,6 @@ namespace Networking.Server {
                 if(netPlayer.Entity.TryGetComponent(out DefaultController defaultController)) {
                     var defaultControllerState = defaultController.GetSerializableState(tick);
                     genericControllerState = defaultControllerState;
-                    //Debug.Log($"Client rotation on {tick} was {defaultControllerState.boundedRotatorRotation}");
-                    Debug.Log($"Client position on {tick} was {defaultControllerState.position}");
                 } // else if spectator, etc.
 
                 if(genericControllerState != null) {

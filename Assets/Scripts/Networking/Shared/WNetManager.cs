@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using Networking.Server;
 using Networking.Client;
 using Controllers.Shared;
+using TMPro;
 
 namespace Networking.Shared {
     public class WNetManager : MonoBehaviour {
@@ -23,6 +24,12 @@ namespace Networking.Shared {
         private static WInputsSerializable[] inputPackets = new WInputsSerializable[WCommon.TICKS_PER_SNAPSHOT];
 
         [SerializeField] private GameObject entitiesHolder;
+
+        [Space(10)]
+        [SerializeField] private TMP_InputField clientAddress;
+        [SerializeField] private TMP_InputField clientPort;
+        [Space(10)]
+        [SerializeField] private TMP_InputField serverPort;
 
 
         private void Awake() {
@@ -50,14 +57,15 @@ namespace Networking.Shared {
         }
 
 
-        public void StartClient(string address) {
+        public void StartClient() {
             WCEntityManager.SpawnHolder = entitiesHolder;
 
             GameObject clientObject = Instantiate(clientPrefab);
             WNetClient = clientObject.GetComponent<WCNetClient>();
 
             WNetClient.Init();
-            WNetClient.Connect("localhost", OnDisconnect);
+            Debug.Log($"{clientAddress.text}:{clientPort.text}");
+            WNetClient.Connect(clientAddress.text, ushort.Parse(clientPort.text), OnDisconnect);
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
         }
@@ -69,7 +77,7 @@ namespace Networking.Shared {
             GameObject serverObject = Instantiate(serverPrefab);
             WNetServer = serverObject.GetComponent<WSNetServer>();
             WSEntityManager.SpawnHolder = entitiesHolder;
-            WNetServer.Init();
+            WNetServer.Init(ushort.Parse(serverPort.text));
         }
     }
 }

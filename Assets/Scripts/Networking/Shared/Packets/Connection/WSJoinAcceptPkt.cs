@@ -1,5 +1,4 @@
 using LiteNetLib.Utils;
-using Mono.Cecil;
 
 namespace Networking.Shared {
     public class WSJoinAcceptPkt : INetSerializable {

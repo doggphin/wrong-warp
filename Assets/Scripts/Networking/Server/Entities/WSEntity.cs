@@ -2,8 +2,6 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 using Networking.Shared;
-using UnityEditor.Rendering;
-using System;
 
 namespace Networking.Server {
     public class WSEntity : WEntityBase {
@@ -53,11 +51,11 @@ namespace Networking.Server {
             ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Tick]);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WSChunkManager.GetChunk(ChunkPosition, false);
-        }
+        }   
 
 
         private void Update() {
-            float percentageThroughTick = WSNetServer.PercentageThroughTick;
+            float percentageThroughTick = WSNetServer.Instance.GetPercentageThroughTick();
 
             //if(!updatePositionsLocally)
                 transform.position = LerpBufferedPositions(WSNetServer.Tick, percentageThroughTick);

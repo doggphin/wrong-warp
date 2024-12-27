@@ -153,11 +153,11 @@ namespace Networking.Client {
         }
 
 
-        public void Connect(string ip, Action<DisconnectInfo> onDisconnected) {
+        public void Connect(string address, ushort port, Action<DisconnectInfo> onDisconnected) {
             this.onDisconnected = onDisconnected;
 
-            Debug.Log($"Connecting to {ip}:{WCommon.WRONGWARP_PORT}");
-            netManager.Connect(ip, WCommon.WRONGWARP_PORT, "WW 0.01");
+            Debug.Log($"Attempting to connect to {address}:{port}");
+            netManager.Connect(address, port, "WW 0.01");
         }
 
 
@@ -316,12 +316,6 @@ namespace Networking.Client {
         private void HandleDefaultControllerState(int receivedTick, NetDataReader reader) {
             WSDefaultControllerStatePkt confirmedControllerState = new();
             confirmedControllerState.Deserialize(reader);
-
-            if(WCommon.IsTickOld(SendingTick, receivedTick)) {
-                Debug.Log("Received an old rollback!");
-            } else {
-                Debug.Log("Received a modern rollback!");
-            }
 
             //Debug.Log($"Received a default controller state for tick {tick}! Observing tick is {ObservingTick}! Sending tick is {SendingTick}");
             bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(receivedTick, confirmedControllerState);

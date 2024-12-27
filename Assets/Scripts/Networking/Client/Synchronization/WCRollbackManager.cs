@@ -1,8 +1,6 @@
 using UnityEngine;
 using Controllers.Shared;
-using Mono.Cecil.Cil;
 using Networking.Shared;
-using System;
 
 public static class WCRollbackManager {
     public static TimestampedCircularTickBuffer<WSDefaultControllerStatePkt> defaultControllerStates = new();
@@ -42,16 +40,10 @@ public static class WCRollbackManager {
             predictedState.velocity == confirmedState.velocity &&
             predictedState.position == confirmedState.position;
 
-        if(isSameDefaultControllerState) {
-            Debug.Log("Same controller state!");
-        } else {
-            Debug.Log("Different controller state!");
-            //Debug.Log($"Predicted rotation for tick {tick} was {predictedState.boundedRotatorRotation}, received {confirmedState.boundedRotatorRotation}");
-            //Debug.Log($"Predicted look for tick {tick} was {predictedState.previousInputs.look}, received {confirmedState.previousInputs.look}");
-            Debug.Log($"== Predicted position for tick {tick} was {predictedState.position}, received {confirmedState.position}");
-            Debug.Log($"-1 Predicted position for tick {tick - 1} was {defaultControllerStates[tick - 1].position}");
-            Debug.Log($"-2 Predicted position for tick {tick - 2} was {defaultControllerStates[tick - 2].position}");
+        if(!isSameDefaultControllerState) {
+            Debug.Log("Desync detected!");
         }
+        
         return isSameDefaultControllerState;
     }
 }

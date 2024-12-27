@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
     public static class WPrefabLookup {
-        public static Dictionary<WPrefabId, WPrefabTransformUpdateTypes> PrefabUpdateTypes {get; private set;} = new() {
+        public static Dictionary<WPrefabId, WPrefabTransformUpdateTypes> PrefabUpdateTypes { get; private set; } = new() {
             { WPrefabId.Empty, new WPrefabTransformUpdateTypes(false, false, false) },
             { WPrefabId.Test, new WPrefabTransformUpdateTypes(true, false, false) },
             { WPrefabId.Player, new WPrefabTransformUpdateTypes(true, true, false) },
@@ -28,29 +28,36 @@ namespace Networking.Shared {
 
         private static Dictionary<WPrefabId, GameObject> idToNetPrefabs = null;
 
-        private static readonly string shortNetPrefabPath = Path.Combine("NetPrefabs");
-        private static readonly string netPrefabPath = Path.Combine(".", "Assets", "Resources", "NetPrefabs");
+        private const string netPrefabPath = "NetPrefabs";
 
         public static void Init() {
-            idToNetPrefabs = new();
+            idToNetPrefabs = new Dictionary<WPrefabId, GameObject>();
 
-            foreach (string filePath in Directory.GetFileSystemEntries(netPrefabPath, "*.prefab")) {
-                string fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
+            // Load all prefabs in the "Resources/NetPrefabs" folder
+            GameObject[] loadedPrefabs = Resources.LoadAll<GameObject>(netPrefabPath);
 
-                string[] splitFileName = fileName.Split('_');
-                if(splitFileName.Length != 2) {
+            foreach (var prefab in loadedPrefabs) {
+                string[] splitFileName = prefab.name.Split('_');
+                if (splitFileName.Length != 2) {
+                    Debug.LogWarning($"Invalid prefab name format: {prefab.name}");
                     continue;
                 }
 
-                int id = int.Parse(splitFileName[0]);
-                string gameObjectPath = Path.Combine(shortNetPrefabPath, fileName).Split('.')[0];
-
-                idToNetPrefabs[(WPrefabId)id] = Resources.Load<GameObject>(gameObjectPath);
+                if (int.TryParse(splitFileName[0], out int id)) {
+                    idToNetPrefabs[(WPrefabId)id] = prefab;
+                } else {
+                    Debug.LogWarning($"Invalid ID in prefab name: {prefab.name}");
+                }
             }
         }
 
-        public static GameObject GetById(WPrefabId prefabId) {   
-            return idToNetPrefabs[prefabId];
+        public static GameObject GetById(WPrefabId prefabId) {
+            if (idToNetPrefabs.TryGetValue(prefabId, out var prefab)) {
+                return prefab;
+            }
+
+            Debug.LogError($"Prefab with ID {prefabId} not found!");
+            return null;
         }
     }
 }
