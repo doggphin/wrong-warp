@@ -2,6 +2,8 @@ using Networking.Shared;
 using UnityEngine.InputSystem;
 using UnityEngine;
 using Unity.VisualScripting;
+using System;
+using Unity.Profiling.LowLevel.Unsafe;
 
 namespace Controllers.Shared {
     public static class ControlsManager {
@@ -12,7 +14,19 @@ namespace Controllers.Shared {
         public static TimestampedCircularTickBuffer<WInputsSerializable> inputs = new();
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
+
+        public static Action TypingClicked;
+        public static Action EscapeClicked;
         
+        public static void SetGameplayControlsEnabled(bool value) {
+            if(value) {
+                inputActions.Gameplay.Enable();
+            } else {
+                inputActions.Gameplay.Disable();
+            }
+        }
+
+
         public static void Init() {
             for(int i=0; i<inputs.buffer.Length; i++) {
                 inputs.buffer[i] = new();
@@ -25,6 +39,7 @@ namespace Controllers.Shared {
 
             inputActions = new();
             inputActions.Gameplay.Enable();
+            inputActions.Ui.Enable();
 
             BindInputActionToInputType(inputActions.Gameplay.Forward, InputType.Forward);
             BindInputActionToInputType(inputActions.Gameplay.Left, InputType.Left);
@@ -36,6 +51,26 @@ namespace Controllers.Shared {
             inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => { 
                 player?.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
+
+            inputActions.Ui.Chat.started += (InputAction.CallbackContext ctx) => {
+                TypingClicked?.Invoke();
+            };
+
+            inputActions.Ui.Escape.started += (InputAction.CallbackContext ctx) => {
+                EscapeClicked?.Invoke();
+            };
+        }
+
+
+        public static bool GameplayControlsEnabled {
+            get => inputActions.Gameplay.enabled;
+            private set {
+                if(value) {
+                    inputActions.Gameplay.Enable();
+                } else {
+                    inputActions.Gameplay.Disable();
+                }
+            }
         }
 
 

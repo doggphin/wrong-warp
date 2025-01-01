@@ -9,20 +9,19 @@ namespace Networking.Shared {
         Unimplemented,
 
         CJoinRequest,
-        CInputs,
-        CGroupedInputs,
-
         SJoinAccept,
         SJoinDenied,
-
+        CInputs,
+        CGroupedInputs,
         SChunkDeltaSnapshot,
         SEntityTransformUpdate,
         SEntityKill,
         SEntitySpawn,
         SFullEntitiesSnapshot,
         SEntitiesLoadedDelta,
-
-        SDefaultControllerState
+        SDefaultControllerState,
+        CChatMessage,
+        SChatMessage,
     }
 }
 

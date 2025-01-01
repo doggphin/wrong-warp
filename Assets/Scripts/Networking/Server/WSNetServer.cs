@@ -117,7 +117,7 @@ namespace Networking.Server {
 
                 // Send full snapshot to the player, then reset the writer from the chunk to before it was personalized
                 peer.Send(writer, DeliveryMethod.Unreliable);
-                writer.Reset(writerPositionBeforeModification);
+                writer.SetPosition(writerPositionBeforeModification);
             }
 
             // Unload + reset chunks
