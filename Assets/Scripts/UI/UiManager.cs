@@ -3,7 +3,7 @@ using Controllers.Shared;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class UiManager : Singleton<UiManager>
+public class UiManager : BaseSingleton<UiManager>
 {   
     [SerializeField] private GameObject chatUiPrefab;
     [SerializeField] private GameObject escapeUiPrefab;
@@ -47,7 +47,6 @@ public class UiManager : Singleton<UiManager>
     
     // When escape is pressed, either close the current ui or open the escape UI
     private static void Escape() {
-        Debug.Log($"gwa");
         if(!CloseActiveUiElement()) {
             Debug.Log("Closed!");
             Instance.escapeUi.Open();

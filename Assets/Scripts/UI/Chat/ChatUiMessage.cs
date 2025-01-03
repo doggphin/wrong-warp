@@ -11,7 +11,7 @@ public class ChatUiMessage : MonoBehaviour {
 
     public void SetChatMessage(WSChatMessagePkt chatMessageInfo) {
         message.text = chatMessageInfo.message;
-        message.alpha = chatMessageInfo.distanceToSpeaker = 1f - chatMessageInfo.distanceToSpeaker / ChatManager.MAX_LOCAL_CHAT_DISTANCE;
+        message.alpha = 1f;//chatMessageInfo.distanceToSpeaker = 1f - chatMessageInfo.distanceToSpeaker / ChatUiManager.MAX_LOCAL_CHAT_DISTANCE;
 
         bust.sprite = chatMessageInfo.isServerMessage ? serverBust : playerBust;
     }

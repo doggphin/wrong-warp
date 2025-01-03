@@ -1,4 +1,6 @@
+using UnityEngine;
 using LiteNetLib.Utils;
+using Networking.Client;
 
 namespace Networking.Shared {
     public enum WEntitySpawnReason : byte {
@@ -6,7 +8,7 @@ namespace Networking.Shared {
         Load,
     }
 
-    public class WSEntitySpawnPkt : INetSerializable {
+    public class WSEntitySpawnPkt : INetSerializable, IClientApplicablePacket {
         public WEntitySerializable entity;
         public WEntitySpawnReason reason;
 
@@ -15,11 +17,19 @@ namespace Networking.Shared {
             reason = (WEntitySpawnReason)reader.GetByte();
         }
 
+
         public void Serialize(NetDataWriter writer) {
             writer.Put((ushort)WPacketType.SEntitySpawn);
 
             entity.Serialize(writer);
             writer.Put((byte)reason);
+        }
+
+        
+        public void ApplyOnClient(int tick)
+        {
+            Debug.Log("Spawning!");
+            WCEntityManager.Spawn(this);
         }
     }
 }

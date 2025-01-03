@@ -1,4 +1,5 @@
 using LiteNetLib.Utils;
+using Networking.Client;
 
 namespace Networking.Shared {
     public enum WEntityKillReason : byte {
@@ -7,7 +8,7 @@ namespace Networking.Shared {
         Unload
     }
 
-    public class WSEntityKillPkt : INetSerializable {
+    public class WSEntityKillPkt : INetSerializable, IClientApplicablePacket {
         public int entityId;
         public WEntityKillReason reason;
 
@@ -16,11 +17,18 @@ namespace Networking.Shared {
             reason = (WEntityKillReason)reader.GetByte();
         }
 
+
         public void Serialize(NetDataWriter writer) {
             writer.Put((ushort)WPacketType.SEntityKill);
 
             writer.Put(entityId);
             writer.Put((byte)reason);
+        }
+
+
+        public void ApplyOnClient(int _)
+        {
+            WCEntityManager.KillEntity(this);
         }
     }
 }

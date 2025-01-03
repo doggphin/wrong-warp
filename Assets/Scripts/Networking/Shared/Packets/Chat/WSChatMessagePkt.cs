@@ -2,13 +2,12 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSChatMessagePkt : INetSerializable {
+    public class WSChatMessagePkt : INetSerializable, IClientApplicablePacket {
         public string message;
         public bool isServerMessage;
 
         // If this is a server message, it doesn't originate from a speaker
         public int speakerId;
-        public float distanceToSpeaker;
 
         public void Serialize(NetDataWriter writer) {
             writer.Put((ushort)WPacketType.SChatMessage);
@@ -18,7 +17,6 @@ namespace Networking.Shared {
             writer.Put(isServerMessage);
 
             if(!isServerMessage) {
-                writer.Put(distanceToSpeaker);
                 writer.Put(speakerId);
             }
         }
@@ -28,10 +26,12 @@ namespace Networking.Shared {
             speakerId = reader.GetInt();
 
             bool isServerMessage = reader.GetBool();
-            if(isServerMessage) {
-                distanceToSpeaker = reader.GetFloat();
+            if(isServerMessage)
                 speakerId = reader.GetInt();
-            }
+        }
+
+        public void ApplyOnClient(int _) {
+            ChatUiManager.ReceiveChatMessage(this);
         }
     }
 }

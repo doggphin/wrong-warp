@@ -277,8 +277,23 @@ namespace Networking.Server {
             }
         }
 
+
         public static Vector2Int ProjectToGrid(Vector3 position) {
             Vector2Int ret = new Vector2Int(Mathf.RoundToInt(position.x / chunkSize), Mathf.RoundToInt(position.z / chunkSize));
+
+            return ret;
+        }
+
+
+        public static HashSet<WSChunk> GetAllPlayerChunks() {
+            HashSet<WSChunk> ret = new();
+
+            foreach(var peer in WSNetServer.ServerNetManager.ConnectedPeerList) {
+                if(!WSPlayer.FromPeer(peer, out WSPlayer player))
+                    continue;
+
+                ret.Add(player.Entity.CurrentChunk);
+            }
 
             return ret;
         }

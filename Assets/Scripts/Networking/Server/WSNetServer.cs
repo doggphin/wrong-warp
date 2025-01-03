@@ -16,6 +16,7 @@ namespace Networking.Server {
         private static int tick;
         public static int Tick => tick;
         private static WWatch watch;
+        public static WSPlayer Host { get; private set; }
 
         public int GetTick() {
             return tick;
@@ -32,15 +33,26 @@ namespace Networking.Server {
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = WCommon.TICKS_PER_SECOND;
 
+            // Initialize player
             WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, tick, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
-            
             ControlsManager.player = player;
             ControlsManager.player.EnablePlayer();
 
+            Host = new();
+            Host.Init(null, playerEntity);
+
+
+            // Start listening for server-specific events
+            ChatUiManager.SendChatMessage += (string message) => WSChatHandler.HandleChatMessage(message, null, false);
+
             watch = new();
             watch.Start();
+        }
+
+        private void CreatePlayer() {
+            
         }
 
 
@@ -87,7 +99,7 @@ namespace Networking.Server {
 
                 // Get the initial snapshot packet from the chunk the player is in
                 WSChunk chunk = netPlayer.Entity.CurrentChunk;
-                writer = chunk.GetPrepared3x3SnapshotPacket();
+                writer = chunk.GetPrepared3x3UnreliableDeltaSnapshotPacket();
 
                 // Save the position of the writer for this chunk for later use
                 int writerPositionBeforeModification = writer.Length;
@@ -141,20 +153,26 @@ namespace Networking.Server {
                         return false;
 
                     OnJoinReceived(joinRequest, peer);
-
-                    return true;
+                    break;
                 }
-
                 case WPacketType.CGroupedInputs: {
                     if(peer.Tag == null)
                         return false;
 
-                    WCGroupedInputsPkt groupedInputsPkt = new();
-                    groupedInputsPkt.Deserialize(reader);
+                    WCGroupedInputsPkt groupedInputs = new();
+                    groupedInputs.Deserialize(reader);
+                    WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
+                    break;
+                }
+                case WPacketType.CChatMessage: {
+                    if(peer.Tag == null)
+                        return false;
 
-                    WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputsPkt);
-                    
-                    return true;
+                    Debug.Log("Got a chat message!");
+                    WCChatMessagePkt chatMessage = new();
+                    chatMessage.Deserialize(reader);
+                    WSChatHandler.HandleChatMessage(chatMessage.message, peer, false);
+                    break;
                 }
 
                 default: {
@@ -162,6 +180,8 @@ namespace Networking.Server {
                     return false;
                 }
             }
+
+            return true;
         }
 
 

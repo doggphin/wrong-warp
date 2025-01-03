@@ -4,13 +4,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Networking.Shared;
+using Unity.VisualScripting;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Networking.Server {
     public class WSChunk {
         private HashSet<WSEntity> presentLoaders = new();
         public HashSet<WSEntity> PresentEntities { get; private set; } = new();
-        List<INetSerializable>[] generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
-        Dictionary<int, List<INetSerializable>>[] entityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
+        public List<INetSerializable>[] ReliableUpdates { get; private set; } = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
+        private List<INetSerializable>[] unreliableGeneralUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
+        private Dictionary<int, List<INetSerializable>>[] unreliableEntityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
         private bool isLoaded = false;
         public Vector2Int Coords { get; private set; }
 
@@ -18,27 +21,31 @@ namespace Networking.Server {
             isLoaded = true;
 
             for (int i = 0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
-                generalUpdates[i] = new();
-                entityUpdates[i] = new();
+                unreliableGeneralUpdates[i] = new();
+                unreliableEntityUpdates[i] = new();
+                ReliableUpdates[i] = new();
             }
 
             Coords = coords;
         }
 
 
-        private WSChunkDeltaSnapshotPkt deltaSnapshot = null;
-        private bool isDeltaSnapshot3x3PktWritten = false;
-        private NetDataWriter deltaSnapshot3x3PktWriter = new();
-        public NetDataWriter GetPrepared3x3SnapshotPacket() {
-            if (isDeltaSnapshot3x3PktWritten) {
+        // Chunks will write their own WSChunkDeltaSnapshotPkts and cache them for each group of ticks.
+        // Each player within each chunk is sent the WSChunkDeltaSnapshotPkt of each chunk in a 3x3 radius around them.
+        // Work can be reduced by reusing individual chunk WSChunkDeltaSnapshotPkts and sending the same combined 3x3 chunks to players in same chunk
+        private WSChunkDeltaSnapshotPkt unreliableDeltaSnapshot = null;
+        private bool isUnreliableDeltaSnapshot3x3PktWritten = false;
+        private NetDataWriter unreliableDeltaSnapshot3x3PktWriter = new();
+        public NetDataWriter GetPrepared3x3UnreliableDeltaSnapshotPacket() {
+            if (isUnreliableDeltaSnapshot3x3PktWritten) {
                 Debug.Log("Returning already written snapshot!");
-                return deltaSnapshot3x3PktWriter;
+                return unreliableDeltaSnapshot3x3PktWriter;
             }
 
-            deltaSnapshot3x3PktWriter.Reset();
+            unreliableDeltaSnapshot3x3PktWriter.Reset();
 
-            WPacketCommunication.StartMultiPacket(deltaSnapshot3x3PktWriter, WSNetServer.Tick);
-            GetSnapshot().Serialize(deltaSnapshot3x3PktWriter);
+            WPacketCommunication.StartMultiPacket(unreliableDeltaSnapshot3x3PktWriter, WSNetServer.Tick);
+            GetUnreliableDeltaSnapshot().Serialize(unreliableDeltaSnapshot3x3PktWriter);
 
             WSChunk[] neighbors = WSChunkManager.GetNeighboringChunks(Coords, false, false);
             for (int i = 0; i < 8; i++) {
@@ -46,31 +53,52 @@ namespace Networking.Server {
                     Debug.Log("A surrounding chunk was null!");
                     continue;
                 }
-                neighbors[i].GetSnapshot().Serialize(deltaSnapshot3x3PktWriter);
+                neighbors[i].GetUnreliableDeltaSnapshot().Serialize(unreliableDeltaSnapshot3x3PktWriter);
             }
 
-            isDeltaSnapshot3x3PktWritten = true;
+            isUnreliableDeltaSnapshot3x3PktWritten = true;
 
-            return deltaSnapshot3x3PktWriter;
+            return unreliableDeltaSnapshot3x3PktWriter;
         }
-        public WSChunkDeltaSnapshotPkt GetSnapshot() {
-            if (deltaSnapshot != null)
-                return deltaSnapshot;
+        public WSChunkDeltaSnapshotPkt GetUnreliableDeltaSnapshot() {
+            if (unreliableDeltaSnapshot != null)
+                return unreliableDeltaSnapshot;
 
-            deltaSnapshot = new() { s_generalUpdates = generalUpdates, s_entityUpdates = entityUpdates };
+            unreliableDeltaSnapshot = new() { s_generalUpdates = unreliableGeneralUpdates, s_entityUpdates = unreliableEntityUpdates };
 
-            return deltaSnapshot;
+            return unreliableDeltaSnapshot;
+        }
+
+        private NetDataWriter reliableUpdates3x3PktWriter = new();
+        private bool isReliableUpdates3x3Written = false;
+        public NetDataWriter GetPrepared3x3ReliableUpdatesPacket() {
+            // If 3x3 reliable updates have already been written + cached, use that
+            if(isReliableUpdates3x3Written)
+                return reliableUpdates3x3PktWriter;
+
+            reliableUpdates3x3PktWriter.Reset();
+
+            // Serialize all ReliableUpdates in each surrounding chunk, including ourselves
+            foreach(WSChunk chunk in WSChunkManager.GetNeighboringChunks(Coords, true, false)) {
+                foreach(INetSerializable packet in chunk.ReliableUpdates) {
+                    packet.Serialize(reliableUpdates3x3PktWriter);
+                }
+            }
+
+            isReliableUpdates3x3Written = true;
+            return reliableUpdates3x3PktWriter;
         }
 
 
         public void ResetUpdates() {
             for (int i = 0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
-                generalUpdates[i].Clear();
-                entityUpdates[i].Clear();
+                unreliableGeneralUpdates[i].Clear();
+                unreliableEntityUpdates[i].Clear();
+                ReliableUpdates[i].Clear();
             }
 
-            deltaSnapshot = null;
-            isDeltaSnapshot3x3PktWritten = false;
+            unreliableDeltaSnapshot = null;
+            isUnreliableDeltaSnapshot3x3PktWritten = false;
         }
 
 
@@ -88,10 +116,10 @@ namespace Networking.Server {
             // Want insertAt to start at 0, not 1. Need to do add ticksPerSnapshot - 1 to make it start at 0
             int insertAt = (tick + WCommon.TICKS_PER_SNAPSHOT - 1) % WCommon.TICKS_PER_SNAPSHOT;
 
-            if (!entityUpdates[insertAt].TryGetValue(id, out var entityUpdatesList)) {
+            if (!unreliableEntityUpdates[insertAt].TryGetValue(id, out var entityUpdatesList)) {
                 List<INetSerializable> newEntityUpdatesList = new();
 
-                entityUpdates[insertAt][id] = newEntityUpdatesList;
+                unreliableEntityUpdates[insertAt][id] = newEntityUpdatesList;
                 entityUpdatesList = newEntityUpdatesList;
             }
 
@@ -101,17 +129,13 @@ namespace Networking.Server {
         }
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="tick"></param>
-        /// <param name="update"></param>
-        /// <returns> Whether this chunk is loaded. </returns>
-        public bool AddGenericUpdate(int tick, INetSerializable update) {
+        /// <returns> Whether the chunk is loaded. </returns>
+        public bool AddGenericUpdate(int tick, INetSerializable update, bool reliable) {
             if (!isLoaded)
                 return false;
-
-            generalUpdates[tick % WCommon.TICKS_PER_SNAPSHOT].Add(update);
+            
+            List<INetSerializable>[] updatesToAppendTo = reliable ? ReliableUpdates : unreliableGeneralUpdates;
+            updatesToAppendTo[tick % WCommon.TICKS_PER_SNAPSHOT].Add(update);
 
             return true;
         }

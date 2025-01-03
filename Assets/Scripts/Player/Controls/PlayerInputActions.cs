@@ -192,6 +192,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Confirm"",
+                    ""type"": ""Button"",
+                    ""id"": ""cc5ebdd8-6dc0-413c-bf43-e245f1d97c06"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -216,6 +225,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Escape"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4d9d1292-06ec-4e42-9a30-95a33f043cd3"",
+                    ""path"": ""<Keyboard>/enter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Confirm"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -235,6 +255,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Ui = asset.FindActionMap("Ui", throwIfNotFound: true);
         m_Ui_Chat = m_Ui.FindAction("Chat", throwIfNotFound: true);
         m_Ui_Escape = m_Ui.FindAction("Escape", throwIfNotFound: true);
+        m_Ui_Confirm = m_Ui.FindAction("Confirm", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
@@ -398,12 +419,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private List<IUiActions> m_UiActionsCallbackInterfaces = new List<IUiActions>();
     private readonly InputAction m_Ui_Chat;
     private readonly InputAction m_Ui_Escape;
+    private readonly InputAction m_Ui_Confirm;
     public struct UiActions
     {
         private @PlayerInputActions m_Wrapper;
         public UiActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
         public InputAction @Chat => m_Wrapper.m_Ui_Chat;
         public InputAction @Escape => m_Wrapper.m_Ui_Escape;
+        public InputAction @Confirm => m_Wrapper.m_Ui_Confirm;
         public InputActionMap Get() { return m_Wrapper.m_Ui; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -419,6 +442,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Escape.started += instance.OnEscape;
             @Escape.performed += instance.OnEscape;
             @Escape.canceled += instance.OnEscape;
+            @Confirm.started += instance.OnConfirm;
+            @Confirm.performed += instance.OnConfirm;
+            @Confirm.canceled += instance.OnConfirm;
         }
 
         private void UnregisterCallbacks(IUiActions instance)
@@ -429,6 +455,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Escape.started -= instance.OnEscape;
             @Escape.performed -= instance.OnEscape;
             @Escape.canceled -= instance.OnEscape;
+            @Confirm.started -= instance.OnConfirm;
+            @Confirm.performed -= instance.OnConfirm;
+            @Confirm.canceled -= instance.OnConfirm;
         }
 
         public void RemoveCallbacks(IUiActions instance)
@@ -460,5 +489,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     {
         void OnChat(InputAction.CallbackContext context);
         void OnEscape(InputAction.CallbackContext context);
+        void OnConfirm(InputAction.CallbackContext context);
     }
 }

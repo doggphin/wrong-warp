@@ -57,9 +57,11 @@ namespace Networking.Client {
             };
             netManager.Start();
 
-            WCTimedPacketSlotter.Init();
+            WCPacketCacher.Init();
             watch = new();
             watch.Start();
+
+            ChatUiManager.SendChatMessage += SendChatMessage;
         }
 
 
@@ -83,7 +85,7 @@ namespace Networking.Client {
                 CheckForTickCompensation();
             }
 
-            WCTimedPacketSlotter.ApplySlottedPacketsFromTick(ObservingTick);
+            WCPacketCacher.ApplyTick(ObservingTick);
 
             // If client is too far ahead, skip this tick
             if(allowTickCompensation && necessaryTickCompensation < 0) {
@@ -174,7 +176,7 @@ namespace Networking.Client {
         }
 
 
-        private bool ConsumeEntityUpdate(
+        public bool ConsumeEntityUpdate(
             int tick,
             int entityId,
             WPacketType packetType,
@@ -191,7 +193,7 @@ namespace Networking.Client {
         }
 
 
-        private bool ProcessPacketFromReader(
+        public bool ProcessPacketFromReader(
             NetPeer peer,
             NetDataReader reader,
             int tick,
@@ -210,9 +212,10 @@ namespace Networking.Client {
                     HandleEntitiesLoadedDelta(tick, reader);
                     return true;
                 case WPacketType.SDefaultControllerState:
-                    // ControllerState is sent at the end of grouped packets; increase tick accordingly
-                    // TODO: Not certain this is the reason this is going on.....
                     HandleDefaultControllerState(tick, reader);
+                    return true;
+                case WPacketType.SChatMessage:
+                    HandleChatMessage(tick, reader);
                     return true;
                 default: {
                     Debug.Log($"Received an (unimplemented) {packetType} packet!");
@@ -269,7 +272,7 @@ namespace Networking.Client {
             entitiesLoadedDelta.Deserialize(reader);
 
             foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
-                WCTimedPacketSlotter.SlotPacket(
+                WCPacketCacher.CachePacket(
                     tick,
                     new WSEntityKillPkt() {
                         entityId = entityId,
@@ -279,7 +282,7 @@ namespace Networking.Client {
             }
 
             foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
-                WCTimedPacketSlotter.SlotPacket(
+                WCPacketCacher.CachePacket(
                     tick,
                     new WSEntitySpawnPkt() {
                         entity = entity,
@@ -310,8 +313,9 @@ namespace Networking.Client {
             WSEntityTransformUpdatePkt entityTransformUpdate = new();
             entityTransformUpdate.Deserialize(reader);
             entityTransformUpdate.entityId = entityId;
-            WCTimedPacketSlotter.SlotPacket(receivedTick, entityTransformUpdate);
+            WCPacketCacher.CachePacket(receivedTick, entityTransformUpdate);
         }
+
 
         private void HandleDefaultControllerState(int receivedTick, NetDataReader reader) {
             WSDefaultControllerStatePkt confirmedControllerState = new();
@@ -334,6 +338,13 @@ namespace Networking.Client {
         }
 
 
+        private void HandleChatMessage(int receivedTick, NetDataReader reader) {
+            WSChatMessagePkt pkt = new();
+            pkt.Deserialize(reader);
+            WCPacketCacher.CachePacket(receivedTick, pkt);
+        }
+
+
         private void ResimulateTicks(int fromTick) {
             // Subtract one since we don't want to resimulate the received tick
             int tickDifference = SendingTick - fromTick - 1;
@@ -346,6 +357,18 @@ namespace Networking.Client {
             }
 
             //Debug.Log($"Ended on {SendingTick}");
+        }
+
+
+        private void SendChatMessage(string message) {
+            NetDataWriter writer = new();
+            WCChatMessagePkt pkt = new() {
+                message = message
+            };
+
+            // Tick is not relevant here but needs to be written regardless
+            WPacketCommunication.SendSingle(writer, server, 0, pkt, DeliveryMethod.ReliableOrdered);
+            Debug.Log("Sent message to the server!");
         }
     }
 }

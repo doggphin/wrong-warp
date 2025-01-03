@@ -76,7 +76,7 @@ namespace Networking.Shared {
                 if (beSafe && reader.AvailableBytes < 2)
                     return false;
 
-                WPacketType packetType = (WPacketType)reader.GetUShort();
+                WPacketType packetType = reader.GetPacketType();
 
                 if (!packetHandler(receivedFrom, reader, tick, packetType)) {
                     return false;

@@ -14,8 +14,7 @@ public class ChatUiMessageLog : MonoBehaviour {
     
     void Awake() {
         for(int i=0; i<BACKLOG_CAPACITY; i++) {
-            GameObject instantiatedMessage = Instantiate(messagePrefab);
-            messageLog[i] = instantiatedMessage.GetComponent<ChatUiMessage>();
+            messageLog[i] = Instantiate(messagePrefab, transform).GetComponent<ChatUiMessage>();
         }
     }
 

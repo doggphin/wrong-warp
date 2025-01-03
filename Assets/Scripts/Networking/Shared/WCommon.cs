@@ -1,8 +1,3 @@
-using Networking;
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices.WindowsRuntime;
-using TMPro;
 using UnityEngine;
 
 namespace Networking.Shared
@@ -62,6 +57,7 @@ namespace Networking.Shared
             }
         }
 
+
         public bool CheckTickIsMoreRecent(int tick, bool returnTrueIfEquals = false) {
             return returnTrueIfEquals ? 
                 tick >= timestamps[WCommon.GetModuloTPS(tick)] :
@@ -78,6 +74,11 @@ namespace Networking.Shared
         public void SetTimestamp(int tick) {
             timestamps[WCommon.GetModuloTPS(tick)] = tick;
         }
+
+
+        public int GetTimestamp(int tick) {
+            return timestamps[WCommon.GetModuloTPS(tick)];
+        }
         
 
         public bool TryGetByTimestamp(int timestamp, out T value) {
@@ -90,19 +91,12 @@ namespace Networking.Shared
             }
         }
 
-        public TimestampedCircularTickBuffer(T defaultValue, int? initialTimestamp) {
+        public TimestampedCircularTickBuffer(T defaultValue, int initialTimestamp) {
             for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
                 buffer[i] = defaultValue;
-            }
-
-            if(initialTimestamp == null)
-                return;
-
-            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
-                timestamps[i] = initialTimestamp.Value;
+                timestamps[i] = initialTimestamp;
             }
         }
-
         public TimestampedCircularTickBuffer() {}
     }
 }

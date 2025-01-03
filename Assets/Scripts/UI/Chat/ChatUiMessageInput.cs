@@ -10,7 +10,7 @@ public class ChatUiMessageInput : MonoBehaviour {
         input.Select();
         input.ActivateInputField();
 
-        input.onEndEdit.RemoveListener(ReselectInputField);
+        input.onEndEdit.AddListener(ReselectInputField);
     }
 
     public void StopTyping() {
@@ -20,7 +20,7 @@ public class ChatUiMessageInput : MonoBehaviour {
 
     private void ReselectInputField(string _) {
         Debug.Log("Reselecting input!");
-        input.Select();
+        StartTyping();
     }
 
 

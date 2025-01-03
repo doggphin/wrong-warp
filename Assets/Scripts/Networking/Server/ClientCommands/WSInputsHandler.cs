@@ -64,9 +64,9 @@ namespace Networking.Server {
 
 
         // Sets multiple inputs at a time
-        public static void SetGroupedInputsOfPlayer(int tick, int playerId, WCGroupedInputsPkt groupedInputsPkt) {
+        public static void SetGroupedInputsOfPlayer(int tick, int peerId, WCGroupedInputsPkt groupedInputsPkt) {
             for(int i=0; i<groupedInputsPkt.inputsSerialized.Length; i++) {
-                SetInputsOfPlayer(tick + i, playerId, groupedInputsPkt.inputsSerialized[i]);
+                SetInputsOfPlayer(tick + i, peerId, groupedInputsPkt.inputsSerialized[i]);
             }
         }
     }

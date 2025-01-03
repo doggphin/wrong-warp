@@ -15,16 +15,9 @@ namespace Controllers.Shared {
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
 
-        public static Action TypingClicked;
+        public static Action ChatClicked;
         public static Action EscapeClicked;
-        
-        public static void SetGameplayControlsEnabled(bool value) {
-            if(value) {
-                inputActions.Gameplay.Enable();
-            } else {
-                inputActions.Gameplay.Disable();
-            }
-        }
+        public static Action ConfirmClicked;
 
 
         public static void Init() {
@@ -52,13 +45,9 @@ namespace Controllers.Shared {
                 player?.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
 
-            inputActions.Ui.Chat.started += (InputAction.CallbackContext ctx) => {
-                TypingClicked?.Invoke();
-            };
-
-            inputActions.Ui.Escape.started += (InputAction.CallbackContext ctx) => {
-                EscapeClicked?.Invoke();
-            };
+            inputActions.Ui.Chat.started += (_) => ChatClicked?.Invoke();
+            inputActions.Ui.Escape.started += (_) => EscapeClicked?.Invoke();
+            inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
         }
 
 
@@ -105,6 +94,23 @@ namespace Controllers.Shared {
                 finalInputs.Reset();
             } else {
                 player?.Control(inputs[onTick], onTick);
+            }
+        }
+
+
+        // Gameplay and Ui don't share a base class, can't be made more efficient
+        public static void SetGameplayControlsEnabled(bool value) {
+            if(value) {
+                inputActions.Gameplay.Enable();
+            } else {
+                inputActions.Gameplay.Disable();
+            }
+        }
+        public static void SetUiControlsEnabled(bool value) {
+            if(value) {
+                inputActions.Ui.Enable();
+            } else {
+                inputActions.Ui.Disable();
             }
         }
     }
