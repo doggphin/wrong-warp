@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put((ushort)WPacketType.SEntityKill);
+            writer.Put(WPacketType.SEntityKill);
 
             writer.Put(entityId);
             writer.Put((byte)reason);

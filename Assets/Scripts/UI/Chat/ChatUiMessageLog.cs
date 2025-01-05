@@ -11,6 +11,7 @@ public class ChatUiMessageLog : MonoBehaviour {
     [SerializeField] GameObject messagePrefab;
 
     private ChatUiMessage[] messageLog = new ChatUiMessage[BACKLOG_CAPACITY];
+    private int messageLogIndex = 0;
     
     void Awake() {
         for(int i=0; i<BACKLOG_CAPACITY; i++) {
@@ -19,11 +20,12 @@ public class ChatUiMessageLog : MonoBehaviour {
     }
 
     public void AddMessage(WSChatMessagePkt newMessage) {
-        /*if(messageLog.Length > BACKLOG_CAPACITY)
-            messageLog.RemoveAt(0);
+        messageLogIndex = (messageLogIndex + 1) % BACKLOG_CAPACITY;
 
-        messageLog.Append(newMessage);
-        UpdateMessages();*/
+        ChatUiMessage uiMessage = messageLog[messageLogIndex];
+        
+        uiMessage.gameObject.transform.SetAsFirstSibling();
+        uiMessage.SetNewMessage(newMessage);
     }
 
     public void ClearMessages() {

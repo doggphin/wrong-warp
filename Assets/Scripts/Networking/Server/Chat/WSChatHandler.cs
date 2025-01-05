@@ -4,6 +4,7 @@ using LiteNetLib.Utils;
 using Networking.Shared;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Networking.Server {
     public static class WSChatHandler {
@@ -52,22 +53,27 @@ namespace Networking.Server {
 
         private static void BroadcastChatMessage(string msg, NetPeer fromPeer, bool isServerMessage) {
             WSPlayer player = null;
-            // If fromPeer is null, it's possible this is a server/host message
-            if(fromPeer != null && !WSPlayer.FromPeer(fromPeer, out player))
-                return;
 
+            if(!isServerMessage) {
+                // Non-server message from a non-peer means it's a host message
+                player = fromPeer == null ? WSNetServer.HostPlayer : WSPlayer.FromPeer(fromPeer);
+            }
+            
             WSChatMessagePkt chatMessagePkt = new() {
                 isServerMessage = isServerMessage,
-                speakerId = isServerMessage ? 0 : player.Entity.Id,
+                speakerId = isServerMessage ? 
+                    0 
+                    : player.Entity.Id,
                 message = msg
             };
 
+            // Display chat on host end
+            ChatUiManager.ReceiveChatMessage(chatMessagePkt);
+
+            // Non-server messages get sent locally
             if(!isServerMessage) {
                 player.Entity.CurrentChunk.AddGenericUpdate(WSNetServer.Tick, chatMessagePkt, true);
-                // If the host is sending this, show in host chat
-                if(fromPeer == null) {
-                    ChatUiManager.ReceiveChatMessage(chatMessagePkt);
-                }
+            // Server messages get sent globally
             } else {
                 // Send server messages directly to each client
                 NetDataWriter writer = new();
@@ -75,15 +81,7 @@ namespace Networking.Server {
                 foreach(var peer in WSNetServer.ServerNetManager.ConnectedPeerList) {
                     peer.Send(writer, DeliveryMethod.ReliableUnordered);
                 }
-                // Show message on host as well
-                ChatUiManager.ReceiveChatMessage(chatMessagePkt);
             }
-            
-            WSChatMessagePkt pkt = new() {
-                speakerId = player.Entity.Id,
-                isServerMessage = fromPeer == null,
-                message = msg
-            };
         }
 
 

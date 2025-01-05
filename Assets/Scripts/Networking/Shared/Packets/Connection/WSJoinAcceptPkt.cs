@@ -7,7 +7,7 @@ namespace Networking.Shared {
         public int tick;
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put((ushort)WPacketType.SJoinAccept);
+            writer.Put(WPacketType.SJoinAccept);
 
             writer.Put(userName);
             writer.Put(playerEntityId);

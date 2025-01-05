@@ -8,14 +8,14 @@ namespace Networking.Shared {
         public int entityId;
         public WTransformSerializable transform;
 
-        public void Serialize(NetDataWriter writer) {
-            writer.Put((ushort)WPacketType.SEntityTransformUpdate);
-
-            transform.Serialize(writer);
-        }
-
         public void Deserialize(NetDataReader reader) {
             transform.Deserialize(reader);
+        }
+
+        public void Serialize(NetDataWriter writer) {
+            writer.Put(WPacketType.SEntityTransformUpdate);
+
+            transform.Serialize(writer);
         }
 
         public void ApplyOnClient(int tick) {

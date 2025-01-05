@@ -15,7 +15,7 @@ namespace Networking.Client {
         private Action<DisconnectInfo> onDisconnected;
         private NetDataWriter writer = new();
         public int Ping { get; private set; }
-        private string userName;
+        private string userName = "";
         private bool isJoined = false;
         /// <summary> If this is set to a value, search for a player entity with this ID. </summary>
         private int? playerEntityIdToFind = null;
@@ -38,7 +38,7 @@ namespace Networking.Client {
         
 
         public static WCNetClient Instance { get; private set; }
-        private void Awake() {
+        void Awake() {
             if(Instance != null)
                 Destroy(gameObject);
 
@@ -94,7 +94,7 @@ namespace Networking.Client {
             }
 
             // This should be done in a better way...
-            TryFindPlayer();
+            FindPlayerIfNotFound();
             ControlsManager.PollAndControl(SendingTick);
 
             // Send inputs to the server
@@ -139,19 +139,21 @@ namespace Networking.Client {
 
 
         // Tries to initialize a player from the entity with ID myEntityId.
-        private void TryFindPlayer() {
-            if(PlayerEntity == null && playerEntityIdToFind != null) {
-                WCEntity entity = WCEntityManager.GetEntityById(playerEntityIdToFind.Value);
+        private void FindPlayerIfNotFound() {
+            if(PlayerEntity != null || playerEntityIdToFind == null)
+                return;
 
-                if(entity != null) {
-                    playerEntityIdToFind = null;
-                    PlayerEntity = entity;
-                    Player = PlayerEntity.GetComponent<IPlayer>();
-                    Player.EnablePlayer();
-                    ControlsManager.player = Player;
-                    entity.isMyPlayer = true;
-                }
-            }
+            WCEntity entity = WCEntityManager.GetEntityById(playerEntityIdToFind.Value);
+
+            if(entity == null)
+                return;
+
+            playerEntityIdToFind = null;
+            PlayerEntity = entity;
+            Player = PlayerEntity.GetComponent<IPlayer>();
+            Player.EnablePlayer();
+            ControlsManager.player = Player;
+            entity.isMyPlayer = true;
         }
 
 
@@ -163,7 +165,7 @@ namespace Networking.Client {
         }
 
 
-        private bool ConsumeGeneralUpdate(
+        public bool ConsumeGeneralUpdate(
             int tick,
             WPacketType packetType,
             NetDataReader reader) {
@@ -214,11 +216,14 @@ namespace Networking.Client {
                 case WPacketType.SDefaultControllerState:
                     HandleDefaultControllerState(tick, reader);
                     return true;
+                case WPacketType.SChunkReliableUpdates:
+                    HandleChunkReliableUpdates(tick, reader);
+                    return true;
                 case WPacketType.SChatMessage:
                     HandleChatMessage(tick, reader);
                     return true;
                 default: {
-                    Debug.Log($"Received an (unimplemented) {packetType} packet!");
+                    Debug.Log($"Received an (unimplemented) {(ushort)packetType} packet!");
                     return false;
                 }
             }
@@ -226,7 +231,7 @@ namespace Networking.Client {
 
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader, true);
+            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
         }
 
 
@@ -259,9 +264,7 @@ namespace Networking.Client {
 
         private void HandleChunkUpdateSnapshot(int tick, NetDataReader reader) {
             WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
-                startTick = tick,
-                c_entityHandler = ConsumeEntityUpdate,
-                c_generalHandler = ConsumeGeneralUpdate
+                c_startTick = tick - WCommon.TICKS_PER_SNAPSHOT
             };
             chunkSnapshotPkt.Deserialize(reader);
         }
@@ -339,9 +342,17 @@ namespace Networking.Client {
 
 
         private void HandleChatMessage(int receivedTick, NetDataReader reader) {
+            Debug.Log("Got a chat message!");
             WSChatMessagePkt pkt = new();
             pkt.Deserialize(reader);
             WCPacketCacher.CachePacket(receivedTick, pkt);
+        }
+
+
+        private void HandleChunkReliableUpdates(int receivedTick, NetDataReader reader) {
+            Debug.Log("Got a reliable updates!");
+            WSChunkReliableUpdatesPkt pkt = new();
+            pkt.Deserialize(reader);
         }
 
 

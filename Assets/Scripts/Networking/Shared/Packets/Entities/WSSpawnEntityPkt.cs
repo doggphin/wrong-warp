@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put((ushort)WPacketType.SEntitySpawn);
+            writer.Put(WPacketType.SEntitySpawn);
 
             entity.Serialize(writer);
             writer.Put((byte)reason);
@@ -28,7 +28,6 @@ namespace Networking.Shared {
         
         public void ApplyOnClient(int tick)
         {
-            Debug.Log("Spawning!");
             WCEntityManager.Spawn(this);
         }
     }

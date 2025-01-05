@@ -22,6 +22,7 @@ namespace Networking.Shared {
         SDefaultControllerState,
         CChatMessage,
         SChatMessage,
+        SChunkReliableUpdates,
     }
 }
 
@@ -53,8 +54,8 @@ public static class WExtensions {
                 // If there's a leading 1, then remove it
                 chunk &= 0b01111111;
 
-                ret |= chunk;
                 ret <<= 7;
+                ret |= chunk;
             } else {
                 ret |= chunk;
 
@@ -85,13 +86,13 @@ public static class WExtensions {
     }
 
 
-    public static void PutShiternion(this NetDataWriter writer, Quaternion quat) {
+    public static void PutLossyQuat(this NetDataWriter writer, Quaternion quat) {
         writer.Put(CompressNormalizedFloat(quat.x));
         writer.Put(CompressNormalizedFloat(quat.y));
         writer.Put(CompressNormalizedFloat(quat.z));
         writer.Put(CompressNormalizedFloat(quat.w));
     }
-    public static Quaternion GetShiternion(this NetDataReader reader) {
+    public static Quaternion GetLossyQuat(this NetDataReader reader) {
         Quaternion rotation = new() {
             x = DecompressNormalizedFloat(reader.GetByte()),
             y = DecompressNormalizedFloat(reader.GetByte()),
@@ -140,6 +141,7 @@ public static class WExtensions {
             reader.GetFloat(),
             reader.GetFloat());
     }
+
 
     public static void Put(this NetDataWriter writer, WPacketType packetType) {
         writer.Put((ushort)packetType);

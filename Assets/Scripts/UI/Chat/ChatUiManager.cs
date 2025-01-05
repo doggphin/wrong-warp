@@ -40,7 +40,8 @@ public class ChatUiManager : BaseUiElement
         messageInput.gameObject.SetActive(true);
         messageInput.StartTyping();
 
-        ControlsManager.ConfirmClicked += () => ConfirmChatMessage();
+        ControlsManager.ConfirmClicked += ConfirmChatMessage;
+        // this needs to be fixed; won't add + remove
         ControlsManager.ChatClicked -= () => UiManager.SetActiveUiElement(this, true);
     }
     
@@ -59,7 +60,7 @@ public class ChatUiManager : BaseUiElement
         Instance.messageInput.ClearInput();
         messageInput.StopTyping();
 
-        ControlsManager.ConfirmClicked -= () => ConfirmChatMessage();
+        ControlsManager.ConfirmClicked -= ConfirmChatMessage;
         ControlsManager.ChatClicked += () => UiManager.SetActiveUiElement(this, true);
     }
 
@@ -70,8 +71,6 @@ public class ChatUiManager : BaseUiElement
 
 
     public static void ConfirmChatMessage() {
-        Debug.Log("Sending!");
-
         string message = Instance.messageInput.GetInput();
         SendChatMessage?.Invoke(message);
         

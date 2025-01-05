@@ -56,6 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "wrong-warp.sln",
+    "dotnet.defaultSolution": "ww.sln",
     "workbench.tree.indent": 24
 }

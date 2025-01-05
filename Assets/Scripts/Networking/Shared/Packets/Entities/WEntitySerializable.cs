@@ -9,15 +9,12 @@ namespace Networking.Shared {
         public void Deserialize(NetDataReader reader) {
             entityId = reader.GetInt();
             prefabId = reader.GetPrefabId();
-
             transform.Deserialize(reader);
         }
 
         public void Serialize(NetDataWriter writer) {
             writer.Put(entityId);
-
             writer.Put(prefabId);
-
             transform.Serialize(writer);
         }
     }

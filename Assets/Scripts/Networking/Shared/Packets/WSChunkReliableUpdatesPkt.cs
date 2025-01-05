@@ -1,13 +1,17 @@
 using System.Collections.Generic;
+using UnityEngine;
 using LiteNetLib.Utils;
 using Networking.Client;
 
 namespace Networking.Shared {
-    public class WSChunkGeneralUpdatesPkt : INetSerializable {
+    public class WSChunkReliableUpdatesPkt : INetSerializable {
+        public void SetStartTick(int currentServerTick) => startTick = currentServerTick - WCommon.TICKS_PER_SNAPSHOT;
         public int startTick;
         public List<INetSerializable>[] updates;
 
-        public void Serialize(NetDataWriter writer) {        
+        public void Serialize(NetDataWriter writer) {
+            writer.Put(WPacketType.SChunkReliableUpdates);
+
             writer.Put(startTick);
             
             // Save position to write bitflags to return to later. Put a dummy value here to overwrite later.
@@ -21,18 +25,18 @@ namespace Networking.Shared {
                     updatesExistBitflags |= 1 << i;
                     // Put length of updates
                     writer.PutVarUInt((uint)updates[i].Count);
+                    Debug.Log($"Putting {updates[i].Count} updates!");
                     // Put updates
                     foreach(INetSerializable update in updates[i]) {
                         update.Serialize(writer);
                     }
                 }
             }
-            writer.Put((byte)updatesExistBitflags);
 
             // Write bitflags, then return to final position
             int finalWriterPosition = writer.Length;
             writer.SetPosition(bitflagsWriterPosition);
-            writer.Put(updatesExistBitflags);
+            writer.Put((byte)updatesExistBitflags);
             writer.SetPosition(finalWriterPosition);
         }
 
@@ -47,8 +51,9 @@ namespace Networking.Shared {
                     continue;
 
                 int amountOfUpdates = (int)reader.GetVarUInt();
+                Debug.Log($"There are {amountOfUpdates} updates in here!");
                 
-                for(int j=0; i<amountOfUpdates; j++) {
+                for(int j=0; j<amountOfUpdates; j++) {
                     WPacketType packetType = reader.GetPacketType();
                     WCNetClient.Instance.ProcessPacketFromReader(null, reader, startTick + i, packetType);
                 }
