@@ -15,7 +15,7 @@ namespace Networking.Server {
 
         private static int tick;
         public static int Tick => tick;
-        private static WWatch watch;
+        private static WWatch watch = new(); // TODO: Should not do this here
         public static WSPlayer HostPlayer { get; private set; }
 
         public int GetTick() {
@@ -48,7 +48,6 @@ namespace Networking.Server {
             ChatUiManager.SendChatMessage += (string message) => WSChatHandler.HandleChatMessage(message, null, false);
 
             watch = new();
-            watch.Start();
         }
 
         private void CreatePlayer() {
@@ -260,7 +259,7 @@ namespace Networking.Server {
 
         public void OnConnectionRequest(ConnectionRequest request) {
             Debug.Log("Received a connection request!");
-            request.AcceptIfKey("WW 0.01");
+            request.AcceptIfKey(WNetManager.CONNECTION_KEY);
         }
 
 

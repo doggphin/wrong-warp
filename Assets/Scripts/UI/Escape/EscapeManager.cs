@@ -1,8 +1,12 @@
+using Networking.Client;
+using Networking.Shared;
 using UnityEngine;
+using UnityEngine.Android;
 
 public class EscapeManager : BaseUiElement
 {
     public static EscapeManager Instance { get; private set; }
+
     
     void Start() {
         if(Instance) {
@@ -18,7 +22,9 @@ public class EscapeManager : BaseUiElement
     }
 
     public void Disconnect() {
-        Debug.Log("Not implemented!");
+        WNetManager.Disconnect(new WDisconnectInfo { reason = "Clicked Disconnect", wasExpected = true});
+        UiManager.CloseActiveUiElement();
+        Cursor.lockState = CursorLockMode.None;
     }
 
     public void OpenSettings() {

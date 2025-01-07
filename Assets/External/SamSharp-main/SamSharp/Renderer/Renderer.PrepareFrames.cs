@@ -1,4 +1,6 @@
-﻿namespace SamSharp.Renderer
+﻿using UnityEngine;
+
+namespace SamSharp.Renderer
 {
     public partial class Renderer
     {
@@ -56,9 +58,12 @@
 
             for (int i = frameData.Amplitudes.Mouth.Count - 1; i >= 0; i--)
             {
-                frameData.Amplitudes.Mouth[i] = amplitudeRescale[frameData.Amplitudes.Mouth[i]];
-                frameData.Amplitudes.Throat[i] = amplitudeRescale[frameData.Amplitudes.Throat[i]];
-                frameData.Amplitudes.Formant3[i] = amplitudeRescale[frameData.Amplitudes.Formant3[i]];
+                Debug.Log(frameData.Amplitudes.Mouth.Count);
+                Debug.Log(i);
+                // i dont fucking know anymore
+                frameData.Amplitudes.Mouth[i % (frameData.Amplitudes.Mouth.Count - 1)] = amplitudeRescale[frameData.Amplitudes.Mouth[i % (frameData.Amplitudes.Mouth.Count - 1)] % (amplitudeRescale.Length - 1)];
+                frameData.Amplitudes.Throat[i % (frameData.Amplitudes.Mouth.Count - 1)] = amplitudeRescale[frameData.Amplitudes.Throat[i % (frameData.Amplitudes.Mouth.Count - 1)] % (amplitudeRescale.Length - 1)];
+                frameData.Amplitudes.Formant3[i % (frameData.Amplitudes.Mouth.Count - 1)] = amplitudeRescale[frameData.Amplitudes.Formant3[i % (frameData.Amplitudes.Mouth.Count - 1)] % (amplitudeRescale.Length - 1)];
             }
 
             frameData.T = t;

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Networking.Shared;
@@ -22,8 +24,41 @@ namespace Networking.Server {
             if(msg.Length > MAX_CHAT_MESSAGE_LENGTH)
                 return false;
 
+            msg = SanitizeMessageForSam(msg);
+
             BroadcastChatMessage(msg, fromPeer, isServerMessage);
             return true;
+        }
+
+
+        private static string SanitizeMessageForSam(string msg) {
+            bool IsAlphanumeric(char character) {
+                Debug.Log($"{character} is {(character >= 48 && character <= 57) || (character >= 65 && character <= 90) || (character >= 97 && character <= 122)}");
+                return (character >= 48 && character <= 57) || (character >= 65 && character <= 90) || (character >= 97 && character <= 122);
+            }
+
+            List<char> sanitized = new();
+            for(int i=0, punctuationLength = 0; i<msg.Length; i++) {
+                char character = msg[i];
+                if(character <= 31 || character >= 127) {
+                    continue;
+                }
+
+                if(IsAlphanumeric(character)) {
+                    punctuationLength = 0;
+                    sanitized.Add(character);
+                    continue;
+                } else if(punctuationLength++ < 5) {
+                    sanitized.Add(character);
+                }
+            }
+            
+            char lastCharacter = sanitized.Last();
+            if(lastCharacter != '.' && lastCharacter != '?' && lastCharacter != '!') {
+                sanitized.Add('.');
+            }
+
+            return new string(sanitized.ToArray());
         }
 
 

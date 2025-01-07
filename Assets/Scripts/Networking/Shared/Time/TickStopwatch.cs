@@ -5,7 +5,7 @@ namespace Networking.Shared {
         private Stopwatch sw;
         private long msTicked;
 
-        public void Start() {
+        public WWatch() {
             sw = new();
             sw.Start();
             msTicked = 0;

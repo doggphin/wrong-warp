@@ -27,13 +27,4 @@ public class ChatUiMessageLog : MonoBehaviour {
         uiMessage.gameObject.transform.SetAsFirstSibling();
         uiMessage.SetNewMessage(newMessage);
     }
-
-    public void ClearMessages() {
-        //messageLog.Clear();
-    }
-
-    private void UpdateMessages() {
-        string logText = "";
-
-    }
 }

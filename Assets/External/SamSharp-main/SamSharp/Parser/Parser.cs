@@ -11,8 +11,8 @@ namespace SamSharp.Parser
         private Dictionary<int, int?> phonemeIndexes;
         
         
-        private string? GetPhonemeNamePos(int? pos) => pos is null || phonemeIndexes[pos.Value] is null ? null : phonemeNameTable[phonemeIndexes[pos.Value]!.Value];
-        private string? GetPhonemeName(int? phoneme) => phoneme is null ? null : phonemeNameTable[phoneme.Value];
+        private string GetPhonemeNamePos(int? pos) => pos is null || phonemeIndexes[pos.Value] is null ? null : phonemeNameTable[phonemeIndexes[pos.Value]!.Value];
+        private string GetPhonemeName(int? phoneme) => phoneme is null ? null : phonemeNameTable[phoneme.Value];
         
         private int? GetPhoneme(int pos)
         {
@@ -105,7 +105,7 @@ namespace SamSharp.Parser
         /// </summary>
         /// <param name="input">The data to parse.</param>
         /// <returns>The parsed data.</returns>
-        public PhonemeData[] Parse(string? input)
+        public PhonemeData[] Parse(string input)
         {
             if (input is null)
                 return null;

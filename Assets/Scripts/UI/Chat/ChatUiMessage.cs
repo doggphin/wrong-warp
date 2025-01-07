@@ -3,7 +3,6 @@ using Networking.Shared;
 using TMPro;
 using UnityEngine;
 using SamSharp;
-using System;
 
 [RequireComponent(typeof(CanvasGroup), typeof(RectTransform))]
 public class ChatUiMessage : MonoBehaviour {
@@ -60,13 +59,10 @@ public class ChatUiMessage : MonoBehaviour {
         Sam sam = new(new Options());
         var byteAudio = sam.Speak(msg);
         
-        //var floatAudio = new float[byteAudio.Length / 4];
-        //Buffer.BlockCopy(byteAudio, 0, floatAudio, 0, byteAudio.Length);
         var floatAudio = new float[byteAudio.Length];
         for(int i=0; i<floatAudio.Length; i++) {
             floatAudio[i] = (byteAudio[i] / 127f) - 0.5f;
         }
-        
         AudioClip newClip = AudioClip.Create("sam", floatAudio.Length, 1, 22050, false);
         newClip.SetData(floatAudio, 0);
         audioSource.clip = newClip;

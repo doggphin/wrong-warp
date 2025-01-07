@@ -31,4 +31,9 @@ public abstract class BaseSingleton<T> : MonoBehaviour where T : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+
+    protected virtual void OnDestroy() {
+        instance = null;
+    }
 }

@@ -255,6 +255,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9204861}
   m_CullTransparentMesh: 1
+--- !u!4 &60222817 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2642073418528213077, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
+  m_PrefabInstance: {fileID: 7858416553204224972}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &81806198
 GameObject:
   m_ObjectHideFlags: 0
@@ -504,7 +509,6 @@ GameObject:
   - component: {fileID: 259361839}
   - component: {fileID: 259361838}
   - component: {fileID: 259361837}
-  - component: {fileID: 259361840}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -573,18 +577,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &259361840
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 259361836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d158fe54882da3e4197dba46b531a84a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &292286261
 GameObject:
   m_ObjectHideFlags: 0
@@ -3070,6 +3062,10 @@ PrefabInstance:
       propertyPath: clientAddress
       value: 
       objectReference: {fileID: 2016640491}
+    - target: {fileID: 8608626494055877048, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
+      propertyPath: entitiesHolder
+      value: 
+      objectReference: {fileID: 60222817}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -9,10 +9,10 @@ namespace Networking.Server {
         private static Dictionary<int, WSEntity> entities = new();
         private static int nextEntityId = -1;
 
-        public static GameObject SpawnHolder {get; set; }
+        public static Transform spawnHolder;
 
         public static WSEntity SpawnEntity(WPrefabId prefabId, int tick, bool isChunkLoader = false) {
-            GameObject gameObject = Object.Instantiate(WPrefabLookup.GetById(prefabId), SpawnHolder.transform);
+            GameObject gameObject = Object.Instantiate(WPrefabLookup.GetById(prefabId), spawnHolder);
             
             if(gameObject == null)
                 throw new System.Exception("Couldn't instantiate prefab!!!!");

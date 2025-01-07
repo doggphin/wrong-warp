@@ -20,6 +20,11 @@ namespace Networking.Shared
         public static bool IsTickOld(int tick, int pastTick) => tick - pastTick > WCommon.TICKS_PER_SECOND - 1;
     }
 
+    public struct WDisconnectInfo {
+        public string reason;
+        public bool wasExpected;
+    }
+
 
     public class CircularTickBuffer<T> {
         public T[] buffer = new T[WCommon.TICKS_PER_SECOND];

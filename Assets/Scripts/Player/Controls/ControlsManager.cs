@@ -1,13 +1,12 @@
 using Networking.Shared;
 using UnityEngine.InputSystem;
 using UnityEngine;
-using Unity.VisualScripting;
 using System;
-using Unity.Profiling.LowLevel.Unsafe;
+using UnityEngine.WSA;
 
 namespace Controllers.Shared {
     public static class ControlsManager {
-        private static PlayerInputActions inputActions = new();
+        private static PlayerInputActions inputActions;
 
         public static IPlayer player = null;
 
@@ -20,7 +19,11 @@ namespace Controllers.Shared {
         public static Action ConfirmClicked;
 
 
+        private static bool isInitialized = false;
         public static void Init() {
+            if(isInitialized)
+                return;
+            
             for(int i=0; i<inputs.buffer.Length; i++) {
                 inputs.buffer[i] = new();
             }
@@ -31,8 +34,7 @@ namespace Controllers.Shared {
             }
 
             inputActions = new();
-            inputActions.Gameplay.Enable();
-            inputActions.Ui.Enable();
+            Activate();
 
             BindInputActionToInputType(inputActions.Gameplay.Forward, InputType.Forward);
             BindInputActionToInputType(inputActions.Gameplay.Left, InputType.Left);
@@ -41,13 +43,26 @@ namespace Controllers.Shared {
             BindInputActionToInputType(inputActions.Gameplay.Jump, InputType.Jump);
             BindInputActionToInputType(inputActions.Gameplay.Crouch, InputType.Crouch);
 
-            inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => { 
+            inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => {
                 player?.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
 
             inputActions.Ui.Chat.started += (_) => ChatClicked?.Invoke();
             inputActions.Ui.Escape.started += (_) => EscapeClicked?.Invoke();
             inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
+
+            isInitialized = true;
+        }
+
+        public static void Activate() {
+            inputActions.Gameplay.Enable();
+            inputActions.Ui.Enable();
+        }
+
+        public static void Deactivate() {
+            Debug.Log("Disabling controls!");
+            inputActions.Gameplay.Disable();
+            inputActions.Ui.Disable();
         }
 
 

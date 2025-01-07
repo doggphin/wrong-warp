@@ -9,12 +9,11 @@ using Networking.Shared;
 using Controllers.Shared;
 
 namespace Networking.Client {
-    public class WCNetClient : MonoBehaviour, INetEventListener {
-        private NetPeer server;
-        private NetManager netManager;
-        private Action<DisconnectInfo> onDisconnected;
+    [RequireComponent(typeof(WCEntityManager))]
+    public class WCNetClient : BaseSingleton<WCNetClient>, INetEventListener {
+        WCEntityManager entityManager;
+        private NetPeer serverPeer;
         private NetDataWriter writer = new();
-        public int Ping { get; private set; }
         private string userName = "";
         private bool isJoined = false;
         /// <summary> If this is set to a value, search for a player entity with this ID. </summary>
@@ -22,53 +21,66 @@ namespace Networking.Client {
         public static WCEntity PlayerEntity {get; private set;} = null;
         public static IPlayer Player {get; private set;} = null;
 
+        private WCPacketCacher packetCacher;
         private static WWatch watch;
         public static float PercentageThroughTick => watch.GetPercentageThroughTick();
         // If client is sending stuff too late (ping is better than they're pretending it is), lower window + skip a couple ticks
         // If client is sending stuff too early (ping is worse than they're pretending it is), increase window + wait a couple ticks
         // This should be done by temporarily increasing the watch AdvanceTick speed.
         //private static int TickOffsetWindow = WCommon.TICKS_PER_SNAPSHOT + 1;
-        public static int CentralTimingTick {get; set;}
+        public static int CentralTimingTick { get; set; }
         private static int windowSize = WCommon.TICKS_PER_SNAPSHOT * 2;
         //private int DesiredTickOffset = -TickOffsetWindow * 2; // Initially want to start in the future
         public static int ObservingTick => CentralTimingTick - windowSize;
         public static int SendingTick => CentralTimingTick + windowSize;
         private WCTickDifferenceTracker tickDifferenceTracker = new();
         private int necessaryTickCompensation = 0;
+
+        protected override void OnDestroy() {
+            base.OnDestroy();
+            ChatUiManager.SendChatMessage -= SendChatMessage;
+            ControlsManager.player = null;
+            ControlsManager.Deactivate();
+            Destroy(gameObject);
+        }
         
+        private bool isActivated = false;
+        private void Activate() {
+            entityManager = GetComponent<WCEntityManager>();
 
-        public static WCNetClient Instance { get; private set; }
-        void Awake() {
-            if(Instance != null)
-                Destroy(gameObject);
+            userName = $"{Environment.MachineName}_{new System.Random().Next(1000000)}";
 
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-
-        public void Init() {
-            DontDestroyOnLoad(gameObject);
-            System.Random rand = new();
-            userName = $"{Environment.MachineName}_{rand.Next(1000000)}";
-            
-            netManager = new NetManager(this) {
-                AutoRecycle = true,
-                IPv6Enabled = false
-            };
-            netManager.Start();
-
-            WCPacketCacher.Init();
+            packetCacher = new();
             watch = new();
-            watch.Start();
 
+            ControlsManager.Activate();
             ChatUiManager.SendChatMessage += SendChatMessage;
+
+            isActivated = true;
+            DontDestroyOnLoad(gameObject);
         }
 
 
-        private void Update() {
-            netManager.PollEvents();
+        public Action<WDisconnectInfo> Disconnected;
+        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+            Disconnected?.Invoke(new WDisconnectInfo { reason = nameof(disconnectInfo.Reason), wasExpected = false});
+        }
 
-            if(PercentageThroughTick > 1) {
+        
+        public Action Connected;
+        public void OnPeerConnected(NetPeer peer) {
+            Debug.Log("Connected to server: " + peer.Address);
+            serverPeer = peer;
+
+            Activate();
+
+            WCJoinRequestPkt joinRequest = new() { userName = userName };
+            WPacketCommunication.SendSingle(writer, serverPeer, CentralTimingTick, joinRequest, DeliveryMethod.ReliableOrdered);
+        }
+
+
+        void Update() {
+            if(isActivated && PercentageThroughTick > 1) {
                 watch.AdvanceTick();
                 AdvanceTick(true);
             }
@@ -85,7 +97,7 @@ namespace Networking.Client {
                 CheckForTickCompensation();
             }
 
-            WCPacketCacher.ApplyTick(ObservingTick);
+            packetCacher.ApplyTick(ObservingTick);
 
             // If client is too far ahead, skip this tick
             if(allowTickCompensation && necessaryTickCompensation < 0) {
@@ -94,7 +106,7 @@ namespace Networking.Client {
             }
 
             // This should be done in a better way...
-            FindPlayerIfNotFound();
+            GetPlayerReference();
             ControlsManager.PollAndControl(SendingTick);
 
             // Send inputs to the server
@@ -102,7 +114,7 @@ namespace Networking.Client {
                 //Debug.Log($"Sending inputs for {SendingTick}!");
                 WPacketCommunication.SendSingle(
                     writer, 
-                    server, 
+                    serverPeer, 
                     SendingTick,
                     new WCGroupedInputsPkt() { inputsSerialized = new WInputsSerializable[]{ ControlsManager.inputs[SendingTick] } },
                     DeliveryMethod.Unreliable);
@@ -139,7 +151,7 @@ namespace Networking.Client {
 
 
         // Tries to initialize a player from the entity with ID myEntityId.
-        private void FindPlayerIfNotFound() {
+        private void GetPlayerReference() {
             if(PlayerEntity != null || playerEntityIdToFind == null)
                 return;
 
@@ -157,13 +169,13 @@ namespace Networking.Client {
         }
 
 
-        public void Connect(string address, ushort port, Action<DisconnectInfo> onDisconnected) {
-            this.onDisconnected = onDisconnected;
-
-            Debug.Log($"Attempting to connect to {address}:{port}");
-            netManager.Connect(address, port, "WW 0.01");
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
         }
-
+        public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) => throw new NotImplementedException();
+        public void OnConnectionRequest(ConnectionRequest request) => request.Reject();
+        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) => Debug.Log($"Socket error: {socketError}");
+        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
 
         public bool ConsumeGeneralUpdate(
             int tick,
@@ -172,7 +184,7 @@ namespace Networking.Client {
 
             switch(packetType) {
                 default:
-                    Debug.Log($"Unrecognized entity update packet type {packetType}!");
+                    Debug.Log($"Unrecognized general update packet type {packetType}!");
                     return false;
             }
         }
@@ -230,36 +242,16 @@ namespace Networking.Client {
         }
 
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
+        private void HandleJoinAccept(NetDataReader reader) {
+            WSJoinAcceptPkt pkt = new();
+            pkt.Deserialize(reader);
+            playerEntityIdToFind = pkt.playerEntityId;
+
+            CentralTimingTick = pkt.tick;
+            Debug.Log($"Being told to start at tick {pkt.tick}!");
+
+            isJoined = true;
         }
-
-
-        public void OnPeerConnected(NetPeer peer) {
-            Debug.Log("Connected to server: " + peer.Address);
-            server = peer;
-
-            WCJoinRequestPkt joinRequest = new() { userName = userName };
-            
-            Debug.Log($"Sending join packet with username {joinRequest.userName}");
-
-            WPacketCommunication.SendSingle(writer, server, CentralTimingTick, joinRequest, DeliveryMethod.ReliableOrdered);
-        }
-
-
-        public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) => throw new NotImplementedException();
-
-
-        public void OnConnectionRequest(ConnectionRequest request) { request.Reject(); }
-
-
-        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) { Debug.Log($"Socket error: {socketError}"); }
-
-
-        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { Ping = latency; }
-
-
-        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) { onDisconnected(disconnectInfo); }
 
 
         private void HandleChunkUpdateSnapshot(int tick, NetDataReader reader) {
@@ -275,7 +267,7 @@ namespace Networking.Client {
             entitiesLoadedDelta.Deserialize(reader);
 
             foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
-                WCPacketCacher.CachePacket(
+                packetCacher.CachePacket(
                     tick,
                     new WSEntityKillPkt() {
                         entityId = entityId,
@@ -285,7 +277,7 @@ namespace Networking.Client {
             }
 
             foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
-                WCPacketCacher.CachePacket(
+                packetCacher.CachePacket(
                     tick,
                     new WSEntitySpawnPkt() {
                         entity = entity,
@@ -293,18 +285,6 @@ namespace Networking.Client {
                     }
                 );
             }
-        }
-
-
-        private void HandleJoinAccept(NetDataReader reader) {
-            WSJoinAcceptPkt pkt = new();
-            pkt.Deserialize(reader);
-            playerEntityIdToFind = pkt.playerEntityId;
-
-            CentralTimingTick = pkt.tick;
-            Debug.Log($"Being told to start at tick {pkt.tick}!");
-
-            isJoined = true;
         }
 
 
@@ -316,7 +296,7 @@ namespace Networking.Client {
             WSEntityTransformUpdatePkt entityTransformUpdate = new();
             entityTransformUpdate.Deserialize(reader);
             entityTransformUpdate.entityId = entityId;
-            WCPacketCacher.CachePacket(receivedTick, entityTransformUpdate);
+            packetCacher.CachePacket(receivedTick, entityTransformUpdate);
         }
 
 
@@ -345,7 +325,7 @@ namespace Networking.Client {
             Debug.Log("Got a chat message!");
             WSChatMessagePkt pkt = new();
             pkt.Deserialize(reader);
-            WCPacketCacher.CachePacket(receivedTick, pkt);
+            packetCacher.CachePacket(receivedTick, pkt);
         }
 
 
@@ -378,7 +358,7 @@ namespace Networking.Client {
             };
 
             // Tick is not relevant here but needs to be written regardless
-            WPacketCommunication.SendSingle(writer, server, 0, pkt, DeliveryMethod.ReliableOrdered);
+            WPacketCommunication.SendSingle(writer, serverPeer, 0, pkt, DeliveryMethod.ReliableOrdered);
             Debug.Log("Sent message to the server!");
         }
     }
