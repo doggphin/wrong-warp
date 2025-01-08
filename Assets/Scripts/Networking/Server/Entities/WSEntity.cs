@@ -55,7 +55,7 @@ namespace Networking.Server {
 
 
         private void Update() {
-            float percentageThroughTick = WSNetServer.Instance.GetPercentageThroughTick();
+            float percentageThroughTick = WSNetServer.GetPercentageThroughTick();
 
             //if(!updatePositionsLocally)
                 transform.position = LerpBufferedPositions(WSNetServer.Tick, percentageThroughTick);

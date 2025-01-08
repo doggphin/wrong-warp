@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Controllers.Shared;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class UiManager : BaseSingleton<UiManager>
@@ -12,7 +11,7 @@ public class UiManager : BaseSingleton<UiManager>
     public static IUiElement ActiveUiElement { get; private set; }
 
     void Start() {
-        ControlsManager.EscapeClicked += Escape;
+        ControlsManager.EscapeClicked += OpenEscape;
         Instantiate(chatUiPrefab, transform);
         escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeManager>();
     }
@@ -46,7 +45,7 @@ public class UiManager : BaseSingleton<UiManager>
 
     
     // When escape is pressed, either close the current ui or open the escape UI
-    private static void Escape() {
+    private static void OpenEscape() {
         if(!CloseActiveUiElement()) {
             Debug.Log("Closed!");
             Instance.escapeUi.Open();

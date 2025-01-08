@@ -113,7 +113,7 @@ namespace Networking.Server {
                 // Send server messages directly to each client
                 NetDataWriter writer = new();
                 chatMessagePkt.Serialize(writer);
-                foreach(var peer in WSNetServer.ServerNetManager.ConnectedPeerList) {
+                foreach(var peer in WNetManager.ConnectedPeers) {
                     peer.Send(writer, DeliveryMethod.ReliableUnordered);
                 }
             }

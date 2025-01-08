@@ -5,19 +5,13 @@ using System.Linq;
 using Networking.Shared;
 
 namespace Networking.Server {
-    public static class WSEntityManager {
-        private static Dictionary<int, WSEntity> entities = new();
+    public class WSEntityManager : BaseSingleton<WSEntityManager> {
+        private Dictionary<int, WSEntity> entities = new();
         private static int nextEntityId = -1;
 
-        public static Transform spawnHolder;
-
-        public static WSEntity SpawnEntity(WPrefabId prefabId, int tick, bool isChunkLoader = false) {
-            GameObject gameObject = Object.Instantiate(WPrefabLookup.GetById(prefabId), spawnHolder);
-            
-            if(gameObject == null)
-                throw new System.Exception("Couldn't instantiate prefab!!!!");
-
-            var netEntity = gameObject.AddComponent<WSEntity>();
+        public static WSEntity SpawnEntity(WPrefabId prefabId, bool isChunkLoader = false) {
+            GameObject entityPrefab = Instantiate(WPrefabLookup.GetById(prefabId), Instance.transform);
+            var netEntity = entityPrefab.AddComponent<WSEntity>();
 
             
             WPrefabTransformUpdateTypes transformUpdateTypes = WPrefabLookup.PrefabUpdateTypes[prefabId];
@@ -25,7 +19,7 @@ namespace Networking.Server {
             netEntity.updateRotation = transformUpdateTypes.updateRotation;
             netEntity.updateScale = transformUpdateTypes.updateScale;
 
-            while (!entities.TryAdd(++nextEntityId, netEntity));
+            while (!Instance.entities.TryAdd(++nextEntityId, netEntity));
 
             netEntity.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
 
@@ -40,18 +34,18 @@ namespace Networking.Server {
         public static void KillEntity(int id, WEntityKillReason killReason = WEntityKillReason.Unload) {
             Debug.Log($"Killing {id}!");
 
-            if (!entities.TryGetValue(id, out WSEntity netEntity)) {
+            if (!Instance.entities.TryGetValue(id, out WSEntity netEntity)) {
                 Debug.LogError("Tried to delete an entity that did not exist!");
                 return;
             }
 
             netEntity.Kill(killReason);
-            entities.Remove(id);
+            Instance.entities.Remove(id);
         }
 
 
         public static void PollFinalizeAdvanceEntities() {
-            foreach (WSEntity netEntity in entities.Values.ToList()) {
+            foreach (WSEntity netEntity in Instance.entities.Values.ToList()) {
                 netEntity.PollAndFinalizeTransform();
             }
         }

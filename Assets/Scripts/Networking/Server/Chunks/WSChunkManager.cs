@@ -288,7 +288,7 @@ namespace Networking.Server {
         public static HashSet<WSChunk> GetAllPlayerChunks() {
             HashSet<WSChunk> ret = new();
 
-            foreach(var peer in WSNetServer.ServerNetManager.ConnectedPeerList) {
+            foreach(var peer in WNetManager.ConnectedPeers) {
                 if(!WSPlayer.FromPeer(peer, out WSPlayer player))
                     continue;
 

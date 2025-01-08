@@ -8,33 +8,43 @@ using Networking.Shared;
 using Controllers.Shared;
 
 namespace Networking.Server {
-    public class WSNetServer : MonoBehaviour, INetEventListener, ITicker {
-        public static NetManager ServerNetManager { get; private set; }
-
+    [RequireComponent(typeof(WSEntityManager))]
+    public class WSNetServer : BaseSingleton<WSNetServer>, INetEventListener {
+        private WSEntityManager entityManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
         public static int Tick => tick;
-        private static WWatch watch = new(); // TODO: Should not do this here
+        private static WWatch watch; // TODO: Should not do this here
+        public static float GetPercentageThroughTick() => watch.GetPercentageThroughTick();
         public static WSPlayer HostPlayer { get; private set; }
 
-        public int GetTick() {
-            return tick;
-        }
-        public float GetPercentageThroughTick() {
-            return watch.GetPercentageThroughTick();
-        }
+        private bool isActivated;
+        public void Activate() {
+            if(isActivated)
+                return;
 
-        public static WSNetServer Instance { get; private set; }
-        public void Init(ushort port) {
-            ServerNetManager.Start(port);
-            print($"Running server on port {port}!");
-
+            entityManager = GetComponent<WSEntityManager>();
+            CreatePlayer();
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = WCommon.TICKS_PER_SECOND;
+            
+            ControlsManager.Activate();
+            ChatUiManager.SendChatMessage += SendHostChatMessage;
 
-            // Initialize player
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, tick, true);
+            watch = new();
+        }
+
+        protected override void OnDestroy() {
+            base.OnDestroy();
+            ChatUiManager.SendChatMessage -= SendHostChatMessage;
+            ControlsManager.player = null;
+            ControlsManager.Deactivate();
+            Destroy(gameObject);
+        }
+
+        private void CreatePlayer() {
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
             ControlsManager.player = player;
@@ -42,23 +52,11 @@ namespace Networking.Server {
 
             HostPlayer = new();
             HostPlayer.Init(null, playerEntity);
-
-
-            // Start listening for server-specific events
-            ChatUiManager.SendChatMessage += (string message) => WSChatHandler.HandleChatMessage(message, null, false);
-
-            watch = new();
-        }
-
-        private void CreatePlayer() {
-            
         }
 
 
-        private void Update() {
-            ServerNetManager.PollEvents();
-
-            while(GetPercentageThroughTick() > 1) {
+        void Update() {
+            while(watch.GetPercentageThroughTick() > 1) {
                 watch.AdvanceTick();
                 StartNextTick();
             }
@@ -73,7 +71,7 @@ namespace Networking.Server {
             ControlsManager.PollAndControl(tick);
 
             // Run inputs of each client
-            foreach (var peer in ServerNetManager.ConnectedPeerList) {
+            foreach (var peer in WNetManager.ConnectedPeers) {
                 if(!WSPlayer.FromPeer(peer, out WSPlayer netPlayer))
                     continue;
                 
@@ -88,7 +86,7 @@ namespace Networking.Server {
                 RunSnapshot();
         }
         private void RunSnapshot() {
-            foreach (var peer in ServerNetManager.ConnectedPeerList) {
+            foreach (var peer in WNetManager.ConnectedPeers) {
                 SendUpdatesToPlayer(peer);
             }
 
@@ -113,8 +111,7 @@ namespace Networking.Server {
                     netPlayer.previousChunk.Coords,
                     netPlayer.Entity.ChunkPosition);
 
-                if(entitiesLoadedDeltaPkt != null)
-                    entitiesLoadedDeltaPkt.Serialize(writer);
+                entitiesLoadedDeltaPkt?.Serialize(writer);
             }
             netPlayer.previousChunk = chunk;
             
@@ -125,9 +122,7 @@ namespace Networking.Server {
                 genericControllerState = defaultControllerState;
             } // else if spectator, etc.
 
-            if(genericControllerState != null) {
-                genericControllerState.Serialize(writer);
-            }
+            genericControllerState?.Serialize(writer);
                 
             // Send full snapshot to the player, then reset the writer from the chunk to before it was personalized
             peer.Send(writer, DeliveryMethod.Unreliable);
@@ -142,14 +137,9 @@ namespace Networking.Server {
         }
 
 
-        private bool ProcessPacketFromReader(
-            NetPeer peer,
-            NetDataReader reader,
-            int tick,
-            WPacketType packetType) {
-
+        private bool ProcessPacketFromReader(NetPeer peer, NetDataReader reader, int tick, WPacketType packetType) {
+            // Not the best architecture, but not that awful either
             switch (packetType) {
-
                 case WPacketType.CJoinRequest: {
                     WCJoinRequestPkt joinRequest = new();
                     joinRequest.Deserialize(reader);
@@ -157,7 +147,7 @@ namespace Networking.Server {
                         return false;
 
                     OnJoinReceived(joinRequest, peer);
-                    break;
+                    return true;
                 }
                 case WPacketType.CGroupedInputs: {
                     if(peer.Tag == null)
@@ -166,7 +156,7 @@ namespace Networking.Server {
                     WCGroupedInputsPkt groupedInputs = new();
                     groupedInputs.Deserialize(reader);
                     WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
-                    break;
+                    return true;
                 }
                 case WPacketType.CChatMessage: {
                     if(peer.Tag == null)
@@ -176,16 +166,13 @@ namespace Networking.Server {
                     WCChatMessagePkt chatMessage = new();
                     chatMessage.Deserialize(reader);
                     WSChatHandler.HandleChatMessage(chatMessage.message, peer, false);
-                    break;
+                    return true;
                 }
-
                 default: {
                     print($"Could not handle packet of type {packetType}!");
                     return false;
                 }
             }
-
-            return true;
         }
 
 
@@ -203,7 +190,7 @@ namespace Networking.Server {
 
             WsPlayerInputsSlotter.AddPlayer(peer.Id);
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, Tick, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
 
             WSPlayer netPlayer = new();
             netPlayer.Init(peer, playerEntity);
@@ -237,18 +224,12 @@ namespace Networking.Server {
         }
 
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) =>
             WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
-        }
-
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) { }
 
-
-        public void OnPeerConnected(NetPeer peer) {
-            print($"Player connected: {peer.Address}!");
-        }
-
+        public void OnPeerConnected(NetPeer peer) => print($"Player connected: {peer.Address}!");
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
             print($"Player disconnected: {disconnectInfo.Reason}!");
@@ -256,38 +237,12 @@ namespace Networking.Server {
             TryRemovePlayer(peer);
         }
 
+        public void OnConnectionRequest(ConnectionRequest request) => request.AcceptIfKey(WCommon.CONNECTION_KEY);
 
-        public void OnConnectionRequest(ConnectionRequest request) {
-            Debug.Log("Received a connection request!");
-            request.AcceptIfKey(WNetManager.CONNECTION_KEY);
-        }
+        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) => print($"Network error: {socketError}");
 
+        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {}
 
-        public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
-            print($"Network error: {socketError}");
-        }
-
-
-        public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
-
-        }
-
-        private void OnDestroy() {
-            ServerNetManager.Stop();
-        }
-
-        
-        void Awake() {
-            if(Instance != null)
-                Destroy(gameObject);
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            ServerNetManager = new NetManager(this) {
-                AutoRecycle = true,
-                IPv6Enabled = false
-            };
-        }
+        private void SendHostChatMessage(string message) => WSChatHandler.HandleChatMessage(message, null, false);
     }
 }

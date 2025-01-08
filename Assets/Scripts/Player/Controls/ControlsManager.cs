@@ -19,14 +19,16 @@ namespace Controllers.Shared {
         public static Action ConfirmClicked;
 
 
-        private static bool isInitialized = false;
-        public static void Init() {
-            if(isInitialized)
-                return;
-            
+        private static bool inputsInitialized = false;
+        public static void Init() {      
+            // Always reinitialize inputs.
+            // Otherwise, old inputs can sit here between resets
             for(int i=0; i<inputs.buffer.Length; i++) {
                 inputs.buffer[i] = new();
             }
+
+            if(inputsInitialized)
+                return;
 
             void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
                 inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
@@ -34,7 +36,6 @@ namespace Controllers.Shared {
             }
 
             inputActions = new();
-            Activate();
 
             BindInputActionToInputType(inputActions.Gameplay.Forward, InputType.Forward);
             BindInputActionToInputType(inputActions.Gameplay.Left, InputType.Left);
@@ -51,21 +52,37 @@ namespace Controllers.Shared {
             inputActions.Ui.Escape.started += (_) => EscapeClicked?.Invoke();
             inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
 
-            isInitialized = true;
+            inputsInitialized = true;
         }
 
         public static void Activate() {
-            inputActions.Gameplay.Enable();
-            inputActions.Ui.Enable();
+            Debug.Log("Enabling controls!");
+            SetGameplayControlsEnabled(true);
+            SetUiControlsEnabled(true);
         }
 
         public static void Deactivate() {
             Debug.Log("Disabling controls!");
-            inputActions.Gameplay.Disable();
-            inputActions.Ui.Disable();
+            SetGameplayControlsEnabled(false);
+            SetUiControlsEnabled(false);
         }
 
 
+        // Gameplay and Ui don't share a base class, can't be made more efficient
+        public static void SetGameplayControlsEnabled(bool value) {
+            if(value) {
+                inputActions.Gameplay.Enable();
+            } else {
+                inputActions.Gameplay.Disable();
+            }
+        }
+        public static void SetUiControlsEnabled(bool value) {
+            if(value) {
+                inputActions.Ui.Enable();
+            } else {
+                inputActions.Ui.Disable();
+            }
+        }
         public static bool GameplayControlsEnabled {
             get => inputActions.Gameplay.enabled;
             private set {
@@ -109,23 +126,6 @@ namespace Controllers.Shared {
                 finalInputs.Reset();
             } else {
                 player?.Control(inputs[onTick], onTick);
-            }
-        }
-
-
-        // Gameplay and Ui don't share a base class, can't be made more efficient
-        public static void SetGameplayControlsEnabled(bool value) {
-            if(value) {
-                inputActions.Gameplay.Enable();
-            } else {
-                inputActions.Gameplay.Disable();
-            }
-        }
-        public static void SetUiControlsEnabled(bool value) {
-            if(value) {
-                inputActions.Ui.Enable();
-            } else {
-                inputActions.Ui.Disable();
             }
         }
     }

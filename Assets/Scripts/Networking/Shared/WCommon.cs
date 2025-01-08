@@ -5,6 +5,8 @@ namespace Networking.Shared
     public static class WCommon {
         public static float GetPercentageTimeThroughCurrentTick() => (Time.time % SECONDS_PER_TICK) * TICKS_PER_SECOND;
 
+        public const string CONNECTION_KEY = "WW 0.01";
+        public const int TIMEOUT_MS = 5000;
         public const int TICKS_PER_SNAPSHOT = 2;
         public const int TICKS_PER_SECOND = 20;
         public const int MAX_PING_MS = 300;

@@ -6,21 +6,21 @@ using Networking.Shared;
 
 namespace Networking.Client {
     public class WCEntityManager : BaseSingleton<WCEntityManager> {
-        private static Dictionary<int, WCEntity> entities = new();
+        private Dictionary<int, WCEntity> entities = new();
 
         public static void KillEntity(WSEntityKillPkt killPacket) {
-            if (!entities.TryGetValue(killPacket.entityId, out WCEntity entity)) {
+            if (!Instance.entities.TryGetValue(killPacket.entityId, out WCEntity entity)) {
                 Debug.LogWarning("Tried to delete an entity that did not exist!");
                 return;
             }
 
             entity.Kill(killPacket.reason);
-            entities.Remove(killPacket.entityId);
+            Instance.entities.Remove(killPacket.entityId);
         }
 
 
         public static WCEntity Spawn(WSEntitySpawnPkt spawnPacket) {
-            if(entities.ContainsKey(spawnPacket.entity.entityId))
+            if(Instance.entities.ContainsKey(spawnPacket.entity.entityId))
                 return null;
 
             GameObject prefabToSpawn = WPrefabLookup.GetById(spawnPacket.entity.prefabId);
@@ -28,7 +28,7 @@ namespace Networking.Client {
             var gameObject = Instantiate(prefabToSpawn, Instance.transform);
             var ret = gameObject.AddComponent<WCEntity>();
 
-            entities[spawnPacket.entity.entityId] = ret;
+            Instance.entities[spawnPacket.entity.entityId] = ret;
 
             ret.Init(spawnPacket);
 
@@ -36,11 +36,11 @@ namespace Networking.Client {
         }
 
 
-        public static WCEntity GetEntityById(int id) => entities.GetValueOrDefault(id, null);
+        public static WCEntity GetEntityById(int id) => Instance.entities.GetValueOrDefault(id, null);
 
         
         public static void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
-            if(!entities.TryGetValue(transformPacket.entityId, out WCEntity entity))
+            if(!Instance.entities.TryGetValue(transformPacket.entityId, out WCEntity entity))
                 return;
 
             entity.SetTransformForTick(tick, transformPacket.transform);

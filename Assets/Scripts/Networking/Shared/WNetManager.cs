@@ -6,27 +6,23 @@ using UnityEngine.SceneManagement;
 using Networking.Server;
 using Networking.Client;
 using Controllers.Shared;
-using TMPro;
+using System.Collections.Generic;
 using System;
-using UnityEditor.Networking.PlayerConnection;
+using System.Collections;
 
 namespace Networking.Shared {
     public class WNetManager : BaseSingleton<WNetManager> {
-        public const string CONNECTION_KEY = "WW 0.01";
-
         [SerializeField] private GameObject serverPrefab;
         [SerializeField] private GameObject clientPrefab;
-        [SerializeField] private Transform entitiesHolder;
-        [Space(10)]
-        [SerializeField] private TMP_InputField clientAddress;
-        [SerializeField] private TMP_InputField clientPort;
-        [Space(10)]
-        [SerializeField] private TMP_InputField serverPort;
-        private NetManager netManager;
-        public WSNetServer WcNetServer { get; private set; }
+
+        public static NetManager BaseNetManager { get; private set; }
+        public static List<NetPeer> ConnectedPeers => BaseNetManager.ConnectedPeerList;
+        public WSNetServer WsNetServer { get; private set; }
         public WCNetClient WcNetClient { get; private set; }
-        public static bool IsServer { get { return Instance.WcNetServer != null; } }
+        public static bool IsServer { get { return Instance.WsNetServer != null; } }
         public static bool IsClient { get { return Instance.WcNetClient != null; } }
+
+        public static Action<WDisconnectInfo> Disconnected;
 
         protected override void Awake() {
             base.Awake();
@@ -37,55 +33,81 @@ namespace Networking.Shared {
             ControlsManager.Init();
         }
 
-        void Update() => netManager?.PollEvents();
+        void Update() => BaseNetManager?.PollEvents();
+ 
 
-        public static void Disconnect(WDisconnectInfo info) {
-            if(IsServer) {
-                throw new Exception("Not yet implemented!");
-            } else {
-                Instance.StopClient();
-            }
-        }
-
-
-        public void StartClient() {
+        
+        public void StartClient(string address, ushort port) {
+            print("Trying to start client!");
             if(WcNetClient != null)
                 return;
+
             WcNetClient = Instantiate(clientPrefab).GetComponent<WCNetClient>();
 
-            netManager = new NetManager(WcNetClient) {
-                AutoRecycle = true,
-                IPv6Enabled = false
-            };
-            netManager.Start();
-            netManager.Connect(clientAddress.text, ushort.Parse(clientPort.text), CONNECTION_KEY);
+            BaseNetManager = SetNewNetManager(WcNetClient);
+            BaseNetManager.Start();
+            BaseNetManager.Connect(address, port, WCommon.CONNECTION_KEY);
+
+            SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
+        }
+        
+        
+
+        public void StartServer(ushort port) {
+            print("Trying to start server!");
+            if(WsNetServer != null)
+                return;
+
+            WsNetServer = Instantiate(serverPrefab).GetComponent<WSNetServer>();
+
+            BaseNetManager = SetNewNetManager(WsNetServer);
+            BaseNetManager.Start(port);
+            WsNetServer.Activate();
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
         }
 
 
-        private void StopClient() {
-            Debug.Log("Stopping client!");
-            netManager.Stop();
-            netManager = null;  // This may or may not be necessary
+        public static void Disconnect(WDisconnectInfo info) {
+            BaseNetManager.Stop();
+            BaseNetManager = null;
 
-            if(WcNetClient != null) {
-                Debug.Log("Destroying it too!");
-                Destroy(WcNetClient);
+            // Not great to do this here, but it's common between both client/server OnDestroy()s
+            ControlsManager.player = null;
+            ControlsManager.Deactivate();
+            UiManager.CloseActiveUiElement();
+
+            if(Instance.WcNetClient != null)
+                Destroy(Instance.WcNetClient);
+            if(Instance.WsNetServer != null)
+                Destroy(Instance.WsNetServer);
+
+            Instance.WcNetClient = null;
+            Instance.WsNetServer = null;
+
+            Instance.StartCoroutine(LoadMenuFromDisconnect(info));
+        }
+
+        private static IEnumerator LoadMenuFromDisconnect(WDisconnectInfo info) {
+            var asyncLoadScene = SceneManager.LoadSceneAsync(sceneBuildIndex: (int)SceneType.MainMenu);
+
+            while (!asyncLoadScene.isDone){
+                yield return null;
             }
 
-            WcNetClient = null;
-
-            SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.MainMenu);
+            Cursor.lockState = CursorLockMode.None;
+            Disconnected?.Invoke(info);
         }
 
 
-        public void StartServer() {      
-            SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
-            WSEntityManager.spawnHolder = entitiesHolder;
-            GameObject serverObject = Instantiate(serverPrefab);
-            WcNetServer = serverObject.GetComponent<WSNetServer>();
-            WcNetServer.Init(ushort.Parse(serverPort.text));
+        private NetManager SetNewNetManager(INetEventListener netEventListener) {
+            return new NetManager(netEventListener) {
+                AutoRecycle = true,
+                IPv6Enabled = false,
+                DisconnectTimeout = WCommon.TIMEOUT_MS,
+                ReconnectDelay = 500,
+                MaxConnectAttempts = 5
+            };
         }
     }
 }
