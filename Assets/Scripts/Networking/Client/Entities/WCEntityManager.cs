@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Networking.Shared;
+using Unity.VisualScripting;
 
 namespace Networking.Client {
     public class WCEntityManager : BaseSingleton<WCEntityManager> {
@@ -20,19 +21,27 @@ namespace Networking.Client {
 
 
         public static WCEntity Spawn(WSEntitySpawnPkt spawnPacket) {
-            if(Instance.entities.ContainsKey(spawnPacket.entity.entityId))
+            if(Instance.entities.ContainsKey(spawnPacket.entity.entityId)) {
+                Debug.Log($"Entity with ID {spawnPacket.entity.entityId} already exists");
                 return null;
+            }
 
             GameObject prefabToSpawn = WPrefabLookup.GetById(spawnPacket.entity.prefabId);
 
-            var gameObject = Instantiate(prefabToSpawn, Instance.transform);
-            var ret = gameObject.AddComponent<WCEntity>();
+            var instantiatedPrefab = Instantiate(prefabToSpawn, Instance.transform);
+            var entity = instantiatedPrefab.AddComponent<WCEntity>();
+            WTransformSerializable transform = spawnPacket.entity.transform;
+            
+            instantiatedPrefab.transform.position = transform.position.Value;
+            instantiatedPrefab.transform.rotation = transform.rotation.Value;
+            instantiatedPrefab.transform.localScale = transform.scale.Value;
+            
 
-            Instance.entities[spawnPacket.entity.entityId] = ret;
+            Instance.entities[spawnPacket.entity.entityId] = entity;
 
-            ret.Init(spawnPacket);
+            entity.Init(spawnPacket);
 
-            return ret;
+            return entity;
         }
 
 
@@ -44,6 +53,33 @@ namespace Networking.Client {
                 return;
 
             entity.SetTransformForTick(tick, transformPacket.transform);
+        }
+
+
+        public static void HandleFullEntitiesSnapshot(WSFullEntitiesSnapshotPkt pkt) {
+            Dictionary<int, WEntitySerializable> receivedEntities = new();
+            foreach(var serializedEntity in pkt.entities) {
+                receivedEntities.Add(serializedEntity.entityId, serializedEntity);
+            }
+
+            // Find entities that might exist on client but not in received
+            // Delete these first to not iterate over new entities
+            foreach(var clientEntityId in Instance.entities.Keys) {
+                if(!receivedEntities.ContainsKey(clientEntityId)) {
+                    Debug.Log("Killing an entity that exists on the client but not the server!");
+                    KillEntity(new WSEntityKillPkt() { entityId = clientEntityId, reason = WEntityKillReason.Unload });
+                }
+            }
+
+            foreach(var receivedEntity in receivedEntities) {
+                if(!Instance.entities.ContainsKey(receivedEntity.Key)) {
+                    // Does not exist on client; must create new entity for it
+                    Debug.Log("Spawning an entity that exists on the server but not the client!");
+                    Spawn(new WSEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
+                }
+            }
+
+            
         }
     }
 }

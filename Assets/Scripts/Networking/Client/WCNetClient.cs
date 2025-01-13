@@ -71,8 +71,7 @@ namespace Networking.Client {
         protected override void OnDestroy() {
             base.OnDestroy();
             ChatUiManager.SendChatMessage -= SendChatMessage;
-            ControlsManager.player = null;
-            ControlsManager.Deactivate();
+            
             Destroy(gameObject);
         }
 
@@ -202,7 +201,10 @@ namespace Networking.Client {
             { WPacketType.SEntitiesLoadedDelta, HandleEntitiesLoadedDelta },
             { WPacketType.SDefaultControllerState, HandleDefaultControllerState },
             { WPacketType.SChunkReliableUpdates, HandleChunkReliableUpdates },
-            { WPacketType.SChatMessage, HandleChatMessage }
+            { WPacketType.SChatMessage, HandleChatMessage },
+            { WPacketType.SFullEntitiesSnapshot, HandleFullEntitiesSnapshot },
+            { WPacketType.SEntitySpawn, HandleEntitySpawn },
+            { WPacketType.SEntityKill, HandleEntityKill },
         };
         public bool ProcessPacketFromReader(NetPeer peer, NetDataReader reader, int tick, WPacketType packetType) {
             if(!packetHandlers.TryGetValue(packetType, out Action<int, NetDataReader> handler)) {
@@ -210,6 +212,7 @@ namespace Networking.Client {
                 return false;
             }
 
+            Debug.Log($"Processing {packetType}!");
             tickDifferenceTracker.AddTickDifferenceReading(tick - ObservingTick, windowSize);
             handler.Invoke(tick, reader);
             return true;
@@ -286,15 +289,28 @@ namespace Networking.Client {
             Player.SetRotation(originalRotation);
         }
         private static void HandleChatMessage(int receivedTick, NetDataReader reader) {
-            Debug.Log("Got a chat message!");
             WSChatMessagePkt pkt = new();
             pkt.Deserialize(reader);
             Instance.packetCacher.CachePacket(receivedTick, pkt);
         }
         private static void HandleChunkReliableUpdates(int receivedTick, NetDataReader reader) {
-            Debug.Log("Got a reliable updates!");
             WSChunkReliableUpdatesPkt pkt = new();
             pkt.Deserialize(reader);
+        }
+        private static void HandleFullEntitiesSnapshot(int receivedTick, NetDataReader reader) {
+            WSFullEntitiesSnapshotPkt pkt = new();
+            pkt.Deserialize(reader);
+            WCEntityManager.HandleFullEntitiesSnapshot(pkt);
+        }
+        private static void HandleEntityKill(int receivedTick, NetDataReader reader) {
+            WSEntityKillPkt pkt = new();
+            pkt.Deserialize(reader);
+            WCEntityManager.KillEntity(pkt);
+        }
+        private static void HandleEntitySpawn(int receivedTick, NetDataReader reader) {
+            WSEntitySpawnPkt pkt = new();
+            pkt.Deserialize(reader);
+            WCEntityManager.Spawn(pkt);
         }
         private void ResimulateTicks(int fromTick) {
             // Subtract one since we don't want to resimulate the received tick

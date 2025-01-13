@@ -1,4 +1,5 @@
 using LiteNetLib.Utils;
+using Networking.Server;
 
 namespace Networking.Shared {
     public class WEntitySerializable : INetSerializable {

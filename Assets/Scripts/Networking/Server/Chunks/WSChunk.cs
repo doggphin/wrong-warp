@@ -157,5 +157,27 @@ namespace Networking.Server {
                 WSChunkManager.chunksMarkedToUnload.Add(Coords);
             }  
         }
+
+        // This is called from WSEntityManager
+        public void KillEntity(WSEntity entity, WEntityKillReason killReason) {
+            PresentEntities.Remove(entity);
+            WSEntityKillPkt packet = new() { reason = killReason };
+            AddEntityUpdate(WSNetServer.Tick, entity.Id, packet);
+
+            if(entity.IsChunkLoader)
+                WSChunkManager.RemoveChunkLoader(Coords, entity, true);
+            
+        }
+
+        // This is called from WSEntityManager
+        public void SpawnEntity(WSEntity entity, WEntitySpawnReason reason) {
+            PresentEntities.Add(entity);
+            WSEntitySpawnPkt packet = new()
+            {
+                entity = entity.GetSerializedEntity(WSNetServer.Tick),
+                reason = reason
+            };
+            //AddEntityUpdate(WSNetServer.Tick, entity.Id, packet);
+        }
     }
 }

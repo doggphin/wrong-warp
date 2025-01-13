@@ -6,6 +6,7 @@ using System.Net.Sockets;
 
 using Networking.Shared;
 using Controllers.Shared;
+using System.Linq;
 
 namespace Networking.Server {
     [RequireComponent(typeof(WSEntityManager))]
@@ -38,8 +39,7 @@ namespace Networking.Server {
         protected override void OnDestroy() {
             base.OnDestroy();
             ChatUiManager.SendChatMessage -= SendHostChatMessage;
-            ControlsManager.player = null;
-            ControlsManager.Deactivate();
+
             Destroy(gameObject);
         }
 
@@ -202,11 +202,23 @@ namespace Networking.Server {
                 tick = Tick
             };
 
-            WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
+            WSChunk chunk = playerEntity.CurrentChunk;
+            WSFullEntitiesSnapshotPkt fullEntitiesSnapshotPacket = new()
+            {
+                entities = new WEntitySerializable[chunk.PresentEntities.Count],
+                isFullReset = true
+            };
             
+            int i=0;
+            foreach(WSEntity entity in chunk.PresentEntities) {
+                fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(Tick);
+            }
+            //WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
+
             WPacketCommunication.StartMultiPacket(writer, tick);
             joinAcceptPacket.Serialize(writer);
-            entitiesLoadPacket.Serialize(writer);
+            fullEntitiesSnapshotPacket.Serialize(writer);
+            //entitiesLoadPacket.Serialize(writer);
             peer.Send(writer, DeliveryMethod.ReliableUnordered);
 
             return true;
@@ -216,7 +228,8 @@ namespace Networking.Server {
             if(player == null)
                 return false;
 
-            WSEntityManager.KillEntity(player.Entity.Id);
+            player.Entity.Kill(WEntityKillReason.Unload);
+            //WSEntityManager.KillEntity(player.Entity.Id);
             
             WsPlayerInputsSlotter.RemovePlayer(peer.Id);
 

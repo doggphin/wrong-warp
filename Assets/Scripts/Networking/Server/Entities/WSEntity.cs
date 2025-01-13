@@ -2,6 +2,8 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 using Networking.Shared;
+using UnityEditor.UI;
+using System;
 
 namespace Networking.Server {
     public class WSEntity : WEntityBase {
@@ -9,6 +11,9 @@ namespace Networking.Server {
 
         public Vector2Int ChunkPosition { get; private set; }
         public WSChunk CurrentChunk { get; private set; } = null;
+
+        public Action<WSEntity, WEntityKillReason> Killed;
+
         private bool isChunkLoader;
         public bool IsChunkLoader {
             get {
@@ -105,23 +110,22 @@ namespace Networking.Server {
         }
 
 
+        // This should be called from the entity manager.
         public override void Kill(WEntityKillReason killReason) {
-            Debug.Log("Killing object!");
+            isDead = true;
+            Killed?.Invoke(this, killReason);
+
             switch(killReason) {
+                // Start a coroutine playing death animation if dying maybe?
+                // Or just spawn an entity to play the death animation/ragdoll?
                 default:
-                    gameObject.SetActive(false);
+                    Destroy(gameObject);
                     break;
             }
-
-            PushUpdates(new WSEntityKillPkt() { reason = killReason });
-            isDead = true;
-
-            if (isChunkLoader)
-                WSChunkManager.RemoveChunkLoader(CurrentChunk.Coords, this, true);
         }
 
 
-        public void PushUpdates(INetSerializable packet) {
+        private void PushUpdates(INetSerializable packet) {
             isSerialized = false;
 
             if (isDead) {

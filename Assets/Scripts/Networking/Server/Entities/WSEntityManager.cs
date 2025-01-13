@@ -11,36 +11,33 @@ namespace Networking.Server {
 
         public static WSEntity SpawnEntity(WPrefabId prefabId, bool isChunkLoader = false) {
             GameObject entityPrefab = Instantiate(WPrefabLookup.GetById(prefabId), Instance.transform);
-            var netEntity = entityPrefab.AddComponent<WSEntity>();
+            var entity = entityPrefab.AddComponent<WSEntity>();
 
             
             WPrefabTransformUpdateTypes transformUpdateTypes = WPrefabLookup.PrefabUpdateTypes[prefabId];
-            netEntity.updatePosition = transformUpdateTypes.updatePosition;
-            netEntity.updateRotation = transformUpdateTypes.updateRotation;
-            netEntity.updateScale = transformUpdateTypes.updateScale;
+            entity.updatePosition = transformUpdateTypes.updatePosition;
+            entity.updateRotation = transformUpdateTypes.updateRotation;
+            entity.updateScale = transformUpdateTypes.updateScale;
 
-            while (!Instance.entities.TryAdd(++nextEntityId, netEntity));
+            while (!Instance.entities.TryAdd(++nextEntityId, entity));
 
-            netEntity.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
+            entity.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
 
-            netEntity.Init(nextEntityId, prefabId, isChunkLoader);
+            entity.Init(nextEntityId, prefabId, isChunkLoader);
 
-            netEntity.CurrentChunk.PresentEntities.Add(netEntity);
+            entity.CurrentChunk.SpawnEntity(entity, WEntitySpawnReason.Spawn);
             
-            return netEntity;
+            entity.Killed += KillEntity;
+            return entity;
         }
 
 
-        public static void KillEntity(int id, WEntityKillReason killReason = WEntityKillReason.Unload) {
-            Debug.Log($"Killing {id}!");
-
-            if (!Instance.entities.TryGetValue(id, out WSEntity netEntity)) {
-                Debug.LogError("Tried to delete an entity that did not exist!");
+        public static void KillEntity(WSEntity entity, WEntityKillReason killReason = WEntityKillReason.Unload) {
+            if(entity == null)
                 return;
-            }
-
-            netEntity.Kill(killReason);
-            Instance.entities.Remove(id);
+            entity.CurrentChunk.KillEntity(entity, killReason);
+            entity.Killed -= KillEntity;
+            Instance.entities.Remove(entity.Id);
         }
 
 
