@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Inventory {
+namespace Inventories {
     [CreateAssetMenu(fileName = "ItemSO", menuName = "Scriptable Objects/ItemSO")]
     public class BaseItemSO : ScriptableObject
     {

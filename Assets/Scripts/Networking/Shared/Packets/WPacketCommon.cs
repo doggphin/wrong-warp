@@ -24,6 +24,7 @@ namespace Networking.Shared {
         CChatMessage,
         SChatMessage,
         SChunkReliableUpdates,
+        SInventoryDeltaCollection,
     }
 }
 

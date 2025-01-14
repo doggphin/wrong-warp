@@ -1,5 +1,5 @@
-namespace Inventory {
-    public enum ItemType : int {
+namespace Inventories {
+    public enum ItemType : ushort {
         TestingWand,
         TestingPotion
     }

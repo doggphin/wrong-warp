@@ -1,5 +1,8 @@
+using System.Runtime.Serialization;
 using LiteNetLib;
+using LiteNetLib.Utils;
 using Networking.Shared;
+using Unity.VisualScripting;
 
 namespace Networking.Server {
     public class WSPlayer {
@@ -14,11 +17,12 @@ namespace Networking.Server {
 
             player = null;
             return false;
-                
         }
+
         public WSChunk previousChunk = null;
         public WSEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
+        public NetDataWriter writer = null;
 
         private bool isInitialized = false;
 
@@ -28,8 +32,14 @@ namespace Networking.Server {
 
             Peer = peer;
             Entity = entity;
+            writer = new();
 
             isInitialized = true;
+        }
+
+        
+        public void AddData(INetSerializable serializable) {
+            serializable.Serialize(writer);
         }
     }
 }

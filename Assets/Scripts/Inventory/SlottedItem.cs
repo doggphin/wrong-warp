@@ -1,8 +1,9 @@
 using System.Runtime.InteropServices.WindowsRuntime;
+using LiteNetLib.Utils;
 using UnityEngine;
 
-namespace Inventory {
-    public class SlottedItem {
+namespace Inventories {
+    public class SlottedItem : INetSerializable {
         public ItemType itemType;
         public int stackSize;
 
@@ -11,7 +12,7 @@ namespace Inventory {
         // Tries to merge otherSlottedItem into this slottedItem.
         // Returns whether otherSlottedItem was modified.
         public bool TryMerge(SlottedItem otherSlottedItem) {
-            if(itemType != otherSlottedItem.itemType)
+            if(otherSlottedItem == null || itemType != otherSlottedItem.itemType)
                 return false;
 
             BaseItemSO baseItem = GetBaseItem();
@@ -23,6 +24,18 @@ namespace Inventory {
             stackSize += amountToMerge;
             
             return true;
+        }
+
+        public void Deserialize(NetDataReader reader)
+        {
+            itemType = (ItemType)reader.GetUShort();
+            stackSize = reader.GetInt();
+        }
+
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put((ushort)itemType);
+            writer.Put(stackSize);
         }
     }
 }

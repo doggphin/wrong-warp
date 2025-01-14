@@ -11,7 +11,7 @@ using Audio.Shared;
 using System.Collections.Generic;
 using System;
 using System.Collections;
-using Inventory;
+using Inventories;
 
 namespace Networking.Shared {
     public class WNetManager : BaseSingleton<WNetManager> {
