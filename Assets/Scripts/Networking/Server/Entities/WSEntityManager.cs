@@ -9,12 +9,12 @@ namespace Networking.Server {
         private Dictionary<int, WSEntity> entities = new();
         private static int nextEntityId = -1;
 
-        public static WSEntity SpawnEntity(WPrefabId prefabId, bool isChunkLoader = false) {
-            GameObject entityPrefab = Instantiate(WPrefabLookup.GetById(prefabId), Instance.transform);
+        public static WSEntity SpawnEntity(NetPrefabType prefabId, bool isChunkLoader = false) {
+            GameObject entityPrefab = Instantiate(NetPrefabLookup.Lookup(prefabId), Instance.transform);
             var entity = entityPrefab.AddComponent<WSEntity>();
 
             
-            WPrefabTransformUpdateTypes transformUpdateTypes = WPrefabLookup.PrefabUpdateTypes[prefabId];
+            WPrefabTransformUpdateTypes transformUpdateTypes = NetPrefabLookup.PrefabUpdateTypes[prefabId];
             entity.updatePosition = transformUpdateTypes.updatePosition;
             entity.updateRotation = transformUpdateTypes.updateRotation;
             entity.updateScale = transformUpdateTypes.updateScale;

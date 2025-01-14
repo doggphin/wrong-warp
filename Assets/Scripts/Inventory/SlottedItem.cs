@@ -6,7 +6,7 @@ namespace Inventory {
         public ItemType itemType;
         public int stackSize;
 
-        public BaseItemSO GetBaseItem() => ItemLookup.GetById(itemType);
+        public BaseItemSO GetBaseItem() => ItemLookup.Lookup(itemType);
 
         // Tries to merge otherSlottedItem into this slottedItem.
         // Returns whether otherSlottedItem was modified.

@@ -25,7 +25,7 @@ namespace Networking.Client {
                 return null;
             }
 
-            GameObject prefabToSpawn = WPrefabLookup.GetById(spawnPacket.entity.prefabId);
+            GameObject prefabToSpawn = NetPrefabLookup.Lookup(spawnPacket.entity.prefabId);
 
             var instantiatedPrefab = Instantiate(prefabToSpawn, Instance.transform);
             var entity = instantiatedPrefab.AddComponent<WCEntity>();

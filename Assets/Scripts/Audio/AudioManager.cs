@@ -27,7 +27,7 @@ namespace Audio.Shared {
             if(audioSettings.position.HasValue)
                 audioPlayer.transform.position = audioSettings.position.Value;
             
-            AudioClip clip = AudioLookup.GetById(audioSettings.audioEffect);
+            AudioClip clip = AudioLookup.Lookup(audioSettings.audioEffect);
             
             if(clip == null) {
                 Instance.audioPlayerPool.Release(audioPlayer);

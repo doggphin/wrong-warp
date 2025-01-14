@@ -2,7 +2,7 @@ using UnityEngine;
 using Networking.Shared;
 
 namespace Networking.Client {
-    public class WCEntity : WEntityBase {
+    public class WCEntity : EntityBase {
         public TimestampedCircularTickBuffer<Vector3> receivedPositions = new();
         public TimestampedCircularTickBuffer<Quaternion> receivedRotations = new();
         public TimestampedCircularTickBuffer<Vector3> receivedScales = new();

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Controllers.Shared {
     public class BaseController : MonoBehaviour {
         [SerializeField] protected Camera cam;
-        protected WEntityBase entity;
+        protected EntityBase entity;
         
         protected BoundedRotator boundedRotator;
 
@@ -23,7 +23,7 @@ namespace Controllers.Shared {
             cam.gameObject.tag = "MainCamera";
             cam.GetComponent<AudioListener>().enabled = true;
 
-            entity = GetComponent<WEntityBase>();
+            entity = GetComponent<EntityBase>();
 
             entity.updateRotationsLocally = true;
             entity.updatePositionsLocally = true;

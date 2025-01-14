@@ -37,10 +37,7 @@ namespace Networking.Shared {
 
             DontDestroyOnLoad(gameObject);
 
-            WPrefabLookup.Init();
             ControlsManager.Init();
-            ItemLookup.Init();
-            AudioLookup.Init();
         }
 
         void Update() => BaseNetManager?.PollEvents();

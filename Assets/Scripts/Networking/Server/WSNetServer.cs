@@ -55,7 +55,7 @@ namespace Networking.Server {
         }
 
         private void CreatePlayer() {
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             IPlayer player = playerEntity.GetComponent<IPlayer>();
             ControlsManager.player = player;
@@ -193,7 +193,7 @@ namespace Networking.Server {
 
             WsPlayerInputsSlotter.AddPlayer(peer.Id);
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(WPrefabId.Player, true);
+            WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
 
             WSPlayer netPlayer = new();
             netPlayer.Init(peer, playerEntity);

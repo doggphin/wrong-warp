@@ -6,7 +6,7 @@ using UnityEditor.UI;
 using System;
 
 namespace Networking.Server {
-    public class WSEntity : WEntityBase {
+    public class WSEntity : EntityBase {
         public bool updatePosition, updateRotation, updateScale;  
 
         public Vector2Int ChunkPosition { get; private set; }
@@ -50,7 +50,7 @@ namespace Networking.Server {
         }
 
 
-        public void Init(int entityId, WPrefabId prefabId, bool isChunkLoader) {
+        public void Init(int entityId, NetPrefabType prefabId, bool isChunkLoader) {
             Id = entityId;
             PrefabId = prefabId;
             ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Instance.GetTick()]);

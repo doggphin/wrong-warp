@@ -4,7 +4,7 @@ using Networking.Server;
 namespace Networking.Shared {
     public class WEntitySerializable : INetSerializable {
         public int entityId;
-        public WPrefabId prefabId;
+        public NetPrefabType prefabId;
         public WTransformSerializable transform;
 
         public void Deserialize(NetDataReader reader) {

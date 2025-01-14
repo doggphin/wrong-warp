@@ -26,7 +26,7 @@ namespace Controllers.Shared {
         }
 
         void Start() {
-            entity = GetComponent<WEntityBase>();
+            entity = GetComponent<EntityBase>();
         }
 
         public void RollbackToTick(int tick)

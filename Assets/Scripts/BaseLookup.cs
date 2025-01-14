@@ -1,41 +1,50 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BaseLookup<PrefabType> where PrefabType : UnityEngine.Object {
-    private Dictionary<int, PrefabType> idToItems = null;
+public abstract class BaseLookup<EnumIdentifierT, PrefabT> : BaseSingleton<BaseLookup<EnumIdentifierT, PrefabT>>
+where EnumIdentifierT : struct, Enum
+where PrefabT : UnityEngine.Object {
+    private Dictionary<EnumIdentifierT, PrefabT> idToPrefabs = null;
 
-    private bool isInitialized = false;
-    public void Init(string prefabPath) {
-        if(isInitialized)
-            return;
+    protected abstract string ResourcesPath { get; }
+
+    public static PrefabT Lookup(EnumIdentifierT id) => Instance.idToPrefabs[id];
+
+    protected override void Awake() {
+        base.Awake();
         
-        idToItems = new();
+        idToPrefabs = new();
         
-        PrefabType[] loadedPrefabs = Resources.LoadAll<PrefabType>(prefabPath);
-
-        foreach (var prefab in loadedPrefabs) {
-            Debug.Log(prefab.name);
-            string[] splitFileName = prefab.name.Split('_');
-            if (splitFileName.Length != 2) {
-                Debug.LogWarning($"Invalid prefab name format: {prefab.name}");
-                continue;
-            }
-
-            if (int.TryParse(splitFileName[0], out int id)) {
-                idToItems[id] = prefab;
-            } else {
-                Debug.LogWarning($"Invalid ID in prefab name: {prefab.name}");
-            }
+        // Gets all the string names and values for a given enum
+        var identifierStrings = Enum.GetNames(typeof(EnumIdentifierT));
+        var identifierValues = (EnumIdentifierT[])Enum.GetValues(typeof(EnumIdentifierT));
+        var identifierStringsToValues = new Dictionary<string, EnumIdentifierT>();
+        for(int i=0; i<identifierStrings.Length; i++) {
+            identifierStringsToValues[identifierStrings[i]] = identifierValues[i];
         }
 
-        isInitialized = true;
-    }
+        PrefabT[] loadedPrefabs = Resources.LoadAll<PrefabT>(ResourcesPath);
 
-    public PrefabType GetById(int id) {
-        if (idToItems.TryGetValue(id, out var prefab))
-            return prefab;
+        // Try to match all names of prefabs in given resources folder to enum strings, then map those enums to prefabs
+        int successfulMatches = 0;
+        foreach (var prefab in loadedPrefabs) {
+            if(!identifierStringsToValues.TryGetValue(prefab.name, out EnumIdentifierT value)) {
+                Debug.Log($"Could not match file {prefab.name} to a value for {typeof(EnumIdentifierT)}!");
+                continue;
+            }
+            successfulMatches++;
+            idToPrefabs[value] = prefab;
+        }
 
-        Debug.LogError($"Prefab with ID {id} not found!");
-        return default;
+        // If there were any unmatched enum values, errors could be caused trying to get them -- log errors
+        if(successfulMatches == identifierValues.Length)
+            return;
+        
+        foreach(EnumIdentifierT identifier in identifierValues) {
+            if(!idToPrefabs.ContainsKey(identifier)) {
+                Debug.LogError($"Did not find a match for {identifier}!");
+            }
+        }
     }
 }

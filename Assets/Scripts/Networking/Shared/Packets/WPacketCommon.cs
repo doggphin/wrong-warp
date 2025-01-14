@@ -165,10 +165,10 @@ public static class WExtensions {
     }
 
 
-    public static void Put(this NetDataWriter writer, WPrefabId prefabId) {
+    public static void Put(this NetDataWriter writer, NetPrefabType prefabId) {
         writer.Put((ushort)prefabId);
     }
-    public static WPrefabId GetPrefabId(this NetDataReader reader) {
-        return (WPrefabId)reader.GetUShort();
+    public static NetPrefabType GetPrefabId(this NetDataReader reader) {
+        return (NetPrefabType)reader.GetUShort();
     }
 }
