@@ -6,9 +6,12 @@ using UnityEngine.SceneManagement;
 using Networking.Server;
 using Networking.Client;
 using Controllers.Shared;
+using Audio.Shared;
+
 using System.Collections.Generic;
 using System;
 using System.Collections;
+using Inventory;
 
 namespace Networking.Shared {
     public class WNetManager : BaseSingleton<WNetManager> {
@@ -22,6 +25,11 @@ namespace Networking.Shared {
         public static bool IsServer { get { return Instance.WsNetServer != null; } }
         public static bool IsClient { get { return Instance.WcNetClient != null; } }
 
+        private ITicker ticker;
+        public static int GetTick() => Instance.ticker.GetTick();
+        public static float GetPercentageThroughTick() => Instance.ticker.GetPercentageThroughTick();
+        public static float GetPercentageThroughTickCurrentFrame() => Instance.ticker.GetPercentageThroughTickCurrentFrame();
+        
         public static Action<WDisconnectInfo> Disconnected;
 
         protected override void Awake() {
@@ -31,6 +39,8 @@ namespace Networking.Shared {
 
             WPrefabLookup.Init();
             ControlsManager.Init();
+            ItemLookup.Init();
+            AudioLookup.Init();
         }
 
         void Update() => BaseNetManager?.PollEvents();
@@ -48,6 +58,8 @@ namespace Networking.Shared {
             BaseNetManager.Start();
             BaseNetManager.Connect(address, port, WCommon.CONNECTION_KEY);
 
+            ticker = WcNetClient;
+
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
         }
         
@@ -63,6 +75,8 @@ namespace Networking.Shared {
             BaseNetManager = SetNewNetManager(WsNetServer);
             BaseNetManager.Start(port);
             WsNetServer.Activate();
+
+            ticker = WsNetServer;
 
             SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
         }
@@ -84,6 +98,7 @@ namespace Networking.Shared {
 
             Instance.WcNetClient = null;
             Instance.WsNetServer = null;
+            Instance.ticker = null;
 
             Instance.StartCoroutine(LoadMenuFromDisconnect(info));
         }

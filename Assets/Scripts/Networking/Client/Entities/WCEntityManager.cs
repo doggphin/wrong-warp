@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Networking.Shared;
-using Unity.VisualScripting;
 
 namespace Networking.Client {
     public class WCEntityManager : BaseSingleton<WCEntityManager> {

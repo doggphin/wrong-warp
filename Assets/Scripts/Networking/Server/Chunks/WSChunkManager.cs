@@ -57,7 +57,7 @@ namespace Networking.Server {
                 WSChunk chunkEntering = GetChunk(coords, false);
 
                 foreach(var entity in chunkEntering.PresentEntities) {
-                    entitiesEntering.Add(entity.GetSerializedEntity(WSNetServer.Tick));
+                    entitiesEntering.Add(entity.GetSerializedEntity(WSNetServer.Instance.GetTick()));
                 }
             }
             

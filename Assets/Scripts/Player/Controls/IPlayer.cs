@@ -12,6 +12,7 @@ namespace Controllers.Shared {
 
         public void AddRotationDelta(Vector2 delta);
         public Vector2? PollLook();
+        public Vector2 GetLook();
 
         public void SetRotation(Vector2 look);
         public Vector2 GetRotation();

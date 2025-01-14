@@ -53,51 +53,56 @@ namespace Networking.Server {
         public void Init(int entityId, WPrefabId prefabId, bool isChunkLoader) {
             Id = entityId;
             PrefabId = prefabId;
-            ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Tick]);
+            ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Instance.GetTick()]);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WSChunkManager.GetChunk(ChunkPosition, false);
         }   
 
 
         private void Update() {
-            float percentageThroughTick = WSNetServer.GetPercentageThroughTick();
+            float percentageThroughTick = WSNetServer.Instance.GetPercentageThroughTick();
+            int tick = WSNetServer.Instance.GetTick();
 
             //if(!updatePositionsLocally)
-                transform.position = LerpBufferedPositions(WSNetServer.Tick, percentageThroughTick);
+                transform.position = LerpBufferedPositions(tick, percentageThroughTick);
 
             if(!updateRotationsLocally)  
-                transform.rotation = LerpBufferedRotations(WSNetServer.Tick, percentageThroughTick);
+                transform.rotation = LerpBufferedRotations(tick, percentageThroughTick);
 
             if(!updateScalesLocally)
-                transform.localScale = LerpBufferedScales(WSNetServer.Tick, percentageThroughTick);
+                transform.localScale = LerpBufferedScales(tick, percentageThroughTick);
         }
 
 
         public void PollAndFinalizeTransform() {
-            positionsBuffer[WSNetServer.Tick + 1] = positionsBuffer[WSNetServer.Tick];
-            rotationsBuffer[WSNetServer.Tick + 1] = rotationsBuffer[WSNetServer.Tick];
-            scalesBuffer[WSNetServer.Tick + 1] = scalesBuffer[WSNetServer.Tick];
+            int tick = WSNetServer.Instance.GetTick();
+            int previousTick = tick - 1;
+            int futureTick = tick + 1;
+
+            positionsBuffer[futureTick] = positionsBuffer[tick];
+            rotationsBuffer[futureTick] = rotationsBuffer[tick];
+            scalesBuffer[futureTick] = scalesBuffer[tick];
 
             if (!gameObject.activeInHierarchy || isDead)
                 return;
 
-            bool hasMoved = positionsBuffer[WSNetServer.Tick] != positionsBuffer[WSNetServer.Tick - 1];
-            bool hasRotated = rotationsBuffer[WSNetServer.Tick] != rotationsBuffer[WSNetServer.Tick - 1];
-            bool hasScaled = scalesBuffer[WSNetServer.Tick] != scalesBuffer[WSNetServer.Tick - 1];
+            bool hasMoved = positionsBuffer[tick] != positionsBuffer[previousTick];
+            bool hasRotated = rotationsBuffer[tick] != rotationsBuffer[previousTick];
+            bool hasScaled = scalesBuffer[tick] != scalesBuffer[previousTick];
 
             if(!hasMoved && !hasRotated && !hasScaled)
                 return;
 
             WSEntityTransformUpdatePkt transformPacket = new() {
                 transform = new WTransformSerializable() {
-                    position = hasMoved ? positionsBuffer[WSNetServer.Tick] : null,
-                    rotation = hasRotated ? rotationsBuffer[WSNetServer.Tick] : null,
-                    scale = hasScaled ? scalesBuffer[WSNetServer.Tick] : null
+                    position = hasMoved ? positionsBuffer[tick] : null,
+                    rotation = hasRotated ? rotationsBuffer[tick] : null,
+                    scale = hasScaled ? scalesBuffer[tick] : null
                 }
             };
 
             if (hasMoved) {
-                Vector2Int newChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Tick]);
+                Vector2Int newChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[tick]);
         
                 if (newChunkPosition != ChunkPosition)
                     CurrentChunk = WSChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
@@ -133,7 +138,7 @@ namespace Networking.Server {
                 return;
             }
 
-            CurrentChunk.AddEntityUpdate(WSNetServer.Tick, Id, packet);
+            CurrentChunk.AddEntityUpdate(WSNetServer.Instance.GetTick(), Id, packet);
         }
     }
 }

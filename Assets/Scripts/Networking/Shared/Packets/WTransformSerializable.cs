@@ -14,7 +14,7 @@ public struct WTransformSerializable : INetSerializable {
             position = reader.GetVector3();
         }
         if ((flags & 2) != 0) {
-            rotation = reader.GetLossyQuat();
+            rotation = reader.GetLossyQuaternion();
         }
         if ((flags & 4) != 0) {
             scale = reader.GetVector3();
@@ -40,7 +40,7 @@ public struct WTransformSerializable : INetSerializable {
             writer.Put((Vector3)position);
         }
         if (rotation != null) {
-            writer.PutLossyQuat((Quaternion)rotation);
+            writer.PutLossyQuaternion((Quaternion)rotation);
         }
         if (scale != null) {
             writer.Put((Vector3)scale);

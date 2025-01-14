@@ -1,4 +1,5 @@
 using LiteNetLib.Utils;
+using Mono.Cecil;
 using Networking;
 using Networking.Shared;
 using UnityEngine;
@@ -28,6 +29,12 @@ namespace Networking.Shared {
 
 
 public static class WExtensions {
+    public static byte CompressUnsignedFloat(float val, float maxValue) {
+        return (byte)(byte.MaxValue * (val / maxValue));
+    }
+    public static float DecompressUnsignedFloat(byte val, float maxValue) {
+        return val * (maxValue / byte.MaxValue);
+    }
     public static byte CompressNormalizedFloat(float val) {
         return (byte)((val + 1) * 127.5);
     }
@@ -42,7 +49,14 @@ public static class WExtensions {
         return (val / 16f) - 1f;
     }
 
-
+    public static void PutCompressedUnsignedFloat(this NetDataWriter writer, float value, float maxValue) {
+        writer.Put(CompressUnsignedFloat(value, maxValue));
+    }
+    public static float GetCompressedUnsignedFloat(this NetDataReader reader, float maxValue) {
+        byte compressedValue = reader.GetByte();
+        return DecompressUnsignedFloat(compressedValue, maxValue);
+    }
+    
     public static uint GetVarUInt(this NetDataReader reader)
     {
         uint ret = 0;
@@ -86,13 +100,13 @@ public static class WExtensions {
     }
 
 
-    public static void PutLossyQuat(this NetDataWriter writer, Quaternion quat) {
+    public static void PutLossyQuaternion(this NetDataWriter writer, Quaternion quat) {
         writer.Put(CompressNormalizedFloat(quat.x));
         writer.Put(CompressNormalizedFloat(quat.y));
         writer.Put(CompressNormalizedFloat(quat.z));
         writer.Put(CompressNormalizedFloat(quat.w));
     }
-    public static Quaternion GetLossyQuat(this NetDataReader reader) {
+    public static Quaternion GetLossyQuaternion(this NetDataReader reader) {
         Quaternion rotation = new() {
             x = DecompressNormalizedFloat(reader.GetByte()),
             y = DecompressNormalizedFloat(reader.GetByte()),

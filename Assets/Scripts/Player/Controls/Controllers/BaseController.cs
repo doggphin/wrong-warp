@@ -47,9 +47,9 @@ namespace Controllers.Shared {
         }
 
 
-        public Vector2? PollLook()
-        {
-            return boundedRotator.PollLook();
-        }
+        public Vector2? PollLook() => boundedRotator.PollLook();
+
+
+        public Vector2 GetLook() => boundedRotator.GetLook();
     }
 }

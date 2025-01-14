@@ -107,7 +107,7 @@ namespace Networking.Server {
 
             // Non-server messages get sent locally
             if(!isServerMessage) {
-                player.Entity.CurrentChunk.AddGenericUpdate(WSNetServer.Tick, chatMessagePkt, true);
+                player.Entity.CurrentChunk.AddGenericUpdate(WSNetServer.Instance.GetTick(), chatMessagePkt, true);
             // Server messages get sent globally
             } else {
                 // Send server messages directly to each client
@@ -134,7 +134,7 @@ namespace Networking.Server {
                     WSEntity playerEntity = ((WSPlayer)sender.Tag).Entity;
 
                     if(playerEntity != null)
-                        playerEntity.positionsBuffer[WSNetServer.Tick] = new Vector3(posX, posY, posZ);
+                        playerEntity.positionsBuffer[WSNetServer.Instance.GetTick()] = new Vector3(posX, posY, posZ);
                     
                     return true;
                 default:

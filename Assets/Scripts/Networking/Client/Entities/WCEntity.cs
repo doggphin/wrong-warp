@@ -11,7 +11,7 @@ namespace Networking.Client {
         public bool isMyPlayer;
 
         private void Update() {
-            float percentageThroughTick = WCNetClient.PercentageThroughTick;
+            float percentageThroughTick = WCNetClient.Instance.GetPercentageThroughTick();
 
             // Non-player entities use ObservingTick
             if(!isMyPlayer) {
@@ -40,7 +40,7 @@ namespace Networking.Client {
 
             // If a previous position exists, lerp between previous and current position
             if(receivedPositions.TryGetByTimestamp(WCNetClient.ObservingTick - 2, out Vector3 previousPosition)) {
-                transform.position = Vector3.Lerp(previousPosition, currentPosition, WCNetClient.PercentageThroughTick);
+                transform.position = Vector3.Lerp(previousPosition, currentPosition, WCNetClient.Instance.GetPercentageThroughTick());
 
             // Otherwise teleport
             } else {
@@ -57,7 +57,7 @@ namespace Networking.Client {
 
             // If a previous Rotation exists, lerp between previous and current Rotation
             if(receivedRotations.TryGetByTimestamp(WCNetClient.ObservingTick - 2, out Quaternion previousRotation)) {
-                transform.rotation = Quaternion.Lerp(previousRotation, currentRotation, WCNetClient.PercentageThroughTick);
+                transform.rotation = Quaternion.Lerp(previousRotation, currentRotation, WCNetClient.Instance.GetPercentageThroughTick());
 
             // Otherwise teleport
             } else {

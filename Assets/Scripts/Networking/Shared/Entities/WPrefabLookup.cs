@@ -5,6 +5,15 @@ using System.Linq;
 using UnityEngine;
 
 namespace Networking.Shared {
+    public enum WPrefabId : int
+    {
+        Undefined = 0,
+        Test = 1,
+        Player = 2,
+        Spectator = 3,
+    }
+
+
     public struct WPrefabTransformUpdateTypes {
         public bool updatePosition;
         public bool updateRotation;
@@ -20,7 +29,7 @@ namespace Networking.Shared {
 
     public static class WPrefabLookup {
         public static Dictionary<WPrefabId, WPrefabTransformUpdateTypes> PrefabUpdateTypes { get; private set; } = new() {
-            { WPrefabId.Empty, new WPrefabTransformUpdateTypes(false, false, false) },
+            { WPrefabId.Undefined, new WPrefabTransformUpdateTypes(false, false, false) },
             { WPrefabId.Test, new WPrefabTransformUpdateTypes(true, false, false) },
             { WPrefabId.Player, new WPrefabTransformUpdateTypes(true, true, false) },
             { WPrefabId.Spectator, new WPrefabTransformUpdateTypes(true, true, false) }

@@ -1,5 +1,3 @@
-using Networking.Shared;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Controllers.Shared {
@@ -31,6 +29,11 @@ namespace Controllers.Shared {
 
             oldRotation = rotation;
 
+            return rotation;
+        }
+
+
+        public Vector2 GetLook() {
             return rotation;
         }
     }

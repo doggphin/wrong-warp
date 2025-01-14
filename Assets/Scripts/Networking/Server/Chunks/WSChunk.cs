@@ -36,7 +36,7 @@ namespace Networking.Server {
             if (isUnreliableDeltaSnapshot3x3PktWritten)
                 return unreliableDeltaSnapshot3x3PktWriter;
 
-            WPacketCommunication.StartMultiPacket(unreliableDeltaSnapshot3x3PktWriter, WSNetServer.Tick);
+            WPacketCommunication.StartMultiPacket(unreliableDeltaSnapshot3x3PktWriter, WSNetServer.Instance.GetTick());
             foreach(var chunk in WSChunkManager.GetNeighboringChunks(Coords, true, false))
                 chunk.GetUnreliableDeltaSnapshot().Serialize(unreliableDeltaSnapshot3x3PktWriter);
 
@@ -81,8 +81,8 @@ namespace Networking.Server {
                 return null;
             }
 
-            WPacketCommunication.StartMultiPacket(reliableUpdates3x3PktWriter, WSNetServer.Tick);
-            new WSChunkReliableUpdatesPkt() { updates = updates, startTick = WSNetServer.Tick - WCommon.TICKS_PER_SNAPSHOT }.Serialize(reliableUpdates3x3PktWriter);
+            WPacketCommunication.StartMultiPacket(reliableUpdates3x3PktWriter, WSNetServer.Instance.GetTick());
+            new WSChunkReliableUpdatesPkt() { updates = updates, startTick = WSNetServer.Instance.GetTick() - WCommon.TICKS_PER_SNAPSHOT }.Serialize(reliableUpdates3x3PktWriter);
 
             isReliableUpdates3x3Written = true;
             return reliableUpdates3x3PktWriter;
@@ -162,7 +162,7 @@ namespace Networking.Server {
         public void KillEntity(WSEntity entity, WEntityKillReason killReason) {
             PresentEntities.Remove(entity);
             WSEntityKillPkt packet = new() { reason = killReason };
-            AddEntityUpdate(WSNetServer.Tick, entity.Id, packet);
+            AddEntityUpdate(WSNetServer.Instance.GetTick(), entity.Id, packet);
 
             if(entity.IsChunkLoader)
                 WSChunkManager.RemoveChunkLoader(Coords, entity, true);
@@ -174,7 +174,7 @@ namespace Networking.Server {
             PresentEntities.Add(entity);
             WSEntitySpawnPkt packet = new()
             {
-                entity = entity.GetSerializedEntity(WSNetServer.Tick),
+                entity = entity.GetSerializedEntity(WSNetServer.Instance.GetTick()),
                 reason = reason
             };
             //AddEntityUpdate(WSNetServer.Tick, entity.Id, packet);

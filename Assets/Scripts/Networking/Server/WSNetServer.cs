@@ -10,15 +10,26 @@ using System.Linq;
 
 namespace Networking.Server {
     [RequireComponent(typeof(WSEntityManager))]
-    public class WSNetServer : BaseSingleton<WSNetServer>, INetEventListener {
+    public class WSNetServer : BaseSingleton<WSNetServer>, ITicker, INetEventListener {
         private WSEntityManager entityManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
-        public static int Tick => tick;
         private static WWatch watch; // TODO: Should not do this here
-        public static float GetPercentageThroughTick() => watch.GetPercentageThroughTick();
+        private float percentageThroughTickCurrentFrame;
+        public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
+        public float GetPercentageThroughTick() => watch.GetPercentageThroughTick();
+        public int GetTick() => tick;
         public static WSPlayer HostPlayer { get; private set; }
+
+        void Update() {
+            percentageThroughTickCurrentFrame = watch.GetPercentageThroughTick();
+            while(percentageThroughTickCurrentFrame > 1) {
+                watch.AdvanceTick();
+                StartNextTick();
+                percentageThroughTickCurrentFrame = watch.GetPercentageThroughTick();
+            }
+        }
 
         private bool isActivated;
         public void Activate() {
@@ -52,14 +63,6 @@ namespace Networking.Server {
 
             HostPlayer = new();
             HostPlayer.Init(null, playerEntity);
-        }
-
-
-        void Update() {
-            while(watch.GetPercentageThroughTick() > 1) {
-                watch.AdvanceTick();
-                StartNextTick();
-            }
         }
 
 
@@ -199,7 +202,7 @@ namespace Networking.Server {
             WSJoinAcceptPkt joinAcceptPacket = new() {
                 userName = userName,
                 playerEntityId = playerEntity.Id,
-                tick = Tick
+                tick = tick
             };
 
             WSChunk chunk = playerEntity.CurrentChunk;
@@ -211,7 +214,7 @@ namespace Networking.Server {
             
             int i=0;
             foreach(WSEntity entity in chunk.PresentEntities) {
-                fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(Tick);
+                fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(tick);
             }
             //WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
 

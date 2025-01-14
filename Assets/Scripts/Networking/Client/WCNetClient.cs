@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace Networking.Client {
     [RequireComponent(typeof(WCEntityManager))]
-    public class WCNetClient : BaseSingleton<WCNetClient>, INetEventListener {
+    public class WCNetClient : BaseSingleton<WCNetClient>, ITicker, INetEventListener {
         private WCEntityManager entityManager;
         private NetPeer serverPeer;
         private NetDataWriter writer = new();
@@ -24,7 +24,6 @@ namespace Networking.Client {
 
         private WCPacketCacher packetCacher;
         private static WWatch watch;
-        public static float PercentageThroughTick => watch.GetPercentageThroughTick();
         // If client is sending stuff too late (ping is better than they're pretending it is), lower window + skip a couple ticks
         // If client is sending stuff too early (ping is worse than they're pretending it is), increase window + wait a couple ticks
         // This should be done by temporarily increasing the watch AdvanceTick speed.
@@ -34,6 +33,9 @@ namespace Networking.Client {
         //private int DesiredTickOffset = -TickOffsetWindow * 2; // Initially want to start in the future
         public static int ObservingTick => CentralTimingTick - windowSize;
         public static int SendingTick => CentralTimingTick + windowSize;
+        public int GetTick() => SendingTick;
+        public float GetPercentageThroughTick() => watch.GetPercentageThroughTick();
+        public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
         private WCTickDifferenceTracker tickDifferenceTracker = new();
         private int necessaryTickCompensation = 0;
 
@@ -75,9 +77,10 @@ namespace Networking.Client {
             Destroy(gameObject);
         }
 
-
+        private float percentageThroughTickCurrentFrame;
         void Update() {
-            if(isActivated && PercentageThroughTick > 1) {
+            percentageThroughTickCurrentFrame = GetPercentageThroughTick();
+            if(isActivated && GetPercentageThroughTick() > 1) {
                 watch.AdvanceTick();
                 AdvanceTick(true);
             }
