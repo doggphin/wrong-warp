@@ -5,7 +5,7 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public class DefaultController : BaseController, IPlayer {
+    public class DefaultController : BaseController {
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
         const float groundedAcceleration = 55f;
@@ -29,7 +29,7 @@ namespace Controllers.Shared {
             entity = GetComponent<EntityBase>();
         }
 
-        public void RollbackToTick(int tick)
+        public override void RollbackToTick(int tick)
         {
             var state = WCRollbackManager.defaultControllerStates[tick];
 
@@ -51,7 +51,7 @@ namespace Controllers.Shared {
             };
         }
 
-        public void Control(WInputsSerializable inputs, int onTick) {
+        public override void Control(WInputsSerializable inputs, int onTick) {
             if(entity == null)
                 return;
 
@@ -147,6 +147,6 @@ namespace Controllers.Shared {
                 var state = GetSerializableState(onTick);
                 WCRollbackManager.defaultControllerStates[onTick] = state;
             }         
-        }
+        } 
     }
 }

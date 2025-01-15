@@ -9,8 +9,9 @@ namespace Networking.Server {
         WSEntity entity;
         public int Id => entity.Id;
         private Inventory inventory;
-        private HashSet<int> deltas;
+        private HashSet<int> deltasBuffer;
         private List<WSPlayer> observers;
+        
 
         void Awake() {
             entity = GetComponent<WSEntity>();
@@ -21,25 +22,31 @@ namespace Networking.Server {
             }
         }
 
+
         public void Init(Inventory inventory) {
             this.inventory = inventory;
             inventory.Modified += InventoryModified;
         }
 
+
         public void InventoryModified(int index) {
-            deltas.Add(index);
+            deltasBuffer.Add(index);
         }
 
-        public List<INetSerializable> GetUpdates() {
-            List<INetSerializable> updates = new();
 
+        public List<WInventoryDelta> GetAndClearUpdates() {
             List<WInventoryDelta> inventoryDeltas = new();
-            foreach(int index in deltas) {
-                inventoryDeltas.Add()
+            foreach(int index in deltasBuffer) {
+                inventoryDeltas.Add(new WInventoryDelta { 
+                    index = index, 
+                    inventorySlot = new WInventorySlot { 
+                        item = inventory.items[index] 
+                    }
+                });
             }
-            WSInventoryDeltaCollectionPkt inventoryDeltaCollectionPkt = new();
-            deltas.Clear();
-            throw new System.Exception("Not implemented!");
+            
+            deltasBuffer.Clear();
+            return inventoryDeltas;
         }
     }
 }

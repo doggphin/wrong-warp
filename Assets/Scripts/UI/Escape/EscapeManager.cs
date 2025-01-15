@@ -1,7 +1,5 @@
-using Networking.Client;
 using Networking.Shared;
 using UnityEngine;
-using UnityEngine.Android;
 
 public class EscapeManager : BaseUiElement
 {

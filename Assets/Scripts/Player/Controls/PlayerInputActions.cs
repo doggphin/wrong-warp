@@ -205,6 +205,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Inventory"",
+                    ""type"": ""Button"",
+                    ""id"": ""9ff9c633-64ef-45f6-bc50-b2816f4e4371"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Escape"",
                     ""type"": ""Button"",
                     ""id"": ""bb5c2422-9137-4e5e-a7d5-ce0cf3e50a70"",
@@ -232,6 +241,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Chat"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bbd50b8d-31fa-4232-b5a0-957512e633e5"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Inventory"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -275,6 +295,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         // Ui
         m_Ui = asset.FindActionMap("Ui", throwIfNotFound: true);
         m_Ui_Chat = m_Ui.FindAction("Chat", throwIfNotFound: true);
+        m_Ui_Inventory = m_Ui.FindAction("Inventory", throwIfNotFound: true);
         m_Ui_Escape = m_Ui.FindAction("Escape", throwIfNotFound: true);
         m_Ui_Confirm = m_Ui.FindAction("Confirm", throwIfNotFound: true);
     }
@@ -447,6 +468,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Ui;
     private List<IUiActions> m_UiActionsCallbackInterfaces = new List<IUiActions>();
     private readonly InputAction m_Ui_Chat;
+    private readonly InputAction m_Ui_Inventory;
     private readonly InputAction m_Ui_Escape;
     private readonly InputAction m_Ui_Confirm;
     public struct UiActions
@@ -454,6 +476,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         private @PlayerInputActions m_Wrapper;
         public UiActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
         public InputAction @Chat => m_Wrapper.m_Ui_Chat;
+        public InputAction @Inventory => m_Wrapper.m_Ui_Inventory;
         public InputAction @Escape => m_Wrapper.m_Ui_Escape;
         public InputAction @Confirm => m_Wrapper.m_Ui_Confirm;
         public InputActionMap Get() { return m_Wrapper.m_Ui; }
@@ -468,6 +491,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Chat.started += instance.OnChat;
             @Chat.performed += instance.OnChat;
             @Chat.canceled += instance.OnChat;
+            @Inventory.started += instance.OnInventory;
+            @Inventory.performed += instance.OnInventory;
+            @Inventory.canceled += instance.OnInventory;
             @Escape.started += instance.OnEscape;
             @Escape.performed += instance.OnEscape;
             @Escape.canceled += instance.OnEscape;
@@ -481,6 +507,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Chat.started -= instance.OnChat;
             @Chat.performed -= instance.OnChat;
             @Chat.canceled -= instance.OnChat;
+            @Inventory.started -= instance.OnInventory;
+            @Inventory.performed -= instance.OnInventory;
+            @Inventory.canceled -= instance.OnInventory;
             @Escape.started -= instance.OnEscape;
             @Escape.performed -= instance.OnEscape;
             @Escape.canceled -= instance.OnEscape;
@@ -518,6 +547,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     public interface IUiActions
     {
         void OnChat(InputAction.CallbackContext context);
+        void OnInventory(InputAction.CallbackContext context);
         void OnEscape(InputAction.CallbackContext context);
         void OnConfirm(InputAction.CallbackContext context);
     }

@@ -4,25 +4,7 @@ using Mono.Cecil;
 
 namespace Networking.Shared {
     public class WSInventoryDeltaCollectionPkt : INetSerializable {
-        public class InventoryDelta : INetSerializable {
-            int index;
-            WInventorySlot inventorySlot;
-
-            public void Deserialize(NetDataReader reader)
-            {
-                index = reader.GetInt();
-                inventorySlot = new();
-                inventorySlot.Deserialize(reader);
-            }
-
-            public void Serialize(NetDataWriter writer)
-            {
-                writer.Put(index);
-                inventorySlot.Serialize(writer);
-            }
-        }
-
-        public Dictionary<int, List<InventoryDelta>> inventoryIdsToDeltas;
+        public Dictionary<int, List<WInventoryDelta>> inventoryIdsToDeltas;
 
         public void Deserialize(NetDataReader reader) {
             inventoryIdsToDeltas = new();
@@ -32,9 +14,9 @@ namespace Networking.Shared {
             for(int i=0; i<amountOfInventoryIdsToDeltas; i++) {
                 int inventoryId = reader.GetInt();
                 int amountOfDeltas = (int)reader.GetVarUInt();
-                List<InventoryDelta> inventoryDeltas = new(amountOfDeltas);
+                List<WInventoryDelta> inventoryDeltas = new(amountOfDeltas);
                 for(int j=0; j<amountOfDeltas; j++) {
-                    InventoryDelta inventoryDelta = new();
+                    WInventoryDelta inventoryDelta = new();
                     inventoryDelta.Deserialize(reader);
                     inventoryDeltas.Add(inventoryDelta);
                 }

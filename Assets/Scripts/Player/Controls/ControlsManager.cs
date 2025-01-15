@@ -11,7 +11,7 @@ namespace Controllers.Shared {
     public static class ControlsManager {
         private static PlayerInputActions inputActions;
 
-        public static IPlayer player = null;
+        public static AbstractPlayer player = null;
 
         public static TimestampedCircularTickBuffer<WInputsSerializable> inputs = new();
 
@@ -26,6 +26,7 @@ namespace Controllers.Shared {
         public static Action ChatClicked;
         public static Action EscapeClicked;
         public static Action ConfirmClicked;
+        public static Action InventoryClicked;
 
         private static bool inputsInitialized = false;
         public static void Init() {      
@@ -63,6 +64,7 @@ namespace Controllers.Shared {
             inputActions.Ui.Chat.started += (_) => ChatClicked?.Invoke();
             inputActions.Ui.Escape.started += (_) => EscapeClicked?.Invoke();
             inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
+            inputActions.Ui.Inventory.started += (_) => InventoryClicked?.Invoke();
 
             inputsInitialized = true;
         }

@@ -3,20 +3,20 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public interface IPlayer
+    public abstract class AbstractPlayer : MonoBehaviour
     {
-        public void EnablePlayer();
-        public void DisablePlayer();
+        public abstract void EnablePlayer();
+        public abstract void DisablePlayer();
 
-        public void Control(WInputsSerializable inputs, int onTick);
+        public abstract void Control(WInputsSerializable inputs, int onTick);
 
-        public void AddRotationDelta(Vector2 delta);
-        public Vector2? PollLook();
-        public Vector2 GetLook();
+        public abstract void AddRotationDelta(Vector2 delta);
+        public abstract Vector2? PollLook();
+        public abstract Vector2 GetLook();
 
-        public void SetRotation(Vector2 look);
-        public Vector2 GetRotation();
+        public abstract void SetRotation(Vector2 look);
+        public abstract Vector2 GetRotation();
 
-        public void RollbackToTick(int tick);
+        public abstract void RollbackToTick(int tick);
     }
 }

@@ -3,7 +3,7 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
-    public class SpectatorController : BaseController, IPlayer {
+    public class SpectatorController : BaseController {
 
         private Vector3 velocity = Vector3.zero;
         float speed = 10;
@@ -13,12 +13,12 @@ namespace Controllers.Shared {
             entity = GetComponent<EntityBase>();
         }
 
-        public void RollbackToTick(int tick)
+        public override void RollbackToTick(int tick)
         {
             Debug.LogError("Not implemented");
         }
 
-        public void Control(WInputsSerializable inputs, int onTick)
+        public override void Control(WInputsSerializable inputs, int onTick)
         {
             if(entity == null) {
                 Debug.LogError("No entity to control!");

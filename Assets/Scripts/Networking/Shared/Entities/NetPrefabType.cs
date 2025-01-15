@@ -3,7 +3,6 @@ namespace Networking.Shared {
     {
         Test,
         Player,
-        Spectator,
-        Wolf
+        Spectator
     }
 }

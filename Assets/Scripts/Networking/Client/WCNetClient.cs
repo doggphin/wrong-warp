@@ -20,7 +20,7 @@ namespace Networking.Client {
         /// <summary> If this is set to a value, search for a player entity with this ID. </summary>
         private int? playerEntityIdToFind = null;
         public static WCEntity PlayerEntity {get; private set;} = null;
-        public static IPlayer Player {get; private set;} = null;
+        public static AbstractPlayer Player {get; private set;} = null;
 
         private WCPacketCacher packetCacher;
         private static WWatch watch;
@@ -159,7 +159,7 @@ namespace Networking.Client {
 
             playerEntityIdToFind = null;
             PlayerEntity = entity;
-            Player = PlayerEntity.GetComponent<IPlayer>();
+            Player = PlayerEntity.GetComponent<AbstractPlayer>();
             Player.EnablePlayer();
             ControlsManager.player = Player;
             entity.isMyPlayer = true;

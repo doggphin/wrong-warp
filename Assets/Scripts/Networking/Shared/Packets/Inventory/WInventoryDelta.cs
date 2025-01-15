@@ -1,9 +1,9 @@
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class InventoryDelta : INetSerializable {
-        int index;
-        WInventorySlot inventorySlot;
+    public class WInventoryDelta : INetSerializable {
+        public int index;
+        public WInventorySlot inventorySlot;
 
         public void Deserialize(NetDataReader reader)
         {
