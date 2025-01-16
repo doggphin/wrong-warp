@@ -40,7 +40,7 @@ namespace Networking.Server {
                 inventoryDeltas.Add(new WInventoryDelta { 
                     index = index, 
                     inventorySlot = new WInventorySlot { 
-                        item = inventory.items[index] 
+                        item = inventory.SlottedItems[index] 
                     }
                 });
             }

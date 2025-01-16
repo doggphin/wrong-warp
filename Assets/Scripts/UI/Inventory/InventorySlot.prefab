@@ -220,7 +220,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3643483054169303705}
-  - component: {fileID: 2669963772603233992}
+  - component: {fileID: 5256991159107816526}
   m_Layer: 5
   m_Name: InventorySlot
   m_TagString: Untagged
@@ -250,14 +250,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 128, y: 128}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &2669963772603233992
-CanvasRenderer:
+--- !u!114 &5256991159107816526
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4145230244449369534}
-  m_CullTransparentMesh: 1
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05c94caf5f70ded4f93d4d602afb9307, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemSprite: {fileID: 4616671369271080197}
+  stackSizeText: {fileID: 3279516840402353023}
 --- !u!1 &8843649927186020720
 GameObject:
   m_ObjectHideFlags: 0

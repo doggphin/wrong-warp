@@ -16,10 +16,10 @@ namespace Inventories {
                 return false;
 
             BaseItemSO baseItem = GetBaseItem();
-            if(baseItem.maxStackSize <= stackSize)
+            if(baseItem.MaxStackSize <= stackSize)
                 return false;
 
-            int amountToMerge = Mathf.Min(baseItem.maxStackSize - stackSize, stackSize + otherSlottedItem.stackSize);
+            int amountToMerge = Mathf.Min(baseItem.MaxStackSize - stackSize, stackSize + otherSlottedItem.stackSize);
             otherSlottedItem.stackSize -= amountToMerge;
             stackSize += amountToMerge;
             

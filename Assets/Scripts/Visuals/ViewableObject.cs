@@ -17,7 +17,6 @@ public class ViewableObject : MonoBehaviour
     bool layersAreSet = false;
     public void ResetLayers() {
         if(!layersAreSet) {
-            Debug.LogError("Cannot reset ViewableObject layers without setting them first!");
             return;
         }
         
@@ -30,7 +29,6 @@ public class ViewableObject : MonoBehaviour
 
     public void CacheAndSetLayers(int layer) {
         if(layersAreSet) {
-            Debug.LogError("Cannot cache and set ViewableObject layers without resetting first!");
             return;
         }
 
