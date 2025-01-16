@@ -1,6 +1,8 @@
 using Controllers.Shared;
+using UnityEngine;
 
 public class InventoryUiManager : BaseUiElement {
+    [SerializeField] GameObject inventorySlot;
     public static InventoryUiManager Instance { get; private set; }
 
     void Start() {

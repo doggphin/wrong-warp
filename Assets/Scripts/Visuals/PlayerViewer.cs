@@ -10,7 +10,15 @@ public class PlayerViewer : MonoBehaviour {
     }
 
     float rotationsPerSecond = 0.33f;
-    void Update() {
+    void LateUpdate() {
+        Capture();
+    }
+
+    void OnRectTransformDimensionsChange() {
+        Capture();
+    }
+
+    void Capture() {
         if(ControlsManager.player && ControlsManager.player.TryGetComponent(out ViewablePlayer viewableObject))
             objectViewer.TakeRotatedImage(viewableObject, Time.time * 360 * rotationsPerSecond % 360, 0);
     }
