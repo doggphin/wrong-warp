@@ -53,7 +53,6 @@ namespace Inventories {
                 if(inventory.SlottedItems.Length < 7) {
                     throw new System.Exception($"Inventories must have at least 7 item spaces to be useable as a player inventory!");
                 }
-
             } else if(inventoryWindowType == InventoryOwnershipType.OtherInventory) {
 
             }

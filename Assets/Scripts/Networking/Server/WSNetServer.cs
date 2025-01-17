@@ -7,11 +7,14 @@ using System.Net.Sockets;
 using Networking.Shared;
 using Controllers.Shared;
 using System.Linq;
+using System;
 
 namespace Networking.Server {
     [RequireComponent(typeof(WSEntityManager))]
+    [RequireComponent(typeof(WSPlayerInputsSlotterManager))]
     public class WSNetServer : BaseSingleton<WSNetServer>, ITicker, INetEventListener {
         private WSEntityManager entityManager;
+        private WSPlayerInputsSlotterManager playerInputsSlotterManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
@@ -22,7 +25,33 @@ namespace Networking.Server {
         public int GetTick() => tick;
         public static WSPlayer HostPlayer { get; private set; }
 
+        public static Action<WSPlayer> PlayerJoined;
+        public static Action<WSPlayer> PlayerLeft;
+
+        private bool isActivated;
+        public void Activate() {
+            Debug.Log("Activating!");
+            if(isActivated)
+                return;
+
+            entityManager = GetComponent<WSEntityManager>();
+            CreateHostPlayer();
+            // Start one second ahead to keep circular buffers from ever trying to index negative numbers
+            tick = WCommon.TICKS_PER_SECOND;
+            
+            ControlsManager.Activate();
+            ChatUiManager.SendChatMessage += SendHostChatMessage;
+
+            watch = new();
+            isActivated = true;
+        }
+
         void Update() {
+            if(!isActivated) {
+                Debug.Log("Not activated!");
+                return;
+            }
+            
             percentageThroughTickCurrentFrame = watch.GetPercentageThroughTick();
             while(percentageThroughTickCurrentFrame > 1) {
                 watch.AdvanceTick();
@@ -31,38 +60,20 @@ namespace Networking.Server {
             }
         }
 
-        private bool isActivated;
-        public void Activate() {
-            if(isActivated)
-                return;
-
-            entityManager = GetComponent<WSEntityManager>();
-            CreatePlayer();
-            // Start one second ahead to keep circular buffers from ever trying to index negative numbers
-            tick = WCommon.TICKS_PER_SECOND;
-            
-            ControlsManager.Activate();
-            ChatUiManager.SendChatMessage += SendHostChatMessage;
-
-            watch = new();
-        }
-
         protected override void OnDestroy() {
-            base.OnDestroy();
             ChatUiManager.SendChatMessage -= SendHostChatMessage;
 
-            Destroy(gameObject);
+            base.OnDestroy();
         }
 
-        private void CreatePlayer() {
+        private void CreateHostPlayer() {
             WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
             ControlsManager.player = player;
             ControlsManager.player.EnablePlayer();
 
-            HostPlayer = new();
-            HostPlayer.Init(null, playerEntity);
+            HostPlayer = new(null, playerEntity);
         }
 
 
@@ -78,7 +89,7 @@ namespace Networking.Server {
                 if(!WSPlayer.FromPeer(peer, out WSPlayer netPlayer))
                     continue;
                 
-                WInputsSerializable inputs = WsPlayerInputsSlotter.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
+                WInputsSerializable inputs = playerInputsSlotterManager.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
                 netPlayer.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
 
@@ -158,7 +169,7 @@ namespace Networking.Server {
 
                     WCGroupedInputsPkt groupedInputs = new();
                     groupedInputs.Deserialize(reader);
-                    WsPlayerInputsSlotter.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
+                    playerInputsSlotterManager.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
                     return true;
                 }
                 case WPacketType.CChatMessage: {
@@ -191,19 +202,18 @@ namespace Networking.Server {
             if(WSPlayer.FromPeer(peer) != null)
                 return false;
 
-            WsPlayerInputsSlotter.AddPlayer(peer.Id);
-
             WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
+            WSPlayer wsPlayer = new(peer, playerEntity);
+            peer.Tag = wsPlayer;
+            PlayerJoined?.Invoke(wsPlayer);
 
-            WSPlayer netPlayer = new();
-            netPlayer.Init(peer, playerEntity);
-            peer.Tag = netPlayer;
-
+            WPacketCommunication.StartMultiPacket(writer, tick);
+            
             WSJoinAcceptPkt joinAcceptPacket = new() {
                 userName = userName,
-                playerEntityId = playerEntity.Id,
                 tick = tick
             };
+            joinAcceptPacket.Serialize(writer);
 
             WSChunk chunk = playerEntity.CurrentChunk;
             WSFullEntitiesSnapshotPkt fullEntitiesSnapshotPacket = new()
@@ -211,18 +221,13 @@ namespace Networking.Server {
                 entities = new WEntitySerializable[chunk.PresentEntities.Count],
                 isFullReset = true
             };
-            
             int i=0;
             foreach(WSEntity entity in chunk.PresentEntities) {
                 fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(tick);
             }
-            //WSEntitiesLoadedDeltaPkt entitiesLoadPacket = WSChunkManager.GetEntitiesLoadedDeltaPkt(null, Vector2Int.zero);
-
-            WPacketCommunication.StartMultiPacket(writer, tick);
-            joinAcceptPacket.Serialize(writer);
             fullEntitiesSnapshotPacket.Serialize(writer);
-            //entitiesLoadPacket.Serialize(writer);
-            peer.Send(writer, DeliveryMethod.ReliableUnordered);
+
+            peer.Send(writer, DeliveryMethod.ReliableOrdered);
 
             return true;
         }
@@ -234,7 +239,7 @@ namespace Networking.Server {
             player.Entity.Kill(WEntityKillReason.Unload);
             //WSEntityManager.KillEntity(player.Entity.Id);
             
-            WsPlayerInputsSlotter.RemovePlayer(peer.Id);
+            playerInputsSlotterManager.RemovePlayer(peer.Id);
 
             return true;
         }

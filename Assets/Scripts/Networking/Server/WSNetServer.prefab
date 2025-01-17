@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4949972054902059105}
   - component: {fileID: 3213489498643125628}
   m_Layer: 0
-  m_Name: WServer
+  m_Name: WSNetServer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using LiteNetLib;
 using Networking.Shared;
 using UnityEngine;
 
 namespace Networking.Server {
-    public static class WsPlayerInputsSlotter {
+    public class WSPlayerInputsSlotterManager : BaseSingleton<WSPlayerInputsSlotterManager> {
         class ReceivedInputs {
             public WInputsSerializable inputs;
             public int receivedTick;
@@ -19,10 +20,29 @@ namespace Networking.Server {
             }
         }
 
-        // Player ID -> Input packets, buffered by a second
-        private static Dictionary<int, CircularTickBuffer<ReceivedInputs>> playerCycledInputs = new();
 
-        public static void AddPlayer(int peerId) {
+        protected override void Awake() {
+            base.Awake();
+
+            WSNetServer.PlayerJoined += AddPlayer;
+            WSNetServer.PlayerLeft += RemovePlayer;
+        }
+
+        protected override void OnDestroy()
+        {
+            WSNetServer.PlayerJoined -= AddPlayer;
+            WSNetServer.PlayerLeft -= RemovePlayer;
+
+            base.OnDestroy();
+        }
+
+        private void AddPlayer(WSPlayer player) => AddPlayer(player.Peer.Id);
+        private void RemovePlayer(WSPlayer player) => RemovePlayer(player.Peer.Id);
+
+        // Player ID -> Input packets, buffered by a second
+        private Dictionary<int, CircularTickBuffer<ReceivedInputs>> playerCycledInputs = new();
+
+        public void AddPlayer(int peerId) {
             var buffer = new CircularTickBuffer<ReceivedInputs>();
             playerCycledInputs[peerId] = buffer;
 
@@ -32,20 +52,20 @@ namespace Networking.Server {
         }
 
         // Removes a player from playerCycledInputs
-        public static void RemovePlayer(int peerId) {
+        public void RemovePlayer(int peerId) {
             playerCycledInputs.Remove(peerId);
         }
 
 
         // Gets the inputs of a player with no strings attached
-        private static ReceivedInputs GetInputsOfAPlayerUnsafe(int tick, int peerId) {
+        private ReceivedInputs GetInputsOfAPlayerUnsafe(int tick, int peerId) {
             return playerCycledInputs[peerId][tick];
         }
 
 
         // Gets the inputs of a player for this tick as long as they're up to date
         // TODO: this should use older ticks if possible
-        public static WInputsSerializable GetInputsOfAPlayer(int tick, int peerId) {
+        public WInputsSerializable GetInputsOfAPlayer(int tick, int peerId) {
             ReceivedInputs receivedInputs = GetInputsOfAPlayerUnsafe(tick, peerId);
             
             return receivedInputs.receivedTick == tick ? receivedInputs.inputs : null;
@@ -53,7 +73,7 @@ namespace Networking.Server {
 
 
         // Sets the inputs of a player for this tick as long as they didn't send inputs for this tick already
-        public static void SetInputsOfPlayer(int tick, int playerId, WInputsSerializable inputsPkt) {
+        public void SetInputsOfPlayer(int tick, int playerId, WInputsSerializable inputsPkt) {
             ReceivedInputs receivedInputs = GetInputsOfAPlayerUnsafe(tick, playerId);
             
             // Don't allow player to send inputs on a tick they already sent inputs for
@@ -64,7 +84,7 @@ namespace Networking.Server {
 
 
         // Sets multiple inputs at a time
-        public static void SetGroupedInputsOfPlayer(int tick, int peerId, WCGroupedInputsPkt groupedInputsPkt) {
+        public void SetGroupedInputsOfPlayer(int tick, int peerId, WCGroupedInputsPkt groupedInputsPkt) {
             for(int i=0; i<groupedInputsPkt.inputsSerialized.Length; i++) {
                 SetInputsOfPlayer(tick + i, peerId, groupedInputsPkt.inputsSerialized[i]);
             }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
@@ -20,6 +21,8 @@ public class ObjectViewer : MonoBehaviour
         cam.transform.position = viewableObject.transform.position + (Quaternion.Euler(rotY, rotX, 0) * Vector3.forward * viewableObject.ViewDistance);
         cam.transform.LookAt(viewableObject.transform, Vector3.up);
         cam.transform.position += viewableObject.ViewOffset;
+        // Error occurs when window is resized -- "Recursive rendering is not supported in SRP"
+        // Almost certainly occurs when derivations of ObjectViewer call TakeRotatedImage twice in the same update loop, but who gives a shit, this doesn't matter much
         cam.Render();
 
         viewableObject.ResetLayers();

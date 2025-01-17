@@ -18,7 +18,7 @@ namespace Networking.Client {
         private string userName = "";
         private bool isJoined = false;
         /// <summary> If this is set to a value, search for a player entity with this ID. </summary>
-        private int? playerEntityIdToFind = null;
+        private int? myEntityId = null;
         public static WCEntity PlayerEntity {get; private set;} = null;
         public static AbstractPlayer Player {get; private set;} = null;
 
@@ -71,10 +71,9 @@ namespace Networking.Client {
             WNetManager.Disconnect(new WDisconnectInfo { reason = disconnectInfo.Reason.ToString(), wasExpected = false});
         }
         protected override void OnDestroy() {
-            base.OnDestroy();
             ChatUiManager.SendChatMessage -= SendChatMessage;
             
-            Destroy(gameObject);
+            base.OnDestroy();
         }
 
         private float percentageThroughTickCurrentFrame;
@@ -88,6 +87,23 @@ namespace Networking.Client {
 
         private int mostRecentlySentTick = 0;
         public void AdvanceTick(bool allowTickCompensation = false) {
+            void GetPlayerReference() {
+                if(PlayerEntity != null || myEntityId == null)
+                    return;
+
+                WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
+
+                if(entity == null)
+                    return;
+
+                myEntityId = null;
+                PlayerEntity = entity;
+                Player = PlayerEntity.GetComponent<AbstractPlayer>();
+                Player.EnablePlayer();
+                ControlsManager.player = Player;
+                entity.isMyPlayer = true;
+            }
+
             if(!isJoined)
                 return;
 
@@ -147,24 +163,6 @@ namespace Networking.Client {
             }  
         }
 
-        // Tries to initialize a player from the entity with ID myEntityId.
-        private void GetPlayerReference() {
-            if(PlayerEntity != null || playerEntityIdToFind == null)
-                return;
-
-            WCEntity entity = WCEntityManager.GetEntityById(playerEntityIdToFind.Value);
-
-            if(entity == null)
-                return;
-
-            playerEntityIdToFind = null;
-            PlayerEntity = entity;
-            Player = PlayerEntity.GetComponent<AbstractPlayer>();
-            Player.EnablePlayer();
-            ControlsManager.player = Player;
-            entity.isMyPlayer = true;
-        }
-
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
             WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
@@ -208,6 +206,7 @@ namespace Networking.Client {
             { WPacketType.SFullEntitiesSnapshot, HandleFullEntitiesSnapshot },
             { WPacketType.SEntitySpawn, HandleEntitySpawn },
             { WPacketType.SEntityKill, HandleEntityKill },
+            { WPacketType.SSetPlayerEntity, HandleSetPlayerEntity }
         };
         public bool ProcessPacketFromReader(NetPeer peer, NetDataReader reader, int tick, WPacketType packetType) {
             if(!packetHandlers.TryGetValue(packetType, out Action<int, NetDataReader> handler)) {
@@ -222,10 +221,14 @@ namespace Networking.Client {
         }
 
 
+        private static void HandleSetPlayerEntity(int tick, NetDataReader reader) {
+            WSSetPlayerEntityPkt pkt = new();
+            pkt.Deserialize(reader);
+            Instance.myEntityId = pkt.entityId;
+        }
         private static void HandleJoinAccept(int tick, NetDataReader reader) {
             WSJoinAcceptPkt pkt = new();
             pkt.Deserialize(reader);
-            Instance.playerEntityIdToFind = pkt.playerEntityId;
     
             CentralTimingTick = pkt.tick;
             Debug.Log($"Being told to start at tick {pkt.tick}!");

@@ -1,6 +1,6 @@
 namespace Inventories {
-    public enum InventoryTemplateType {
-        Player,
-        LootChest,
+    public enum InventoryTemplateType : ushort {
+        Player = 0,
+        LootChest = 1,
     }
 }

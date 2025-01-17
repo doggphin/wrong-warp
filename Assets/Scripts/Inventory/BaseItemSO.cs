@@ -7,7 +7,7 @@ namespace Inventories {
     {
         [SerializeField] private ItemClassification[] serializedItemClassifications;
         public ItemClassification[] ItemClassificationsArray => serializedItemClassifications;
-        public HashSet<ItemClassification> ItemClassificationsHash { get; private set; }
+        public int ItemClassificationBitflags { get; private set; }
 
         [SerializeField] private string itemName;
         public string ItemName => itemName;
@@ -22,7 +22,7 @@ namespace Inventories {
         public int MaxStackSize => MaxStackSize;
 
         void OnEnable() {
-            ItemClassificationsHash = new(serializedItemClassifications);
+            ItemClassificationBitflags = InventoryTemplate.GenerateItemRestrictionFlags(ItemClassificationsArray);
         }
     }
 }

@@ -1,17 +1,21 @@
-using UnityEngine;
-using Networking.Shared;
 using System;
-using System.Collections.Generic;
-using System.Data.Common;
+using LiteNetLib.Utils;
+using Unity.VisualScripting;
 
 namespace Inventories { 
-    public class Inventory {
-        public readonly InventoryTemplate template;
+    public class Inventory : INetSerializable {
+        public int Id { get; private set; }
+        public InventoryTemplate Template { get; private set; }
         public SlottedItem[] SlottedItems { get; private set; }
         
         ///<summary> Generates an empty inventory from a template. </summary>
         public Inventory(int id, InventoryTemplate template) {
-            this.template = template;
+            Init(id, template);
+        }
+
+        private void Init(int id, InventoryTemplate template) {
+            Id = id;
+            Template = template;
             SlottedItems = new SlottedItem[template.slotsCount];
         }
 
@@ -19,8 +23,9 @@ namespace Inventories {
         public Action<int> Modified;
         
         ///<summary> Tries to move an item from an index in this inventory to an index in another inventory. If toInventory is not specified, uses this inventory. </summary>
-        public void MoveItem(int fromIndex, int toIndex, Inventory toInventory = null) { 
+        public void MoveItem(int fromIndex, int toIndex, Inventory toInventory = null) {
             // A null toInventory signifies moving within self
+            // TODO: moving within self would mean movements within own inventory could be seriously optimized by sending MoveItem arguments rather than deltas
             toInventory ??= this;
 
             // Don't allow interactions outside the bounds of the inventories' items array
@@ -28,7 +33,7 @@ namespace Inventories {
                 return;
 
             SlottedItem fromItem = SlottedItems[fromIndex];
-            if(!toInventory.AllowsItemClassificationAtIndex(fromIndex, fromItem.BaseItemRef.ItemClassificationsArray))
+            if(!toInventory.AllowsItemClassificationAtIndex(fromIndex, fromItem.BaseItemRef.ItemClassificationBitflags))
                 return;
             
             // If moving into an empty slot or a slot that contains an item that cannot be merged into,
@@ -55,7 +60,7 @@ namespace Inventories {
             for(int i=0; i<SlottedItems.Length; i++) {
                 SlottedItem slot = SlottedItems[i];
                 // Save first empty slot for use later if necessary
-                if(slot == null) {
+                if(slot == null && AllowsItemClassificationAtIndex(i, itemToAdd.BaseItemRef.ItemClassificationBitflags)) {
                     firstEmptyIndex ??= i;
                     continue;
                 }
@@ -75,14 +80,51 @@ namespace Inventories {
         }
 
         
-        public bool AllowsItemClassificationAtIndex(int inventoryIndex, params ItemClassification[] itemClassifications) {
-            foreach(var itemClassification in itemClassifications) {
-                if (!template.AllowsItemAtIndex(inventoryIndex, itemClassification)) {
-                    return false;
+        public bool AllowsItemClassificationAtIndex(int inventoryIndex, int itemClassificationBitFlags) {
+            return Template.AllowsItemAtIndex(inventoryIndex, itemClassificationBitFlags);
+        }
+
+        public void Deserialize(NetDataReader reader)
+        {
+            int id = reader.GetInt();
+            InventoryTemplateType templateType = (InventoryTemplateType)reader.GetUShort();
+
+            Init(id, InventoryTemplateLookup.GetTemplate(templateType));
+
+            for(int i=0; i<SlottedItems.Length; i++) {
+                uint amountOfBlanks = reader.GetVarUInt();
+                i += (int)amountOfBlanks;
+
+                if(i<SlottedItems.Length) {
+                    SlottedItem item = new();
+                    item.Deserialize(reader);
+                    SlottedItems[i] = item;
+                }
+            }
+        }
+
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put(Id);
+            writer.Put((ushort)Template.templateType);
+
+            // Put all items
+            // For this, use run-length encoding; before every item, include amount of spaces since last item
+            uint amountOfBlanks = 0;
+            for(int i=0; i<SlottedItems.Length; i++) {
+                SlottedItem item = SlottedItems[i];
+                if(item != null) {
+                    writer.PutVarUInt(amountOfBlanks);
+                    amountOfBlanks = 0;
+                    item.Serialize(writer);
+                } else {
+                    amountOfBlanks++;
                 }
             }
             
-            return true;
+            // Finally, if there's any blanks left, put the amount of them
+            if(amountOfBlanks != 0)
+                writer.Put(amountOfBlanks);
         }
     }
 }

@@ -2,12 +2,14 @@ using System.Collections.Generic;
 
 namespace Inventories {
     public class InventoryTemplate {
+        public readonly InventoryTemplateType templateType;
         public readonly int slotsCount;
         public readonly bool acceptsNewItems;
         private readonly Dictionary<int, int> inventorySlotRestrictionFlags;
         
         /// <param name="inventorySlotRestrictionFlagsPair"> Pairs of (inventory index, restriction flags) </param>
-        public InventoryTemplate(int slotsCount, bool acceptsNewItems, params (int, int)[] inventorySlotRestrictionFlagsPairs) {
+        public InventoryTemplate(InventoryTemplateType templateType, int slotsCount, bool acceptsNewItems, params (int, int)[] inventorySlotRestrictionFlagsPairs) {
+            this.templateType = templateType;
             this.slotsCount = slotsCount;
             this.acceptsNewItems = acceptsNewItems;
             foreach(var inventorySlotRestrictionFlagsPair in inventorySlotRestrictionFlagsPairs) {
@@ -16,13 +18,14 @@ namespace Inventories {
         }
 
         ///<summary> Returns whether an item classifications can be accepted into an inventory index. </summary>
-        public bool AllowsItemAtIndex(int inventoryIndex, ItemClassification itemClassification) {
+        public bool AllowsItemAtIndex(int inventoryIndex, int itemClassificationBitflags) {
             if(!acceptsNewItems)
                 return false;
 
-            // If restrictions exist on this slot,
+            // If restrictions exist on this slot, return whether slots are compatible
             if(inventorySlotRestrictionFlags.TryGetValue(inventoryIndex, out var restrictionFlags)) {
-                return (restrictionFlags & (1 << (int)itemClassification)) != 0;
+                // If item classification and restriction bitflags ANDed with one another aren't 0, there's some overlap, so return true
+                return (restrictionFlags & itemClassificationBitflags) != 0;
             }
             // Return true if there are not restrictions on this slot
             return true;

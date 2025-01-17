@@ -26,16 +26,12 @@ namespace Networking.Server {
 
         private bool isInitialized = false;
 
-        public void Init(NetPeer peer, WSEntity entity) {
-            if (isInitialized)
-                return;
-
+        public WSPlayer(NetPeer peer, WSEntity entity) {
             Peer = peer;
             SetEntity(entity);
-
-            isInitialized = true;
         }
-
+        
+        ///<summary> Sets the entity of this player and sends a notification to the peer that their entity has changed. </summary>
         public void SetEntity(WSEntity entity) {
             if(ReferenceEquals(entity, Entity))
                 return;

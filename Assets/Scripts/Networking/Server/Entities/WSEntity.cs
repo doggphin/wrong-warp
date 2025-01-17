@@ -9,6 +9,7 @@ namespace Networking.Server {
     public class WSEntity : EntityBase {
         public bool updatePosition, updateRotation, updateScale;  
 
+        ///<summary> Will be null if this is not attached to a player. </summary>
         public WSPlayer Player { get; private set; }
         public Vector2Int ChunkPosition { get; private set; }
         public WSChunk CurrentChunk { get; private set; } = null;
