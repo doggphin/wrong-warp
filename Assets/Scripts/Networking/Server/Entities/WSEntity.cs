@@ -9,6 +9,7 @@ namespace Networking.Server {
     public class WSEntity : EntityBase {
         public bool updatePosition, updateRotation, updateScale;  
 
+        public WSPlayer Player { get; private set; }
         public Vector2Int ChunkPosition { get; private set; }
         public WSChunk CurrentChunk { get; private set; } = null;
 
@@ -56,7 +57,15 @@ namespace Networking.Server {
             ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Instance.GetTick()]);
             IsChunkLoader = isChunkLoader;
             CurrentChunk = WSChunkManager.GetChunk(ChunkPosition, false);
-        }   
+        }
+
+        ///<summary> This should only ever be called from WSPlayer </summary>
+        public void SetPlayer(WSPlayer player) {
+            if(Player != null && player != null)
+                throw new Exception("Cannot set an entity's player without unsetting player first! Call this from WSPlayer.SetEntity!");
+            
+            Player = player;
+        }
 
 
         private void Update() {

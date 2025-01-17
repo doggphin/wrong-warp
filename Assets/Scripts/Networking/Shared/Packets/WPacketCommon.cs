@@ -25,6 +25,7 @@ namespace Networking.Shared {
         SChatMessage,
         SChunkReliableUpdates,
         SInventoryDeltaCollection,
+        SSetPlayerEntity,
     }
 }
 

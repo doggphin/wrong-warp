@@ -14,9 +14,8 @@ public class InventoryUiSlot : MonoBehaviour, IPointerClickHandler, IPointerUpHa
     public Action<int, int, PointerEventData.InputButton> PointerUp;
     
     public void SetVisibleSlottedItem(SlottedItem slottedItem) {
-        var baseItem = slottedItem.GetBaseItem();
-
         stackSizeText.text = slottedItem.stackSize.ToString();
+        var baseItem = slottedItem.BaseItemRef;
         itemSprite.sprite = baseItem.SlotSprite;
     }
 

@@ -6,10 +6,19 @@ using UnityEngine;
 
 namespace Networking.Shared {
     public static class WPacketCommunication {
+        private static NetDataWriter defaultWriter = new();
+
+        /// <param name="writer"> If left null, will (safely) use default writer </param>
+
         public static void SendSingle<T>(NetDataWriter writer, NetPeer peer, int tick,  T packet, DeliveryMethod deliveryMethod) where T : INetSerializable
         {
             if (peer == null)
                 return;
+
+            if(writer == null) {
+                writer = defaultWriter;
+                writer.Reset();
+            }
 
             StartMultiPacket(writer, tick);
             packet.Serialize(writer);

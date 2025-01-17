@@ -3,34 +3,39 @@ using System.Collections.Generic;
 using Inventories;
 using LiteNetLib.Utils;
 using Networking.Shared;
+using System;
 
 namespace Networking.Server {
-    class WSInventory : MonoBehaviour {
-        WSEntity entity;
-        public int Id => entity.Id;
+    public class WSInventory : MonoBehaviour {
+        WSEntity entityRef;
+        private int id;
+        public int Id => id;
         private Inventory inventory;
         private HashSet<int> deltasBuffer;
         private List<WSPlayer> observers;
-        
+
+        public Action<WSInventory> Modified;
 
         void Awake() {
-            entity = GetComponent<WSEntity>();
+            entityRef = GetComponent<WSEntity>();
             // This is done instead of using RequireComponent as WSEntities must be added via WSEntityManager
-            if(entity == null) {
+            if(entityRef == null) {
                 Debug.LogError("Can't add to a non-entity object!");
                 Destroy(gameObject);
             }
         }
 
 
-        public void Init(Inventory inventory) {
+        public void Init(Inventory inventory, int id) {
             this.inventory = inventory;
+            this.id = id;
             inventory.Modified += InventoryModified;
         }
 
 
         public void InventoryModified(int index) {
             deltasBuffer.Add(index);
+            Modified?.Invoke(this);
         }
 
 

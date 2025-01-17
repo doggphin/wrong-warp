@@ -22,7 +22,7 @@ namespace Networking.Server {
         public WSChunk previousChunk = null;
         public WSEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
-        public NetDataWriter writer = null;
+        public NetDataWriter unreliableWriter = new();
 
         private bool isInitialized = false;
 
@@ -31,15 +31,37 @@ namespace Networking.Server {
                 return;
 
             Peer = peer;
-            Entity = entity;
-            writer = new();
+            SetEntity(entity);
 
             isInitialized = true;
         }
 
+        public void SetEntity(WSEntity entity) {
+            if(ReferenceEquals(entity, Entity))
+                return;
+            
+            if(Entity != null)
+                Entity.SetPlayer(null);
+
+            entity.SetPlayer(this);
+            Entity = entity;
+            
+            // Notify player that their entity has changed
+            WSSetPlayerEntityPkt setPlayerPkt = new() {
+                entityId = entity.Id
+            };
+            SendInstantPacket(setPlayerPkt, true);
+        }
+
         
-        public void AddData(INetSerializable serializable) {
-            serializable.Serialize(writer);
+        public void AddUnreliableData(INetSerializable packet) {
+            packet.Serialize(unreliableWriter);
+        }
+
+        public void SendInstantPacket(INetSerializable packet, bool reliable) {
+            WPacketCommunication.SendSingle(
+                null, Peer, WSNetServer.Instance.GetTick(), packet, reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable
+            );
         }
     }
 }

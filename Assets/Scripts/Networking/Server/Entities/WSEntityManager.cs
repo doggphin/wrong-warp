@@ -7,7 +7,7 @@ using Networking.Shared;
 namespace Networking.Server {
     public class WSEntityManager : BaseSingleton<WSEntityManager> {
         private Dictionary<int, WSEntity> entities = new();
-        private static int nextEntityId = -1;
+        private static BaseIdGenerator idGenerator = new();
 
         public static WSEntity SpawnEntity(NetPrefabType prefabId, bool isChunkLoader = false) {
             GameObject entityPrefab = Instantiate(NetPrefabLookup.Lookup(prefabId), Instance.transform);
@@ -19,11 +19,12 @@ namespace Networking.Server {
             entity.updateRotation = transformUpdateTypes.updateRotation;
             entity.updateScale = transformUpdateTypes.updateScale;
 
-            while (!Instance.entities.TryAdd(++nextEntityId, entity));
+            int entityId = idGenerator.GetNextEntityId(Instance.entities);
+            Instance.entities.Add(entityId, entity);
 
-            entity.gameObject.name = $"{nextEntityId:0000000000}_{prefabId}";
+            entity.gameObject.name = $"{entityId:0000000000}_{prefabId}";
 
-            entity.Init(nextEntityId, prefabId, isChunkLoader);
+            entity.Init(entityId, prefabId, isChunkLoader);
 
             entity.CurrentChunk.SpawnEntity(entity, WEntitySpawnReason.Spawn);
             

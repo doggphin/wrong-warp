@@ -1,6 +1,6 @@
 namespace Inventories {
-    public enum ItemType : ushort {
-        TestingWand,
-        TestingPotion
+    public enum ItemType {
+        TestingWand = 0,
+        TestingPotion = 1,
     }
 }
