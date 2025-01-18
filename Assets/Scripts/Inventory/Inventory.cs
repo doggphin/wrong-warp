@@ -7,7 +7,7 @@ namespace Inventories {
         public int Id { get; private set; }
         public InventoryTemplate Template { get; private set; }
         public SlottedItem[] SlottedItems { get; private set; }
-        
+
         ///<summary> Generates an empty inventory from a template. </summary>
         public Inventory(int id, InventoryTemplate template) {
             Init(id, template);

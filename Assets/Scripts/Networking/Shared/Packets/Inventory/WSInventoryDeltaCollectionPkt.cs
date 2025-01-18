@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using LiteNetLib.Utils;
-using Mono.Cecil;
 
 namespace Networking.Shared {
     public class WSInventoryDeltaCollectionPkt : INetSerializable {

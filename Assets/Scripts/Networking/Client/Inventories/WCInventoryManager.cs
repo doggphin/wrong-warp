@@ -1,9 +1,6 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Inventories;
-using UnityEngine;
+using Networking.Shared;
 
 namespace Networking.Client {
     class WCInventoryManager : BaseSingleton<WCInventoryManager> {
@@ -31,5 +28,13 @@ namespace Networking.Client {
 
             inventories[inventory.Id] = inventory;
         }
+
+        // TODO: save updates somewhere??
+        public void ReceiveInventoryDeltaFromServer(int inventoryId, WInventoryDelta inventoryDelta) {
+            inventories[inventoryId].SlottedItems[inventoryDelta.index] = inventoryDelta.inventorySlot.item;
+        }
+
+
+        
     }
 }

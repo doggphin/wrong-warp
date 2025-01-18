@@ -18,7 +18,7 @@ namespace Networking.Server {
         private static NetDataWriter writer = new();
 
         private static int tick;
-        private static WWatch watch; // TODO: Should not do this here
+        private static WWatch watch;
         private float percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTick() => watch.GetPercentageThroughTick();

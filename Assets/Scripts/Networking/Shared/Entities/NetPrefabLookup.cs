@@ -14,6 +14,7 @@ namespace Networking.Shared {
             { NetPrefabType.Spectator, new WPrefabTransformUpdateTypes(true, true, false) }
         };
     }
+    
     public struct WPrefabTransformUpdateTypes {
         public bool updatePosition;
         public bool updateRotation;

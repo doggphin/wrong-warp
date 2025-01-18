@@ -52,13 +52,11 @@ namespace Controllers.Shared {
 
             inputActions.Gameplay.Fire.started += (InputAction.CallbackContext ctx) => HandleOneOffAction(ctx, InputType.FireDownEvent);
             BindInputActionToInputType(inputActions.Gameplay.Fire, InputType.FireDown);
-
-            inputActions.Gameplay.Fire.started += (InputAction.CallbackContext ctx) => HandleOneOffAction(ctx, InputType.FireDownEvent);
-            BindInputActionToInputType(inputActions.Gameplay.Fire, InputType.FireDown);
             
 
             inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => {
-                player?.AddRotationDelta(ctx.action.ReadValue<Vector2>());
+                if(player != null)
+                    player.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
 
             inputActions.Ui.Chat.started += (_) => ChatClicked?.Invoke();
@@ -129,7 +127,8 @@ namespace Controllers.Shared {
 
 
         private static void HandleOneOffAction(InputAction.CallbackContext ctx, InputType inputType) {
-            // One-off actions should only be done once a tick. If it's already done, skip it
+            // Side effects of one-off actions should only be calculated once a tick
+            // So if one-off action has already been done this tick, return early
             if(player == null || ctx.phase != InputActionPhase.Started || finalInputs.GetFlag(inputType))
                 return;
 
@@ -139,6 +138,7 @@ namespace Controllers.Shared {
                     fireDownSubtickFraction = WNetManager.GetPercentageThroughTickCurrentFrame();
                     Debug.Log(fireDownSubtickFraction);
                     fireDownLookVector = player.GetLook();
+                    // TODO: remove this
                     AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
                     break;
                 case InputType.AltFireDownEvent:

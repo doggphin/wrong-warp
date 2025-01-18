@@ -23,7 +23,13 @@ namespace Networking.Server {
         public WSEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
         public NetDataWriter unreliableWriter = new();
+        public NetDataWriter reliableWriter = new();
+        private WSInventory personalInventory;
 
+        public void SetPersonalInventory(WSInventory inventory) {
+            WSSetPersonalInventoryIdPkt setPersonalInventoryPkt = new() { personalInventoryId = inventory.Id };
+            personalInventory = 
+        }
         private bool isInitialized = false;
 
         public WSPlayer(NetPeer peer, WSEntity entity) {
@@ -50,8 +56,8 @@ namespace Networking.Server {
         }
 
         
-        public void AddUnreliableData(INetSerializable packet) {
-            packet.Serialize(unreliableWriter);
+        public void PutPacket(INetSerializable packet, bool reliable = false) {
+            packet.Serialize(reliable ? reliableWriter : unreliableWriter);
         }
 
         public void SendInstantPacket(INetSerializable packet, bool reliable) {

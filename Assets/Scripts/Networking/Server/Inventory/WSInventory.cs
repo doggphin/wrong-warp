@@ -7,12 +7,12 @@ using System;
 
 namespace Networking.Server {
     public class WSInventory : MonoBehaviour {
-        WSEntity entityRef;
-        private int id;
-        public int Id => id;
+        public int Id { get; private set; }
         private Inventory inventory;
+        private WSEntity entityRef;
+
         private HashSet<int> deltasBuffer;
-        private List<WSPlayer> observers;
+        private HashSet<WSPlayer> observers;
 
         public Action<WSInventory> Modified;
 
@@ -25,19 +25,33 @@ namespace Networking.Server {
             }
         }
 
-
         public void Init(Inventory inventory, int id) {
             this.inventory = inventory;
-            this.id = id;
+            Id = id;
             inventory.Modified += InventoryModified;
         }
 
+        public void AddObserver(WSPlayer player) {
+            if(!observers.Add(player)) {
+                Debug.LogError("Tried to add an observer to an inventory that was already observing it!");
+                return;
+            }
+
+            WSAddInventoryPkt addInventoryPacket = new(){ fullInventory = inventory };
+            player.PutPacket(addInventoryPacket);
+        }
+
+        public void RemoveObserver(WSPlayer player) {
+            if(!observers.Remove(player)) {
+                Debug.LogError("Tried to remove an observer from an inventory that they were not observing!");
+                return;
+            }
+        }
 
         public void InventoryModified(int index) {
             deltasBuffer.Add(index);
             Modified?.Invoke(this);
         }
-
 
         public List<WInventoryDelta> GetAndClearUpdates() {
             List<WInventoryDelta> inventoryDeltas = new();
