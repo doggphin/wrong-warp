@@ -14,11 +14,11 @@ namespace Networking.Client {
             PersonalInventoryId = newId;
         }
 
-        public void ReceiveInventoryFromServer(Inventory inventory) {
+        public void ReceiveInventoryFromServer(int id, Inventory inventory) {
             // Don't mess with queue if the inventory already exists in cache or it's our personal inventory
-            if(!inventories.ContainsKey(inventory.Id) && inventory.Id != PersonalInventoryId) {
+            if(!inventories.ContainsKey(id) && id != PersonalInventoryId) {
                 // Put this inventory in the queue to be deleted after 20 more cached inventories
-                cachedInventoryQueue.Enqueue(inventory.Id);
+                cachedInventoryQueue.Enqueue(id);
                 // If max queue size has been hit, delete the most recent one
                 if(cachedInventoryQueue.Count > MAX_CACHED_INVENTORIES) {
                     int dequeuedInventory = cachedInventoryQueue.Dequeue();
@@ -26,15 +26,12 @@ namespace Networking.Client {
                 }
             }
 
-            inventories[inventory.Id] = inventory;
+            inventories[id] = inventory;
         }
 
         // TODO: save updates somewhere??
         public void ReceiveInventoryDeltaFromServer(int inventoryId, WInventoryDelta inventoryDelta) {
             inventories[inventoryId].SlottedItems[inventoryDelta.index] = inventoryDelta.inventorySlot.item;
         }
-
-
-        
     }
 }

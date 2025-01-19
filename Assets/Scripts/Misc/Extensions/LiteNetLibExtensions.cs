@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using LiteNetLib.Utils;
+using Mono.Cecil;
 using Networking.Shared;
+using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public static class LiteNetLibExtensions {
@@ -124,5 +128,42 @@ public static class LiteNetLibExtensions {
     }
     public static NetPrefabType GetPrefabId(this NetDataReader reader) {
         return (NetPrefabType)reader.GetUShort();
+    }
+
+
+    public static void Put(this NetDataWriter writer, Dictionary<int, List<INetPacketForClient>> serverTickedPacketCollection) {
+        writer.PutVarUInt((uint)serverTickedPacketCollection.Count);
+
+        foreach(var kvp in serverTickedPacketCollection) {
+            writer.Put(kvp.Key);
+            writer.Put(kvp.Value);
+        }
+    }
+    public static Dictionary<int, List<INetPacketForClient>> GetTickedPacketCollection(this NetDataReader reader) {
+        int count = (int)reader.GetVarUInt();
+        Dictionary<int, List<INetPacketForClient>> ret = new(count);
+        for(int i=0; i<count; i++) {
+            int tick = (int)reader.GetVarUInt();
+            List<INetPacketForClient> packets = GetNetPacketForClientList(reader);
+            ret[tick] = packets;
+        }
+
+        return ret;
+    }
+
+
+    public static void Put(this NetDataWriter writer, List<INetPacketForClient> serverPacketList) {
+        writer.PutVarUInt((uint)serverPacketList.Count);
+        foreach(var serializable in serverPacketList) {
+            serializable.Serialize(writer);
+        }
+    }
+    public static List<INetPacketForClient> GetNetPacketForClientList(this NetDataReader reader) {
+        int count = (int)reader.GetVarUInt();
+        List<INetPacketForClient> ret = new(count);
+        for(int i=0; i<count; i++) {
+            ret.Add(WCPacketForClientUnpacker.DeserializeNextPacket(reader));
+        }
+        return ret;
     }
 }

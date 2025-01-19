@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Unload
     }
 
-    public class WSEntityKillPkt : INetSerializable, IClientApplicablePacket {
+    public class WSEntityKillPkt : INetPacketForClient {
         public int entityId;
         public WEntityKillReason reason;
 
@@ -25,7 +25,7 @@ namespace Networking.Shared {
             writer.Put((byte)reason);
         }
 
-
+        public bool ShouldCache => true;
         public void ApplyOnClient(int _)
         {
             WCEntityManager.KillEntity(this);

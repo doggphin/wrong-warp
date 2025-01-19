@@ -4,7 +4,8 @@ using LiteNetLib.Utils;
 using Networking.Client;
 
 namespace Networking.Shared {
-    public class WSChunkReliableUpdatesPkt : INetSerializable {
+    ///<summary> A bundle of reliable updates </summary>
+    public class WSChunkReliableUpdatesPkt : INetPacketForClient {
         public void SetStartTick(int currentServerTick) => startTick = currentServerTick - WCommon.TICKS_PER_SNAPSHOT;
         public int startTick;
         public List<INetSerializable>[] updates;
@@ -54,10 +55,14 @@ namespace Networking.Shared {
                 Debug.Log($"There are {amountOfUpdates} updates in here!");
                 
                 for(int j=0; j<amountOfUpdates; j++) {
-                    WPacketType packetType = reader.GetPacketType();
-                    WCNetClient.Instance.ProcessPacketFromReader(null, reader, startTick + i, packetType);
+                    WCPacketForClientUnpacker.ConsumeNextPacket(startTick + i, reader);
                 }
             }
+        }
+
+        public bool ShouldCache => false;
+        public void ApplyOnClient(int tick) { 
+            // This packet is applied during its deserialization
         }
     }
 }

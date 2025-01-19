@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -22,15 +23,14 @@ namespace Networking.Server {
         public WSChunk previousChunk = null;
         public WSEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
-        public NetDataWriter unreliableWriter = new();
-        public NetDataWriter reliableWriter = new();
         private WSInventory personalInventory;
+
+        public TickedPacketCollection ReliablePackets { get; private set; } = new();
 
         public void SetPersonalInventory(WSInventory inventory) {
             WSSetPersonalInventoryIdPkt setPersonalInventoryPkt = new() { personalInventoryId = inventory.Id };
             personalInventory = inventory;
         }
-        private bool isInitialized = false;
 
         public WSPlayer(NetPeer peer, WSEntity entity) {
             Peer = peer;
@@ -52,18 +52,7 @@ namespace Networking.Server {
             WSSetPlayerEntityPkt setPlayerPkt = new() {
                 entityId = entity.Id
             };
-            SendInstantPacket(setPlayerPkt, true);
-        }
-
-        
-        public void PutPacket(INetSerializable packet, bool reliable = false) {
-            packet.Serialize(reliable ? reliableWriter : unreliableWriter);
-        }
-
-        public void SendInstantPacket(INetSerializable packet, bool reliable) {
-            WPacketCommunication.SendSingle(
-                null, Peer, WSNetServer.Instance.GetTick(), packet, reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable
-            );
+            ReliablePackets.AddPacket(WSNetServer.Tick, setPlayerPkt);
         }
     }
 }

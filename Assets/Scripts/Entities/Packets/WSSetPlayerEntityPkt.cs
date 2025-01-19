@@ -1,8 +1,9 @@
 using LiteNetLib.Utils;
+using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSSetPlayerEntityPkt : INetSerializable, IClientApplicablePacket {
+    public class WSSetPlayerEntityPkt : INetPacketForClient {
         public int entityId;
 
         public void Deserialize(NetDataReader reader) {
@@ -15,9 +16,10 @@ namespace Networking.Shared {
             writer.Put(entityId);     
         }
 
-        public void ApplyOnClient(int tick)
+        public bool ShouldCache => false;
+        public void ApplyOnClient(int _)
         {
-            throw new System.NotImplementedException();
+            WCNetClient.HandleSetPlayerEntity(this);
         }
     }
 }

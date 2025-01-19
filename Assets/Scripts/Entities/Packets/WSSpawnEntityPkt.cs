@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Load,
     }
 
-    public class WSEntitySpawnPkt : INetSerializable, IClientApplicablePacket {
+    public class WSEntitySpawnPkt : INetPacketForClient {
         public WEntitySerializable entity;
         public WEntitySpawnReason reason;
 
@@ -25,8 +25,8 @@ namespace Networking.Shared {
             writer.Put((byte)reason);
         }
 
-        
-        public void ApplyOnClient(int tick)
+        public bool ShouldCache => true;
+        public void ApplyOnClient(int _)
         {
             WCEntityManager.Spawn(this);
         }

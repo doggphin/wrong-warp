@@ -4,17 +4,15 @@ using Unity.VisualScripting;
 
 namespace Inventories { 
     public class Inventory : INetSerializable {
-        public int Id { get; private set; }
         public InventoryTemplate Template { get; private set; }
         public SlottedItem[] SlottedItems { get; private set; }
 
         ///<summary> Generates an empty inventory from a template. </summary>
-        public Inventory(int id, InventoryTemplate template) {
-            Init(id, template);
+        public Inventory(InventoryTemplate template) {
+            Init(template);
         }
 
-        private void Init(int id, InventoryTemplate template) {
-            Id = id;
+        private void Init(InventoryTemplate template) {
             Template = template;
             SlottedItems = new SlottedItem[template.slotsCount];
         }
@@ -86,10 +84,9 @@ namespace Inventories {
 
         public void Deserialize(NetDataReader reader)
         {
-            int id = reader.GetInt();
             InventoryTemplateType templateType = (InventoryTemplateType)reader.GetUShort();
 
-            Init(id, InventoryTemplateLookup.GetTemplate(templateType));
+            Init(InventoryTemplateLookup.GetTemplate(templateType));
 
             for(int i=0; i<SlottedItems.Length; i++) {
                 uint amountOfBlanks = reader.GetVarUInt();
@@ -105,7 +102,6 @@ namespace Inventories {
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(Id);
             writer.Put((ushort)Template.templateType);
 
             // Put all items

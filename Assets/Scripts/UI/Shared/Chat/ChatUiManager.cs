@@ -41,11 +41,20 @@ public class ChatUiManager : BaseUiElement
         messageInput.StartTyping();
 
         ControlsManager.ConfirmClicked += ConfirmChatMessage;
-        // this needs to be fixed; won't add + remove
-        ControlsManager.ChatClicked -= () => UiManager.SetActiveUiElement(this, true);
+        ControlsManager.ChatClicked -= SetAsActiveUi;
+    }
+
+    public static void ConfirmChatMessage() {
+        string message = Instance.messageInput.GetInput();
+        SendChatMessage?.Invoke(message);
+        
+        UiManager.CloseActiveUiElement();
+    }
+
+    private void SetAsActiveUi() {
+        UiManager.SetActiveUiElement(this, true);
     }
     
-
     public override void Close()
     {
         if(!IsOpen)
@@ -55,25 +64,18 @@ public class ChatUiManager : BaseUiElement
         
         DisableMessageInput();
     }
+    
     private void DisableMessageInput() {
         messageInput.gameObject.SetActive(false);
         Instance.messageInput.ClearInput();
         messageInput.StopTyping();
 
         ControlsManager.ConfirmClicked -= ConfirmChatMessage;
-        ControlsManager.ChatClicked += () => UiManager.SetActiveUiElement(this, true);
+        ControlsManager.ChatClicked += SetAsActiveUi;
     }
 
 
     public static void ReceiveChatMessage(WSChatMessagePkt chatMessageInfo) {
         Instance.messageLog.AddMessage(chatMessageInfo);
-    }
-
-
-    public static void ConfirmChatMessage() {
-        string message = Instance.messageInput.GetInput();
-        SendChatMessage?.Invoke(message);
-        
-        UiManager.CloseActiveUiElement();
     }
 }

@@ -11,9 +11,9 @@ namespace Networking.Server {
         private Inventory inventory;
         private WSEntity entityRef;
 
-        private HashSet<int> deltasBuffer;
+        private HashSet<int> indicesThatHaveChanged;
         private HashSet<WSPlayer> observers;
-
+ 
         public Action<WSInventory> Modified;
 
         void Awake() {
@@ -38,7 +38,7 @@ namespace Networking.Server {
             }
 
             WSAddInventoryPkt addInventoryPacket = new(){ fullInventory = inventory };
-            player.PutPacket(addInventoryPacket);
+            player.ReliablePackets.AddPacket(WSNetServer.Tick, addInventoryPacket);
         }
 
         public void RemoveObserver(WSPlayer player) {
@@ -49,13 +49,13 @@ namespace Networking.Server {
         }
 
         public void InventoryModified(int index) {
-            deltasBuffer.Add(index);
+            indicesThatHaveChanged.Add(index);
             Modified?.Invoke(this);
         }
 
         public List<WInventoryDelta> GetAndClearUpdates() {
             List<WInventoryDelta> inventoryDeltas = new();
-            foreach(int index in deltasBuffer) {
+            foreach(int index in indicesThatHaveChanged) {
                 inventoryDeltas.Add(new WInventoryDelta { 
                     index = index, 
                     inventorySlot = new WInventorySlot { 
@@ -64,7 +64,7 @@ namespace Networking.Server {
                 });
             }
             
-            deltasBuffer.Clear();
+            indicesThatHaveChanged.Clear();
             return inventoryDeltas;
         }
     }

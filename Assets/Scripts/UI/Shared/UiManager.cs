@@ -8,7 +8,7 @@ public class UiManager : BaseSingleton<UiManager>
     [SerializeField] private GameObject escapeUiPrefab;
     [SerializeField] private GameObject inventoryUiPrefab;
 
-    private EscapeManager escapeUi;
+    private EscapeUiManager escapeUi;
 
     public static IUiElement ActiveUiElement { get; private set; }
 
@@ -16,7 +16,7 @@ public class UiManager : BaseSingleton<UiManager>
         ControlsManager.EscapeClicked += OpenEscape;
         Instantiate(chatUiPrefab, transform);
         Instantiate(inventoryUiPrefab, transform);
-        escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeManager>();
+        escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeUiManager>();
     }
 
     /// <returns> Whether a UI element was closed. </returns>

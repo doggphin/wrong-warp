@@ -1,7 +1,9 @@
 using LiteNetLib.Utils;
+using Networking.Client;
+using TMPro;
 
 namespace Networking.Shared {
-    public class WSJoinAcceptPkt : INetSerializable {
+    public class WSJoinAcceptPkt : INetPacketForClient {
         public string userName;
         public int tick;
 
@@ -15,6 +17,13 @@ namespace Networking.Shared {
         public void Deserialize(NetDataReader reader) {
             userName = reader.GetString();
             tick = reader.GetInt();
+        }
+
+        // TODO: check if could just sent tick instead of including in join packet
+        public bool ShouldCache => false;
+        public void ApplyOnClient(int _)
+        {
+            WCNetClient.HandleJoinAccept(this);
         }
     }
 }

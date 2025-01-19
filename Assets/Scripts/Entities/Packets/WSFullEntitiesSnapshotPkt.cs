@@ -2,9 +2,11 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSFullEntitiesSnapshotPkt : INetSerializable, IClientApplicablePacket {
+    public class WSFullEntitiesSnapshotPkt : INetPacketForClient {
         public WEntitySerializable[] entities;
         public bool isFullReset;
+
+        public bool ShouldCache =>true;
 
         public void Deserialize(NetDataReader reader) {
             isFullReset = reader.GetBool();
@@ -29,9 +31,8 @@ namespace Networking.Shared {
             }
         }
 
-        public void ApplyOnClient(int tick)
-        {
-            Debug.Log("sup!");
+        public void ApplyOnClient(int tick) {
+            Debug.Log("Implement me!");
         }
     }
 }

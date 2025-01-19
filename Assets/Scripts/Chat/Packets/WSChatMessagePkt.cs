@@ -2,7 +2,7 @@ using LiteNetLib.Utils;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSChatMessagePkt : INetSerializable, IClientApplicablePacket {
+    public class WSChatMessagePkt : INetPacketForClient {
         public string message;
         public bool isServerMessage;
 
@@ -26,6 +26,7 @@ namespace Networking.Shared {
                 writer.Put(speakerId);
         }
 
+        public bool ShouldCache => true;
         public void ApplyOnClient(int _) {
             ChatUiManager.ReceiveChatMessage(this);
         }

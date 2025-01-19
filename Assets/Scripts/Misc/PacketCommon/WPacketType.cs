@@ -22,5 +22,7 @@ namespace Networking.Shared {
         SAddInventory = 18,
         SRemoveInventory = 19,
         SSetPersonalInventoryId = 20,
+        CMoveSlotRequest = 21,
+        CDropSlotRequest = 22,
     }
 }

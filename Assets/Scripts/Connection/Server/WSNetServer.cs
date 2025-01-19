@@ -12,17 +12,19 @@ using System;
 namespace Networking.Server {
     [RequireComponent(typeof(WSEntityManager))]
     [RequireComponent(typeof(WSPlayerInputsSlotterManager))]
+    [RequireComponent(typeof(WSInventoryManager))]
     public class WSNetServer : BaseSingleton<WSNetServer>, ITicker, INetEventListener {
         private WSEntityManager entityManager;
         private WSPlayerInputsSlotterManager playerInputsSlotterManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
+        public int GetTick() => tick;
+        public static int Tick => Instance.GetTick();
         private static WWatch watch;
         private float percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTick() => watch.GetPercentageThroughTick();
-        public int GetTick() => tick;
         public static WSPlayer HostPlayer { get; private set; }
 
         public static Action<WSPlayer> PlayerJoined;
@@ -92,7 +94,7 @@ namespace Networking.Server {
                 WInputsSerializable inputs = playerInputsSlotterManager.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
                 netPlayer.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
-
+    
             WSEntityManager.PollFinalizeAdvanceEntities();
 
             // Only run further code if it's time for a snapshot
@@ -108,46 +110,64 @@ namespace Networking.Server {
             WSChunkManager.ResetChunkUpdatesAndSnapshots();
         }
         private void SendUpdatesToPlayer(NetPeer peer) {
-            WSPlayer netPlayer = WSPlayer.FromPeer(peer);
-            if (netPlayer == null)
+            WSPlayer player = WSPlayer.FromPeer(peer);
+            if (player == null)
                 return;
 
             // Get the initial snapshot packet from the chunk the player is in
-            WSChunk chunk = netPlayer.Entity.CurrentChunk;
-            writer = chunk.GetPrepared3x3UnreliableDeltaSnapshotPacket();
+            if(player.Entity != null) {
+                WSChunk chunk = player.Entity.CurrentChunk;
+                NetDataWriter unreliableChunkWriter = chunk.GetPrepared3x3UnreliableDeltaSnapshotPacket();
 
-            // Save the position of the writer for this chunk for later use
-            int writerPositionBeforeModification = writer.Length;
-            
-            // If the player changed chunks, append a packet for changed entities
-            if(netPlayer.previousChunk != null) {
-                WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
-                    netPlayer.previousChunk.Coords,
-                    netPlayer.Entity.ChunkPosition);
-
-                entitiesLoadedDeltaPkt?.Serialize(writer);
-            }
-            netPlayer.previousChunk = chunk;
-            
-            // Write player controller state
-            INetSerializable genericControllerState = null;
-            if(netPlayer.Entity.TryGetComponent(out DefaultController defaultController)) {
-                var defaultControllerState = defaultController.GetSerializableState(tick);
-                genericControllerState = defaultControllerState;
-            } // else if spectator, etc.
-
-            genericControllerState?.Serialize(writer);
+                // Save the position of the writer for this chunk for later use
+                int chunkWriterPositionBeforeModification = unreliableChunkWriter.Length;
                 
-            // Send full snapshot to the player, then reset the writer from the chunk to before it was personalized
-            peer.Send(writer, DeliveryMethod.Unreliable);
-            writer.SetPosition(writerPositionBeforeModification);
+                // If the player changed chunks, append a packet for changed entities
+                if(player.previousChunk != null) {
+                    WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
+                        player.previousChunk.Coords,
+                        player.Entity.ChunkPosition);
+
+                    entitiesLoadedDeltaPkt?.Serialize(unreliableChunkWriter);
+                }
+                player.previousChunk = chunk;
+                
+                // Write player controller state
+                INetSerializable genericControllerState = null;
+                if(player.Entity.TryGetComponent(out DefaultController defaultController)) {
+                    var defaultControllerState = defaultController.GetSerializableState(tick);
+                    genericControllerState = defaultControllerState;
+                } // else if spectator, etc.
+
+                genericControllerState?.Serialize(unreliableChunkWriter);
+                    
+                // Send full snapshot to the player
+                peer.Send(unreliableChunkWriter, DeliveryMethod.Unreliable);
+
+                // Reset the writer from the chunk to before it was personalized
+                unreliableChunkWriter.SetPosition(chunkWriterPositionBeforeModification);
+            }
 
             // Also send reliable updates
-            var reliableUpdates = chunk.GetPrepared3x3ReliableUpdatesPacket();
-            if(reliableUpdates != null) {
-                peer.Send(reliableUpdates, DeliveryMethod.ReliableOrdered);
-            }
+            var reliableChunkWriter = player.Entity.CurrentChunk.GetPrepared3x3ReliableUpdatesPacket();
+            // If no sources for reliable updates, don't send anything
+            if(!player.ReliablePackets.HasPackets && reliableChunkWriter == null)
+                return;
             
+            // If 3x3 chunk had no reliable updates, create own multipacket (and don't bother resetting it)
+            int? reliableChunkWriterPositionBeforeModification = reliableChunkWriter?.Length;
+            if(reliableChunkWriter == null) {
+                reliableChunkWriter = writer;
+                WPacketCommunication.StartMultiPacket(writer, GetTick());
+            }
+
+            player.ReliablePackets.SerializeAndReset(writer);
+
+            peer.Send(reliableChunkWriter, DeliveryMethod.ReliableOrdered);
+
+            // Reset writer to before modification
+            if(reliableChunkWriterPositionBeforeModification != null)
+                reliableChunkWriter.SetPosition(reliableChunkWriterPositionBeforeModification.Value);
         }
 
 

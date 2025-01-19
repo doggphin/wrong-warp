@@ -1,18 +1,17 @@
 using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-
-using Networking.Server;
-using Networking.Client;
 
 namespace Networking.Shared {
-    public class WSChunkDeltaSnapshotPkt : INetSerializable {
+    ///<summary> A collection of updates that have occured within a chunk across several ticks </summary>
+    public class WSChunkDeltaSnapshotPkt : INetPacketForClient {
         public List<INetSerializable>[] generalUpdates;
         public Dictionary<int, List<INetSerializable>>[] entityUpdates;
 
         // This is set on the client end
         public int c_startTick;
+
+        public bool ShouldCache => false;
 
         public void Deserialize(NetDataReader reader) {
             generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
@@ -34,11 +33,13 @@ namespace Networking.Shared {
                 int numberOfGeneralUpdatesInTick = reader.GetUShort();
 
                 while(numberOfGeneralUpdatesInTick-- > 0) {
-                    WPacketType packetType = reader.GetPacketType();
-                    WCNetClient.Instance.ConsumeGeneralUpdate(
-                        c_startTick + tick,
-                        packetType,
-                        reader);
+                    // WPacketType packetType = reader.GetPacketType();
+                    // WCNetClient.Instance.ConsumeGeneralUpdate(
+                    //     c_startTick + tick,
+                    //     packetType,
+                    //     reader);
+
+                    WCPacketForClientUnpacker.ConsumeNextPacket(c_startTick + tick, reader);
                 }
             }
 
@@ -56,13 +57,17 @@ namespace Networking.Shared {
                     int amountOfUpdatesForEntity = reader.GetUShort();
 
                     while(amountOfUpdatesForEntity-- > 0) {
-                        WPacketType packetType = reader.GetPacketType();
-
-                        WCNetClient.Instance.ConsumeEntityUpdate(
-                            c_startTick + tick,
-                            entityId,
-                            packetType,
-                            reader);
+                        // WPacketType packetType = reader.GetPacketType();
+                        // WCNetClient.Instance.ConsumeEntityUpdate(
+                        //     c_startTick + tick,
+                        //     entityId,
+                        //     packetType,
+                        //     reader);
+                        
+                        var packet = WCPacketForClientUnpacker.DeserializeNextPacket(reader);
+                        INetEntityUpdatePacketForClient entityUpdatePacket = (INetEntityUpdatePacketForClient)packet;
+                        entityUpdatePacket.EntityId = entityId;
+                        WCPacketForClientUnpacker.ConsumePacket(c_startTick + tick, entityUpdatePacket);
                     }
                 }
             }
@@ -142,6 +147,11 @@ namespace Networking.Shared {
                     }
                 }
             }
+        }
+
+        public void ApplyOnClient(int tick)
+        {
+            throw new NotImplementedException();
         }
     }
 }

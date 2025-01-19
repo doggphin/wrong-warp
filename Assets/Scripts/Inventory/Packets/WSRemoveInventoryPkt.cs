@@ -2,7 +2,7 @@ using Inventories;
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSRemoveInventoryPkt : INetSerializable, IClientApplicablePacket {
+    public class WSRemoveInventoryPkt : INetPacketForClient {
         public int inventoryId;
 
         public void Deserialize(NetDataReader reader) {
@@ -16,6 +16,7 @@ namespace Networking.Shared {
         }
 
         // TODO: implement this!!!!!
+        public bool ShouldCache => throw new System.NotImplementedException();
         public void ApplyOnClient(int tick)
         {
             throw new System.NotImplementedException();

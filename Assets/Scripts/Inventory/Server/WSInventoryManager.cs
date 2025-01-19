@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Inventories;
 using Unity.VisualScripting;
+using UnityEngine.Video;
 
 namespace Networking.Server {
     public class WSInventoryManager : BaseSingleton<WSInventoryManager> {
@@ -17,17 +18,24 @@ namespace Networking.Server {
             }
 
             int inventoryId = Instance.idGenerator.GetNextEntityId(Instance.inventories);
-            Inventory inventory = new(inventoryId, inventoryTemplate);
+            Inventory inventory = new(inventoryTemplate);
+            WSInventory wsInventory = AttachInventoryToEntity(entity, inventoryId, inventory);
 
-            WSInventory wsInventory = AttachInventoryToEntity(entity, inventory);
             return wsInventory;
         }
 
-        private static WSInventory AttachInventoryToEntity(WSEntity entity, Inventory inventory) {
-            WSInventory entityWsInventory = entity.AddComponent<WSInventory>();
-            entityWsInventory.Init(inventory, inventory.Id);
 
-            Instance.inventories[inventory.Id] = entityWsInventory;
+        public static void DeleteInventory(WSInventory inventory) {
+            Instance.inventories.Remove(inventory.Id);
+            
+        }
+
+
+        private static WSInventory AttachInventoryToEntity(WSEntity entity, int inventoryId, Inventory inventory) {
+            WSInventory entityWsInventory = entity.AddComponent<WSInventory>();
+            entityWsInventory.Init(inventory, inventoryId);
+
+            Instance.inventories[inventoryId] = entityWsInventory;
 
             entity.Player?.SetPersonalInventory(entityWsInventory);
 
