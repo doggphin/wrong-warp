@@ -33,7 +33,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(WPacketType.SEntitiesLoadedDelta);
+            writer.Put(WPacketIdentifier.SEntitiesLoadedDelta);
 
             writer.PutVarUInt((uint)entityIdsToRemove.Count);
             foreach(int entityId in entityIdsToRemove) {

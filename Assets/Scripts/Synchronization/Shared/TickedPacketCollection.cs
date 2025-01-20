@@ -18,7 +18,7 @@ public class TickedPacketCollection : INetPacketForClient {
 
     public void Serialize(NetDataWriter writer)
     {
-        writer.Put(WPacketType.SGenericUpdatesCollection);
+        writer.Put(WPacketIdentifier.SGenericUpdatesCollection);
 
         writer.Put(tickedPacketCollections);
     }

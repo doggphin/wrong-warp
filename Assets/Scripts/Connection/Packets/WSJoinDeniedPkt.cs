@@ -5,7 +5,7 @@ namespace Networking.Shared {
         public string reason;
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SJoinDenied);
+            writer.Put(WPacketIdentifier.SJoinDenied);
 
             writer.Put(reason);
         }

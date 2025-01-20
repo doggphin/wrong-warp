@@ -25,7 +25,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(WPacketType.CGroupedInputs);
+            writer.Put(WPacketIdentifier.CGroupedInputs);
 
             writer.Put((byte)inputsSerialized.Length);
             for(int i=0; i<inputsSerialized.Length; i++) {

@@ -13,7 +13,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SAddInventory);
+            writer.Put(WPacketIdentifier.SAddInventory);
 
             writer.Put(id);
             fullInventory.Serialize(writer);

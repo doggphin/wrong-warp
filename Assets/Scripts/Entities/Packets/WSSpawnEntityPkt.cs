@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SEntitySpawn);
+            writer.Put(WPacketIdentifier.SEntitySpawn);
 
             entity.Serialize(writer);
             writer.Put((byte)reason);

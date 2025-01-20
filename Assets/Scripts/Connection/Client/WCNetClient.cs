@@ -188,12 +188,6 @@ namespace Networking.Client {
 
             Instance.isJoined = true;
         }
-        private static void HandleChunkUpdateSnapshot(int tick, NetDataReader reader) {
-            WSChunkDeltaSnapshotPkt chunkSnapshotPkt = new() {
-                c_startTick = tick - WCommon.TICKS_PER_SNAPSHOT
-            };
-            chunkSnapshotPkt.Deserialize(reader);
-        }
         public static void HandleEntitiesLoadedDelta(int tick, WSEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
             foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
                 WCPacketCacheManager.CachePacket(

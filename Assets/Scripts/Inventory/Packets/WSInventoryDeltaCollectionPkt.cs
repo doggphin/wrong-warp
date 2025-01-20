@@ -24,7 +24,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SInventoryDeltaCollection);
+            writer.Put(WPacketIdentifier.SInventoryDeltaCollection);
 
             writer.Put((byte)inventoryIdsToDeltas.Count);
             

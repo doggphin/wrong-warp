@@ -13,7 +13,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SEntityTransformUpdate);
+            writer.Put(WPacketIdentifier.SEntityTransformUpdate);
 
             transform.Serialize(writer);
         }
@@ -21,6 +21,7 @@ namespace Networking.Shared {
         public bool ShouldCache => true;
 
         public void ApplyOnClient(int tick) {
+            Debug.Log("Applying set entity transform!");
             WCEntityManager.SetEntityTransformForTick(tick, this);
         }
     }

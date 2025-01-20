@@ -1,19 +1,17 @@
 using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Networking.Shared {
     ///<summary> A collection of updates that have occured within a chunk across several ticks </summary>
     public class WSChunkDeltaSnapshotPkt : INetPacketForClient {
-        public List<INetSerializable>[] generalUpdates;
-        public Dictionary<int, List<INetSerializable>>[] entityUpdates;
-
-        // This is set on the client end
-        public int c_startTick;
+        public List<INetPacketForClient>[] generalUpdates;
+        public Dictionary<int, List<INetPacketForClient>>[] entityUpdates;
 
         public void Deserialize(NetDataReader reader) {
-            generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
-            entityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
+            generalUpdates = new List<INetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
+            entityUpdates = new Dictionary<int, List<INetPacketForClient>>[WCommon.TICKS_PER_SNAPSHOT];
 
             for(int i=0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
                 generalUpdates[i] = new();
@@ -24,20 +22,13 @@ namespace Networking.Shared {
 
             for(int tick=0; tick < WCommon.TICKS_PER_SNAPSHOT; tick++) {
                 // If bitflag for this tick is turned off, skip to the next one
-                if((generalUpdatesExistFlags & (1 << tick)) == 0) {
+                if((generalUpdatesExistFlags & (1 << tick)) == 0)
                     continue;
-                }
                     
-                int numberOfGeneralUpdatesInTick = reader.GetUShort();
+                int numberOfGeneralUpdatesInTick = (int)reader.GetVarUInt();
 
                 while(numberOfGeneralUpdatesInTick-- > 0) {
-                    // WPacketType packetType = reader.GetPacketType();
-                    // WCNetClient.Instance.ConsumeGeneralUpdate(
-                    //     c_startTick + tick,
-                    //     packetType,
-                    //     reader);
-
-                    WCPacketForClientUnpacker.ConsumeNextPacket(c_startTick + tick, reader);
+                    generalUpdates[tick].Add(WCPacketForClientUnpacker.DeserializeNextPacket(reader));
                 }
             }
 
@@ -48,24 +39,17 @@ namespace Networking.Shared {
                 if ((entityUpdatesExistFlags & (1 << tick)) == 0)
                     continue;
                     
-                int numberOfEntitiesInTick = reader.GetUShort();
-
+                int numberOfEntitiesInTick = (int)reader.GetVarUInt();
                 while (numberOfEntitiesInTick-- > 0) {
                     int entityId = reader.GetInt();
-                    int amountOfUpdatesForEntity = reader.GetUShort();
+                    int amountOfUpdatesForEntity = (int)reader.GetVarUInt();
 
                     while(amountOfUpdatesForEntity-- > 0) {
-                        // WPacketType packetType = reader.GetPacketType();
-                        // WCNetClient.Instance.ConsumeEntityUpdate(
-                        //     c_startTick + tick,
-                        //     entityId,
-                        //     packetType,
-                        //     reader);
-                        
-                        var packet = WCPacketForClientUnpacker.DeserializeNextPacket(reader);
-                        INetEntityUpdatePacketForClient entityUpdatePacket = (INetEntityUpdatePacketForClient)packet;
-                        entityUpdatePacket.EntityId = entityId;
-                        WCPacketForClientUnpacker.ConsumePacket(c_startTick + tick, entityUpdatePacket);
+                        if(!entityUpdates[tick].TryGetValue(entityId, out var list)) {
+                            list = new();
+                            entityUpdates[tick][entityId] = list;
+                        }
+                        list.Add(WCPacketForClientUnpacker.DeserializeNextPacket(reader));
                     }
                 }
             }
@@ -74,7 +58,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer) {
             // Put packet type
-            writer.Put(WPacketType.SChunkDeltaSnapshot);
+            writer.Put(WPacketIdentifier.SChunkDeltaSnapshot);
 
             // Get and store the total general packets in each tick
             // If there are any, the tick contains updates, so mark it in the flags
@@ -92,7 +76,7 @@ namespace Networking.Shared {
                 // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
                 int generalUpdatesInTick = generalUpdates[i].Count;
                 if (generalUpdatesInTick > 0)
-                    writer.Put((ushort)generalUpdatesInTick);
+                    writer.PutVarUInt((uint)generalUpdatesInTick);
                 else
                     continue;
 
@@ -121,12 +105,12 @@ namespace Networking.Shared {
                 // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
                 int entitiesInTick = totalEntitiesInTicks[tick];
                 if (entitiesInTick > 0)
-                    writer.Put((ushort)entitiesInTick);
+                    writer.PutVarUInt((uint)entitiesInTick);
                 else
                     continue;
 
                 // For each entity ID and list of updates
-                foreach(KeyValuePair<int, List<INetSerializable>> entityIdAndUpdates in entityUpdates[tick]) {
+                foreach(KeyValuePair<int, List<INetPacketForClient>> entityIdAndUpdates in entityUpdates[tick]) {
 
                     // Put entity ID
                     int entityId = entityIdAndUpdates.Key;
@@ -134,7 +118,7 @@ namespace Networking.Shared {
 
                     // Put # of updates
                     int amountOfUpdates = entityIdAndUpdates.Value.Count;
-                    writer.Put((ushort)amountOfUpdates);
+                    writer.PutVarUInt((uint)amountOfUpdates);
 
                     // Then put all of its updates
                     foreach(var entityUpdatePacket in entityIdAndUpdates.Value) {
@@ -150,7 +134,22 @@ namespace Networking.Shared {
         public bool ShouldCache => false;
         public void ApplyOnClient(int tick)
         {
-            // Packets get applied inside deserialize function
+            for(int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
+                int offsetTick = tick - (WCommon.TICKS_PER_SNAPSHOT - i - 1);
+
+                foreach(INetPacketForClient update in generalUpdates[i]) {
+                    WCPacketForClientUnpacker.ConsumePacket(offsetTick, update);
+                }
+
+                foreach(var(entityId, updates) in entityUpdates[i]) {
+                    
+                    foreach(INetPacketForClient update in updates) {
+                        var entityUpdate = (INetEntityUpdatePacketForClient)update;
+                        entityUpdate.EntityId = entityId;
+                        WCPacketForClientUnpacker.ConsumePacket(offsetTick, update);
+                    }
+                }
+            }
         }
     }
 }

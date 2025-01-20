@@ -18,7 +18,7 @@ namespace Networking.Shared {
 
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SChatMessage);
+            writer.Put(WPacketIdentifier.SChatMessage);
 
             writer.Put(message);
             writer.Put(isServerMessage);

@@ -140,7 +140,7 @@ namespace Networking.Server {
         }
 
 
-        private void PushUpdates(INetSerializable packet) {
+        private void PushUpdates(INetPacketForClient packet) {
             isSerialized = false;
 
             if (isDead) {

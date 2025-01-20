@@ -115,11 +115,11 @@ public static class LiteNetLibExtensions {
     }
 
 
-    public static void Put(this NetDataWriter writer, WPacketType packetType) {
+    public static void Put(this NetDataWriter writer, WPacketIdentifier packetType) {
         writer.Put((ushort)packetType);
     }
-    public static WPacketType GetPacketType(this NetDataReader reader) {
-        return (WPacketType)reader.GetUShort();
+    public static WPacketIdentifier GetPacketType(this NetDataReader reader) {
+        return (WPacketIdentifier)reader.GetUShort();
     }
 
 

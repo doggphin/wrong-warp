@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 using Networking.Shared;
 using Networking.Client;
-using UnityEngine;
-// TODO: generalize this to work for server as well
+// TODO: consider generalizing this to work for server as well
 public static class WCPacketForClientUnpacker {
     ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
     ///<returns> The deserialized packet </returns>
@@ -14,27 +13,27 @@ public static class WCPacketForClientUnpacker {
         return ret;
     }
 
-    private static readonly Dictionary<WPacketType, Func<NetDataReader, INetPacketForClient>> packetDeserializers = new() {
-        { WPacketType.SJoinAccept, Deserialize<WSJoinAcceptPkt> },
-        { WPacketType.SChunkDeltaSnapshot, Deserialize<WSChunkDeltaSnapshotPkt> },
-        { WPacketType.SEntitiesLoadedDelta, Deserialize<WSEntitiesLoadedDeltaPkt> },
-        { WPacketType.SDefaultControllerState, Deserialize<WSDefaultControllerStatePkt> },
-        { WPacketType.SChunkReliableUpdates, Deserialize<WSChunkReliableUpdatesPkt> },
-        { WPacketType.SChatMessage, Deserialize<WSChatMessagePkt> },
-        { WPacketType.SFullEntitiesSnapshot, Deserialize<WSFullEntitiesSnapshotPkt> },
-        { WPacketType.SEntitySpawn, Deserialize<WSEntitySpawnPkt> },
-        { WPacketType.SEntityKill, Deserialize<WSEntityKillPkt> },
-        { WPacketType.SSetPlayerEntity, Deserialize<WSSetPlayerEntityPkt> },
-        { WPacketType.SEntityTransformUpdate, Deserialize<WSEntityTransformUpdatePkt> },
-        { WPacketType.SGenericUpdatesCollection, Deserialize<TickedPacketCollection> }
+    private static readonly Dictionary<WPacketIdentifier, Func<NetDataReader, INetPacketForClient>> packetDeserializers = new() {
+        { WPacketIdentifier.SJoinAccept, Deserialize<WSJoinAcceptPkt> },
+        { WPacketIdentifier.SChunkDeltaSnapshot, Deserialize<WSChunkDeltaSnapshotPkt> },
+        { WPacketIdentifier.SEntitiesLoadedDelta, Deserialize<WSEntitiesLoadedDeltaPkt> },
+        { WPacketIdentifier.SDefaultControllerState, Deserialize<WSDefaultControllerStatePkt> },
+        { WPacketIdentifier.SChunkReliableUpdates, Deserialize<WSChunkReliableUpdatesPkt> },
+        { WPacketIdentifier.SChatMessage, Deserialize<WSChatMessagePkt> },
+        { WPacketIdentifier.SFullEntitiesSnapshot, Deserialize<WSFullEntitiesSnapshotPkt> },
+        { WPacketIdentifier.SEntitySpawn, Deserialize<WSEntitySpawnPkt> },
+        { WPacketIdentifier.SEntityKill, Deserialize<WSEntityKillPkt> },
+        { WPacketIdentifier.SSetPlayerEntity, Deserialize<WSSetPlayerEntityPkt> },
+        { WPacketIdentifier.SEntityTransformUpdate, Deserialize<WSEntityTransformUpdatePkt> },
+        { WPacketIdentifier.SGenericUpdatesCollection, Deserialize<TickedPacketCollection> }
     };
 
     ///<summary> Reads out a packet type and then a packet that matches that type from a NetDataReader </summary>
     ///<returns> The deserialized packet </returns>
     public static INetPacketForClient DeserializeNextPacket(NetDataReader reader) {
         ushort packetTypeUShort = reader.GetUShort();
-        if(!packetDeserializers.TryGetValue((WPacketType)packetTypeUShort, out var function)) {
-            throw new Exception($"No handler for {(WPacketType)packetTypeUShort} (Code {packetTypeUShort})!");
+        if(!packetDeserializers.TryGetValue((WPacketIdentifier)packetTypeUShort, out var function)) {
+            throw new Exception($"No handler for {(WPacketIdentifier)packetTypeUShort} (Code {packetTypeUShort})!");
         }
         return function(reader);
     }

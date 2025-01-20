@@ -16,7 +16,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.CJoinRequest);
+            writer.Put(WPacketIdentifier.CJoinRequest);
 
             writer.Put(userName);     
         }

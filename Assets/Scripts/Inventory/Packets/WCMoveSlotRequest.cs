@@ -20,7 +20,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(WPacketType.CMoveSlotRequest);
+            writer.Put(WPacketIdentifier.CMoveSlotRequest);
 
             writer.Put(fromInventoryId);
             writer.PutVarUInt((uint)fromIndex);

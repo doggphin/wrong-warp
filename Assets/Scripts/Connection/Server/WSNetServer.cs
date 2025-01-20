@@ -147,19 +147,15 @@ namespace Networking.Server {
                 unreliableChunkWriter.SetPosition(chunkWriterPositionBeforeModification);
             }
 
-            Debug.Log("Moving on to reliable updates...");
             // Also send reliable updates
             var reliableChunkWriter = player.Entity.CurrentChunk.GetPrepared3x3ReliableUpdatesPacket();
             // If no sources for reliable updates, don't send anything
             if(!player.ReliablePackets.HasPackets && reliableChunkWriter == null)
                 return;
-            
-            Debug.Log("Alright writing updates now");
 
             // If 3x3 chunk had no reliable updates, create own multipacket (and don't bother resetting it)
             int? reliableChunkWriterPositionBeforeModification = reliableChunkWriter?.Length;
             if(reliableChunkWriter == null) {
-                Debug.Log("Starting from scratch");
                 reliableChunkWriter = writer;
                 WPacketCommunication.StartMultiPacket(writer, GetTick());
             }
@@ -174,10 +170,10 @@ namespace Networking.Server {
         }
 
 
-        private bool ProcessPacketFromReader(NetPeer peer, NetDataReader reader, int tick, WPacketType packetType) {
+        private bool ProcessPacketFromReader(NetPeer peer, NetDataReader reader, int tick, WPacketIdentifier packetType) {
             // Not the best architecture, but not that awful either
             switch (packetType) {
-                case WPacketType.CJoinRequest: {
+                case WPacketIdentifier.CJoinRequest: {
                     WCJoinRequestPkt joinRequest = new();
                     joinRequest.Deserialize(reader);
                     if (!joinRequest.s_isValid)
@@ -186,7 +182,7 @@ namespace Networking.Server {
                     OnJoinReceived(joinRequest, peer);
                     return true;
                 }
-                case WPacketType.CGroupedInputs: {
+                case WPacketIdentifier.CGroupedInputs: {
                     if(peer.Tag == null)
                         return false;
 
@@ -195,7 +191,7 @@ namespace Networking.Server {
                     WSPlayerInputsSlotterManager.Instance.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
                     return true;
                 }
-                case WPacketType.CChatMessage: {
+                case WPacketIdentifier.CChatMessage: {
                     if(peer.Tag == null)
                         return false;
 

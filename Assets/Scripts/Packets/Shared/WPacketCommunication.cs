@@ -34,14 +34,14 @@ namespace Networking.Shared {
 
         /// <param name="packetHandler"> Delegate that will handle all packets found in this MultiPacket. </param>
         /// <returns> Whether no errors occursed. Should improve this at some later date. </returns>
-        public static bool ReadMultiPacket(NetPeer receivedFrom, NetDataReader reader, Func<NetPeer, NetDataReader, int, WPacketType, bool> packetHandler) {
+        public static bool ReadMultiPacket(NetPeer receivedFrom, NetDataReader reader, Func<NetPeer, NetDataReader, int, WPacketIdentifier, bool> packetHandler) {
             int tick = reader.GetInt();
 
             for(;;) {
                 if (reader.AvailableBytes < 2)
                     return reader.AvailableBytes == 0;
 
-                WPacketType packetType = reader.GetPacketType();
+                WPacketIdentifier packetType = reader.GetPacketType();
                 if (!packetHandler(receivedFrom, reader, tick, packetType))
                     return false;
             }

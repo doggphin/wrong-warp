@@ -5,7 +5,7 @@ namespace Networking.Shared {
         public string message;
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put((ushort)WPacketType.CChatMessage);
+            writer.Put((ushort)WPacketIdentifier.CChatMessage);
 
             writer.Put(message);
         }

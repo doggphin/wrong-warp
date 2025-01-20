@@ -17,14 +17,14 @@ public class WSDefaultControllerStatePkt : INetPacketForClient {
 
         previousInputs = new WInputsSerializable();
         previousInputs.Deserialize(reader);
-        
+
         boundedRotatorRotation = reader.GetVector2();
         position = reader.GetVector3();
     }
 
     public void Serialize(NetDataWriter writer)
     {
-        writer.Put(WPacketType.SDefaultControllerState);
+        writer.Put(WPacketIdentifier.SDefaultControllerState);
 
         writer.Put(velocity);
         writer.Put(canDoubleJump);

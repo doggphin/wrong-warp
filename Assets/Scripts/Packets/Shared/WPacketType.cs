@@ -1,5 +1,5 @@
 namespace Networking.Shared {
-    public enum WPacketType : ushort {
+    public enum WPacketIdentifier : ushort {
         Unimplemented = 0,
 
         CJoinRequest = 1,

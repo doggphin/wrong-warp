@@ -11,7 +11,7 @@ namespace Networking.Shared {
         public List<INetSerializable>[] updates;
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SChunkReliableUpdates);
+            writer.Put(WPacketIdentifier.SChunkReliableUpdates);
 
             writer.Put(startTick);
             

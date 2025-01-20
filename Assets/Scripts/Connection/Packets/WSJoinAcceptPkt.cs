@@ -10,7 +10,7 @@ namespace Networking.Shared {
 
         public void Serialize(NetDataWriter writer) {
             Debug.Log("Putting a join accept!");
-            writer.Put(WPacketType.SJoinAccept);
+            writer.Put(WPacketIdentifier.SJoinAccept);
 
             writer.Put(userName);
             writer.Put(tick);

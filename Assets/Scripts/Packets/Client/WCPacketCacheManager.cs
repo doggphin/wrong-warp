@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Networking.Shared;
+using UnityEngine;
 
 namespace Networking.Client {
     public class WCPacketCacheManager : BaseSingleton<WCPacketCacheManager> {
@@ -13,23 +14,16 @@ namespace Networking.Client {
             }
         }
 
-        private TimestampedCircularTickBuffer<PacketCache> caches = new();
-
-        protected override void Awake() {
-            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++)
-                caches[i] = new();
-                
-            base.Awake();
-        }
-
+        private TimestampedCircularTickBuffer<PacketCache> caches = TimestampedCircularTickBufferClassInitializer<PacketCache>.GetInitialized(0);
 
         public static bool CachePacket(int tick, INetPacketForClient packet) {
             int cachedTimestamp = Instance.caches.GetTimestamp(tick);
             var cache = Instance.caches[tick];
 
             // Old packet; toss it out
-            if(cachedTimestamp > tick)
+            if(cachedTimestamp > tick) {
                 return false;
+            }     
             
             // First packet of new tick; clean out this tick
             if(tick > cachedTimestamp) {

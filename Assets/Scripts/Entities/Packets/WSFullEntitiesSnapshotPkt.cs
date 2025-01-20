@@ -19,7 +19,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SFullEntitiesSnapshot);
+            writer.Put(WPacketIdentifier.SFullEntitiesSnapshot);
 
             writer.Put(isFullReset);
             writer.PutVarUInt((uint)entities.Length);

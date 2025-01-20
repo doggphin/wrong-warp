@@ -10,7 +10,7 @@ namespace Networking.Shared {
         }
 
         public void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketType.SSetPersonalInventoryId);
+            writer.Put(WPacketIdentifier.SSetPersonalInventoryId);
 
             writer.Put(personalInventoryId);
         }
