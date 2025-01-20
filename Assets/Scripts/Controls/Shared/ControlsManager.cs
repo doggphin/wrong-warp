@@ -30,9 +30,7 @@ namespace Controllers.Shared {
 
         private static bool inputsInitialized = false;
         public static void Init() {      
-            for(int i=0; i<inputs.buffer.Length; i++) {
-                inputs.buffer[i] = new();
-            }
+            inputs = TimestampedCircularTickBufferClassInitializer<WInputsSerializable>.GetInitialized(-1);
 
             if(inputsInitialized)
                 return;

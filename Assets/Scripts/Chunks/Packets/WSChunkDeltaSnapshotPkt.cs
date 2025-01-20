@@ -11,8 +11,6 @@ namespace Networking.Shared {
         // This is set on the client end
         public int c_startTick;
 
-        public bool ShouldCache => false;
-
         public void Deserialize(NetDataReader reader) {
             generalUpdates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
             entityUpdates = new Dictionary<int, List<INetSerializable>>[WCommon.TICKS_PER_SNAPSHOT];
@@ -149,9 +147,10 @@ namespace Networking.Shared {
             }
         }
 
+        public bool ShouldCache => false;
         public void ApplyOnClient(int tick)
         {
-            throw new NotImplementedException();
+            // Packets get applied inside deserialize function
         }
     }
 }

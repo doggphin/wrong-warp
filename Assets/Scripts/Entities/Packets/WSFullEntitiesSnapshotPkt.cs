@@ -1,12 +1,11 @@
 using LiteNetLib.Utils;
+using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
     public class WSFullEntitiesSnapshotPkt : INetPacketForClient {
         public WEntitySerializable[] entities;
         public bool isFullReset;
-
-        public bool ShouldCache =>true;
 
         public void Deserialize(NetDataReader reader) {
             isFullReset = reader.GetBool();
@@ -16,7 +15,6 @@ namespace Networking.Shared {
             for(int i=0; i<entitiesCount; i++) {
                 entities[i] = new();
                 entities[i].Deserialize(reader);
-                Debug.Log(entities[i].entityId);
             }
         }
 
@@ -27,12 +25,12 @@ namespace Networking.Shared {
             writer.PutVarUInt((uint)entities.Length);
             foreach(WEntitySerializable entity in entities) {
                 entity.Serialize(writer);
-                Debug.Log(entity.entityId);
             }
         }
 
+        public bool ShouldCache =>true;
         public void ApplyOnClient(int tick) {
-            Debug.Log("Implement me!");
+            WCEntityManager.HandleFullEntitiesSnapshot(this);
         }
     }
 }

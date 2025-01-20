@@ -31,7 +31,7 @@ namespace Controllers.Shared {
 
         public override void RollbackToTick(int tick)
         {
-            var state = WCRollbackManager.defaultControllerStates[tick];
+            var state = WCRollbackManager.GetDefaultControllerState(tick);
 
             velocity = state.velocity;
             canDoubleJump = state.canDoubleJump;
@@ -145,7 +145,7 @@ namespace Controllers.Shared {
 
             if(WNetManager.IsClient) {
                 var state = GetSerializableState(onTick);
-                WCRollbackManager.defaultControllerStates[onTick] = state;
+                WCRollbackManager.SetDefaultControllerState(onTick, state);
             }         
         } 
     }

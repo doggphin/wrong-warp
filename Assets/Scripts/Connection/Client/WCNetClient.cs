@@ -12,6 +12,7 @@ using System.Collections.Generic;
 namespace Networking.Client {
     [RequireComponent(typeof(WCEntityManager))]
     [RequireComponent(typeof(WCPacketCacheManager))]
+    [RequireComponent(typeof(WCRollbackManager))]
     public class WCNetClient : BaseSingleton<WCNetClient>, ITicker, INetEventListener {
         private WCEntityManager entityManager;
         private NetPeer serverPeer;
@@ -92,6 +93,7 @@ namespace Networking.Client {
 
                 WCEntity entity = WCEntityManager.GetEntityById(myEntityId.Value);
 
+                Debug.Log($"Entity is {entity}!");
                 if(entity == null)
                     return;
 
@@ -147,7 +149,7 @@ namespace Networking.Client {
         // Checks most recently received packets. Tries to 
         private void CheckForTickCompensation() {
             if(necessaryTickCompensation == 0) {
-                if(tickDifferenceTracker.ReadingsCount > 20) {
+                if(tickDifferenceTracker.ReadingsCount > 10) {
                     int requestedDifference = (int)Mathf.Round(tickDifferenceTracker.GetRequiredCompensation());
 
                     if(Math.Abs(requestedDifference) > 1) {
@@ -175,7 +177,10 @@ namespace Networking.Client {
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) => Debug.Log($"Socket error: {socketError}");
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
         
-        public static void HandleSetPlayerEntity(WSSetPlayerEntityPkt pkt) => Instance.myEntityId = pkt.entityId;
+        public static void HandleSetPlayerEntity(WSSetPlayerEntityPkt pkt) {
+            Instance.myEntityId = pkt.entityId;
+            Debug.Log($"Setting entity id to {pkt.entityId}!");
+        } 
 
         public static void HandleJoinAccept(WSJoinAcceptPkt pkt) { 
             CentralTimingTick = pkt.tick;
@@ -210,10 +215,7 @@ namespace Networking.Client {
                 );
             }
         }
-        private static void HandleDefaultControllerState(int receivedTick, NetDataReader reader) {
-            WSDefaultControllerStatePkt confirmedControllerState = new();
-            confirmedControllerState.Deserialize(reader);
-
+        public static void HandleDefaultControllerState(int receivedTick, WSDefaultControllerStatePkt confirmedControllerState) {
             //Debug.Log($"Received a default controller state for tick {tick}! Observing tick is {ObservingTick}! Sending tick is {SendingTick}");
             bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(receivedTick, confirmedControllerState);
             if(isInSync)
@@ -231,15 +233,13 @@ namespace Networking.Client {
         }
 
         private void ResimulateTicks(int fromTick) {
-            // Subtract one since we don't want to resimulate the received tick
             int tickDifference = SendingTick - fromTick - 1;
-            //Debug.Log($"Need to resimulate from {fromTick}... Turning back from {SendingTick} to {SendingTick - tickDifference}");
+
             CentralTimingTick -= tickDifference;
+
             for(int i=0; i<tickDifference; i++) {
-                //Debug.Log($"Resimulating {SendingTick}");
                 AdvanceTick(false);
             }
-            //Debug.Log($"Ended on {SendingTick}");
         }
 
 

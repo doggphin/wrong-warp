@@ -24,5 +24,6 @@ namespace Networking.Shared {
         SSetPersonalInventoryId = 20,
         CMoveSlotRequest = 21,
         CDropSlotRequest = 22,
+        SGenericUpdatesCollection = 23,
     }
 }

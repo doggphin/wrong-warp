@@ -15,7 +15,6 @@ namespace Networking.Server {
     [RequireComponent(typeof(WSInventoryManager))]
     public class WSNetServer : BaseSingleton<WSNetServer>, ITicker, INetEventListener {
         private WSEntityManager entityManager;
-        private WSPlayerInputsSlotterManager playerInputsSlotterManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
@@ -91,7 +90,7 @@ namespace Networking.Server {
                 if(!WSPlayer.FromPeer(peer, out WSPlayer netPlayer))
                     continue;
                 
-                WInputsSerializable inputs = playerInputsSlotterManager.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
+                WInputsSerializable inputs = WSPlayerInputsSlotterManager.Instance.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
                 netPlayer.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
     
@@ -148,15 +147,19 @@ namespace Networking.Server {
                 unreliableChunkWriter.SetPosition(chunkWriterPositionBeforeModification);
             }
 
+            Debug.Log("Moving on to reliable updates...");
             // Also send reliable updates
             var reliableChunkWriter = player.Entity.CurrentChunk.GetPrepared3x3ReliableUpdatesPacket();
             // If no sources for reliable updates, don't send anything
             if(!player.ReliablePackets.HasPackets && reliableChunkWriter == null)
                 return;
             
+            Debug.Log("Alright writing updates now");
+
             // If 3x3 chunk had no reliable updates, create own multipacket (and don't bother resetting it)
             int? reliableChunkWriterPositionBeforeModification = reliableChunkWriter?.Length;
             if(reliableChunkWriter == null) {
+                Debug.Log("Starting from scratch");
                 reliableChunkWriter = writer;
                 WPacketCommunication.StartMultiPacket(writer, GetTick());
             }
@@ -189,7 +192,7 @@ namespace Networking.Server {
 
                     WCGroupedInputsPkt groupedInputs = new();
                     groupedInputs.Deserialize(reader);
-                    playerInputsSlotterManager.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
+                    WSPlayerInputsSlotterManager.Instance.SetGroupedInputsOfPlayer(tick, peer.Id, groupedInputs);
                     return true;
                 }
                 case WPacketType.CChatMessage: {
@@ -259,7 +262,7 @@ namespace Networking.Server {
             player.Entity.Kill(WEntityKillReason.Unload);
             //WSEntityManager.KillEntity(player.Entity.Id);
             
-            playerInputsSlotterManager.RemovePlayer(peer.Id);
+            WSPlayerInputsSlotterManager.Instance.RemovePlayer(peer.Id);
 
             return true;
         }

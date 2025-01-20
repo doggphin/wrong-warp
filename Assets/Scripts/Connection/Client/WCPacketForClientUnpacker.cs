@@ -3,8 +3,17 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 using Networking.Shared;
 using Networking.Client;
-
+using UnityEngine;
+// TODO: generalize this to work for server as well
 public static class WCPacketForClientUnpacker {
+    ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
+    ///<returns> The deserialized packet </returns>
+    private static INetPacketForClient Deserialize<T>(NetDataReader reader) where T : class, INetPacketForClient, new() {
+        T ret = new();
+        ret.Deserialize(reader);
+        return ret;
+    }
+
     private static readonly Dictionary<WPacketType, Func<NetDataReader, INetPacketForClient>> packetDeserializers = new() {
         { WPacketType.SJoinAccept, Deserialize<WSJoinAcceptPkt> },
         { WPacketType.SChunkDeltaSnapshot, Deserialize<WSChunkDeltaSnapshotPkt> },
@@ -17,15 +26,8 @@ public static class WCPacketForClientUnpacker {
         { WPacketType.SEntityKill, Deserialize<WSEntityKillPkt> },
         { WPacketType.SSetPlayerEntity, Deserialize<WSSetPlayerEntityPkt> },
         { WPacketType.SEntityTransformUpdate, Deserialize<WSEntityTransformUpdatePkt> },
+        { WPacketType.SGenericUpdatesCollection, Deserialize<TickedPacketCollection> }
     };
-    
-    ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
-    ///<returns> The deserialized packet </returns>
-    private static INetPacketForClient Deserialize<T>(NetDataReader reader) where T : class, INetPacketForClient, new() {
-        T ret = new();
-        ret.Deserialize(reader);
-        return ret;
-    }
 
     ///<summary> Reads out a packet type and then a packet that matches that type from a NetDataReader </summary>
     ///<returns> The deserialized packet </returns>

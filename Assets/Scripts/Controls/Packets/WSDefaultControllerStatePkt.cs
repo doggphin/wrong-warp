@@ -1,4 +1,5 @@
 using LiteNetLib.Utils;
+using Networking.Client;
 using Networking.Shared;
 using UnityEngine;
 
@@ -9,13 +10,14 @@ public class WSDefaultControllerStatePkt : INetPacketForClient {
     public Vector2 boundedRotatorRotation;
     public Vector3 position;    // This is really just a convenience; could probably check transform update instead
 
-    public bool ShouldCache => true;
-
     public void Deserialize(NetDataReader reader)
     {
         velocity = reader.GetVector3();
         canDoubleJump = reader.GetBool();
-        previousInputs = new WInputsSerializable(); previousInputs.Deserialize(reader);
+
+        previousInputs = new WInputsSerializable();
+        previousInputs.Deserialize(reader);
+        
         boundedRotatorRotation = reader.GetVector2();
         position = reader.GetVector3();
     }
@@ -31,8 +33,9 @@ public class WSDefaultControllerStatePkt : INetPacketForClient {
         writer.Put(position);
     }
 
+    public bool ShouldCache => false;
     public void ApplyOnClient(int tick)
     {
-        throw new System.NotImplementedException();
+        WCNetClient.HandleDefaultControllerState(tick, this);
     }
 }

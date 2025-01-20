@@ -2,8 +2,14 @@ using UnityEngine;
 using Controllers.Shared;
 using Networking.Shared;
 
-public static class WCRollbackManager {
-    public static TimestampedCircularTickBuffer<WSDefaultControllerStatePkt> defaultControllerStates = new();
+public class WCRollbackManager : BaseSingleton<WCRollbackManager> {
+    private TimestampedCircularTickBuffer<WSDefaultControllerStatePkt> defaultControllerStates;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        defaultControllerStates = TimestampedCircularTickBufferClassInitializer<WSDefaultControllerStatePkt>.GetInitialized(-1);
+    }
 
     // Rolls the player back from currentTick to rollbackTo.
     public static void RollbackDefaultController(int currentTick, int rollbackToTick, WSDefaultControllerStatePkt confirmedPacket) {
@@ -12,22 +18,29 @@ public static class WCRollbackManager {
         // Null out all controller states after the confirmed state since they're all invalid
         // How necessary is this?
         for(int i=currentTick; i > rollbackToTick; i--) {
-            defaultControllerStates[i] = null;
+            Instance.defaultControllerStates[i] = null;
         }
 
         // Replace the predicted controller state with the confirmed one
-        defaultControllerStates[rollbackToTick] = confirmedPacket;
+        Instance.defaultControllerStates[rollbackToTick] = confirmedPacket;
 
         // Roll the player back
-        ControlsManager.player?.RollbackToTick(rollbackToTick);
+        if(ControlsManager.player != null) {
+            ControlsManager.player.RollbackToTick(rollbackToTick);
+        }
+    }
+
+    public static WSDefaultControllerStatePkt GetDefaultControllerState(int tick) {
+        return Instance.defaultControllerStates[tick];
+    }
+
+    public static void SetDefaultControllerState(int tick, WSDefaultControllerStatePkt defaultControllerState) {
+        Instance.defaultControllerStates.SetValueAndTimestamp(defaultControllerState, tick);
     }
 
 
-    public static bool ReceiveDefaultControllerStateConfirmation(
-        int tick,
-        WSDefaultControllerStatePkt confirmedState
-    ) {
-        var predictedState = defaultControllerStates[tick];
+    public static bool ReceiveDefaultControllerStateConfirmation(int tick, WSDefaultControllerStatePkt confirmedState) {
+        var predictedState = Instance.defaultControllerStates[tick];
 
         if(predictedState == null)
             return true;

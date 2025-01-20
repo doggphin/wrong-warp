@@ -18,6 +18,8 @@ namespace Networking.Client {
         protected override void Awake() {
             for(int i=0; i<WCommon.TICKS_PER_SECOND; i++)
                 caches[i] = new();
+                
+            base.Awake();
         }
 
 

@@ -131,39 +131,47 @@ public static class LiteNetLibExtensions {
     }
 
 
-    public static void Put(this NetDataWriter writer, Dictionary<int, List<INetPacketForClient>> serverTickedPacketCollection) {
-        writer.PutVarUInt((uint)serverTickedPacketCollection.Count);
-
-        foreach(var kvp in serverTickedPacketCollection) {
-            writer.Put(kvp.Key);
-            writer.Put(kvp.Value);
-        }
-    }
-    public static Dictionary<int, List<INetPacketForClient>> GetTickedPacketCollection(this NetDataReader reader) {
-        int count = (int)reader.GetVarUInt();
-        Dictionary<int, List<INetPacketForClient>> ret = new(count);
-        for(int i=0; i<count; i++) {
-            int tick = (int)reader.GetVarUInt();
-            List<INetPacketForClient> packets = GetNetPacketForClientList(reader);
-            ret[tick] = packets;
-        }
-
-        return ret;
-    }
-
-
     public static void Put(this NetDataWriter writer, List<INetPacketForClient> serverPacketList) {
         writer.PutVarUInt((uint)serverPacketList.Count);
+        Debug.Log($"Serializing a list of netpacketsforclients of length {serverPacketList.Count}!");
         foreach(var serializable in serverPacketList) {
+            Debug.Log("Putting an item of a list of NetPacketForClients!");
             serializable.Serialize(writer);
         }
     }
     public static List<INetPacketForClient> GetNetPacketForClientList(this NetDataReader reader) {
         int count = (int)reader.GetVarUInt();
         List<INetPacketForClient> ret = new(count);
+        Debug.Log($"Deserializing a list of netpacketsforclients with count {count}!");
         for(int i=0; i<count; i++) {
             ret.Add(WCPacketForClientUnpacker.DeserializeNextPacket(reader));
         }
+        return ret;
+    }
+
+    public static void Put(this NetDataWriter writer, Dictionary<int, List<INetPacketForClient>> serverTickedPacketCollection) {
+        // Put amount of KVPs
+        uint count = (uint)serverTickedPacketCollection.Count;
+        Debug.Log($"Putting a count of {count}!");
+        writer.PutVarUInt((uint)serverTickedPacketCollection.Count);
+
+        foreach(var kvp in serverTickedPacketCollection) {
+            // Put tick, then list of packets
+            writer.Put(kvp.Key);
+            writer.Put(kvp.Value);
+        }
+    }
+    public static Dictionary<int, List<INetPacketForClient>> GetTickedPacketCollection(this NetDataReader reader) {
+        int count = (int)reader.GetVarUInt();
+        Debug.Log($"This collection has {count} ticks!");
+
+        Dictionary<int, List<INetPacketForClient>> ret = new(count);
+        for(int i=0; i<count; i++) {
+            int tick = reader.GetInt();
+            List<INetPacketForClient> packets = GetNetPacketForClientList(reader);
+            ret[tick] = packets;
+        }
+
         return ret;
     }
 }

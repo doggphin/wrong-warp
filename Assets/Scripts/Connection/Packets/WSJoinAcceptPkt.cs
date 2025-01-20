@@ -1,3 +1,4 @@
+using UnityEngine;
 using LiteNetLib.Utils;
 using Networking.Client;
 using TMPro;
@@ -8,6 +9,7 @@ namespace Networking.Shared {
         public int tick;
 
         public void Serialize(NetDataWriter writer) {
+            Debug.Log("Putting a join accept!");
             writer.Put(WPacketType.SJoinAccept);
 
             writer.Put(userName);

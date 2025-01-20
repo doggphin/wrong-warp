@@ -52,58 +52,76 @@ namespace Networking.Shared
 
 
     public class TimestampedCircularTickBuffer<T> {
-        public T[] buffer = new T[WCommon.TICKS_PER_SECOND];
-        public int[] timestamps = new int[WCommon.TICKS_PER_SECOND];
+        private struct TimestampedCircularTickBufferItem {
+            public T item;
+            public int timestamp;
+        }
+
+        private TimestampedCircularTickBufferItem[] timestampedItems = new TimestampedCircularTickBufferItem[WCommon.TICKS_PER_SECOND];
+        // public T[] buffer = new T[WCommon.TICKS_PER_SECOND];
+        // public int[] timestamps = new int[WCommon.TICKS_PER_SECOND];
 
         public T this[int tick] {
             get {
-                return buffer[WCommon.GetModuloTPS(tick)];
+                return timestampedItems[WCommon.GetModuloTPS(tick)].item;
             }
             set {
-                buffer[WCommon.GetModuloTPS(tick)] = value;
+                timestampedItems[WCommon.GetModuloTPS(tick)].item = value;
             }
         }
 
 
         public bool CheckTickIsMoreRecent(int tick, bool returnTrueIfEquals = false) {
             return returnTrueIfEquals ? 
-                tick >= timestamps[WCommon.GetModuloTPS(tick)] :
-                tick > timestamps[WCommon.GetModuloTPS(tick)];
+                tick >= timestampedItems[WCommon.GetModuloTPS(tick)].timestamp :
+                tick > timestampedItems[WCommon.GetModuloTPS(tick)].timestamp;
         }
 
 
         public void SetValueAndTimestamp(T value, int tickTimestamp) {
-            buffer[WCommon.GetModuloTPS(tickTimestamp)] = value;
-            timestamps[WCommon.GetModuloTPS(tickTimestamp)] = tickTimestamp;
+            timestampedItems[WCommon.GetModuloTPS(tickTimestamp)] = new() {
+                item = value,
+                timestamp = tickTimestamp
+            };
         }
 
 
         public void SetTimestamp(int tick) {
-            timestamps[WCommon.GetModuloTPS(tick)] = tick;
+            timestampedItems[WCommon.GetModuloTPS(tick)].timestamp = tick;
         }
 
 
         public int GetTimestamp(int tick) {
-            return timestamps[WCommon.GetModuloTPS(tick)];
+            return timestampedItems[WCommon.GetModuloTPS(tick)].timestamp;
         }
         
 
         public bool TryGetByTimestamp(int timestamp, out T value) {
-            if(timestamps[WCommon.GetModuloTPS(timestamp)] == timestamp) {
-                value = buffer[WCommon.GetModuloTPS(timestamp)];
+            if(timestampedItems[WCommon.GetModuloTPS(timestamp)].timestamp == timestamp) {
+                value = timestampedItems[WCommon.GetModuloTPS(timestamp)].item;
                 return true;
             } else {
                 value = default;
                 return false;
             }
         }
-
-        public TimestampedCircularTickBuffer(T defaultValue, int initialTimestamp) {
+        
+        public TimestampedCircularTickBuffer(int initialTimestamp) {
             for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
-                buffer[i] = defaultValue;
-                timestamps[i] = initialTimestamp;
+                timestampedItems[i].timestamp = initialTimestamp;
             }
         }
         public TimestampedCircularTickBuffer() {}
+    }
+
+    ///<summary> Used to generate initialized TimestampedCircularTickBuffers, where T is a class </summary>
+    public static class TimestampedCircularTickBufferClassInitializer<T> where T : class, new() {
+        public static TimestampedCircularTickBuffer<T> GetInitialized(int initialTick = -1) {
+            TimestampedCircularTickBuffer<T> ret = new(initialTick);
+            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
+                ret[i] = new();
+            }
+            return ret;
+        }
     }
 }
