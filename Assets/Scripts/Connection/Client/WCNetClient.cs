@@ -101,7 +101,7 @@ namespace Networking.Client {
                 PlayerEntity = entity;
                 Player = PlayerEntity.GetComponent<AbstractPlayer>();
                 Player.EnablePlayer();
-                ControlsManager.player = Player;
+                ControlsManager.SetPlayer(Player);
                 entity.isMyPlayer = true;
             }
 

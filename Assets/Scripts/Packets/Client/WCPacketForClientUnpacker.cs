@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 using Networking.Shared;
 using Networking.Client;
-// TODO: consider generalizing this to work for server as well
+
 public static class WCPacketForClientUnpacker {
     ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
     ///<returns> The deserialized packet </returns>

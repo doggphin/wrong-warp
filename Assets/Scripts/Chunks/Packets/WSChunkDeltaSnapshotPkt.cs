@@ -75,10 +75,10 @@ namespace Networking.Shared {
 
                 // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
                 int generalUpdatesInTick = generalUpdates[i].Count;
-                if (generalUpdatesInTick > 0)
-                    writer.PutVarUInt((uint)generalUpdatesInTick);
-                else
+                if (generalUpdatesInTick < 1)
                     continue;
+
+                writer.PutVarUInt((uint)generalUpdatesInTick);
 
                 // Write all the general updates
                 foreach (INetSerializable update in generalUpdates[i]) {
@@ -104,10 +104,10 @@ namespace Networking.Shared {
 
                 // Serialize # of general updates only when there's more than 0; otherwise skip to next tick
                 int entitiesInTick = totalEntitiesInTicks[tick];
-                if (entitiesInTick > 0)
-                    writer.PutVarUInt((uint)entitiesInTick);
-                else
+                if (entitiesInTick < 1)
                     continue;
+
+                writer.PutVarUInt((uint)entitiesInTick);
 
                 // For each entity ID and list of updates
                 foreach(KeyValuePair<int, List<INetPacketForClient>> entityIdAndUpdates in entityUpdates[tick]) {
@@ -145,7 +145,7 @@ namespace Networking.Shared {
                     
                     foreach(INetPacketForClient update in updates) {
                         var entityUpdate = (INetEntityUpdatePacketForClient)update;
-                        entityUpdate.EntityId = entityId;
+                        entityUpdate.CEntityId = entityId;
                         WCPacketForClientUnpacker.ConsumePacket(offsetTick, update);
                     }
                 }

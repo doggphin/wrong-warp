@@ -289,7 +289,7 @@ namespace Networking.Server {
             HashSet<WSChunk> ret = new();
 
             foreach(var peer in WNetManager.ConnectedPeers) {
-                if(!WSPlayer.FromPeer(peer, out WSPlayer player))
+                if(!peer.TryGetWSPlayer(out WSPlayer player))
                     continue;
 
                 ret.Add(player.Entity.CurrentChunk);

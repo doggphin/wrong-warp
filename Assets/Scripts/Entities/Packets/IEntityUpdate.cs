@@ -1,3 +1,4 @@
 public interface INetEntityUpdatePacketForClient : INetPacketForClient {
-    public int EntityId { get; set; }
+    ///<summary> Used in packets where entity ID can be inferred without explicitly being included in the packet </summary>
+    public int CEntityId { get; set; }
 }

@@ -6,18 +6,20 @@ using Networking.Shared;
 using Unity.VisualScripting;
 
 namespace Networking.Server {
-    public class WSPlayer {
-        public static WSPlayer FromPeer(NetPeer peer) {
-            return peer.Tag == null ? null : (WSPlayer)peer.Tag;
-        }
-        public static bool FromPeer(NetPeer peer, out WSPlayer player) {
-            if(peer.Tag != null) {
+    public static class WSPlayerExtensions {
+        public static bool TryGetWSPlayer(this NetPeer peer, out WSPlayer player) {
+            if(peer.Tag == null) {
+                player = null;
+                return false;
+            } else {
                 player = (WSPlayer)peer.Tag;
                 return true;
             }
-
-            player = null;
-            return false;
+        }
+    }
+    public class WSPlayer {
+        public static WSPlayer FromPeer(NetPeer peer) {
+            return peer.Tag == null ? null : (WSPlayer)peer.Tag;
         }
 
         public WSChunk previousChunk = null;

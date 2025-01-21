@@ -19,7 +19,9 @@ public class PlayerViewer : MonoBehaviour {
     }
 
     void Capture() {
-        if(ControlsManager.player && ControlsManager.player.TryGetComponent(out ViewablePlayer viewableObject))
+        if(ControlsManager.TryGetPlayer(out var player) &&
+        player.TryGetComponent(out ViewablePlayer viewableObject)) {
             objectViewer.TakeRotatedImage(viewableObject, Time.time * 360 * rotationsPerSecond % 360, 0);
+        }      
     }
 }

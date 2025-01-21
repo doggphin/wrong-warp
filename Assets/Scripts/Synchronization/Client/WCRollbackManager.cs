@@ -25,8 +25,9 @@ public class WCRollbackManager : BaseSingleton<WCRollbackManager> {
         Instance.defaultControllerStates[rollbackToTick] = confirmedPacket;
 
         // Roll the player back
-        if(ControlsManager.player != null) {
-            ControlsManager.player.RollbackToTick(rollbackToTick);
+
+        if(ControlsManager.TryGetPlayer(out var player)) {
+            player.RollbackToTick(rollbackToTick);
         }
     }
 
@@ -42,7 +43,7 @@ public class WCRollbackManager : BaseSingleton<WCRollbackManager> {
     public static bool ReceiveDefaultControllerStateConfirmation(int tick, WSDefaultControllerStatePkt confirmedState) {
         var predictedState = Instance.defaultControllerStates[tick];
 
-        if(predictedState == null)
+        if(predictedState == null || confirmedState.previousInputs == null || predictedState.previousInputs == null)
             return true;
 
         bool isSameDefaultControllerState =

@@ -84,7 +84,7 @@ namespace Networking.Shared {
             BaseNetManager = null;
 
             // Not great to do this here, but it's common between both client/server OnDestroy()s
-            ControlsManager.player = null;
+            ControlsManager.SetPlayer(null);
             ControlsManager.Deactivate();
             UiManager.CloseActiveUiElement();
 

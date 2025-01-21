@@ -48,7 +48,7 @@ namespace Networking.Client {
 
         
         public static void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
-            if(!Instance.entities.TryGetValue(transformPacket.EntityId, out WCEntity entity))
+            if(!Instance.entities.TryGetValue(transformPacket.CEntityId, out WCEntity entity))
                 return;
 
             entity.SetTransformForTick(tick, transformPacket.transform);

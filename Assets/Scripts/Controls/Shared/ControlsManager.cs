@@ -2,16 +2,24 @@ using Networking.Shared;
 using UnityEngine.InputSystem;
 using UnityEngine;
 using System;
-using UnityEngine.WSA;
-using Networking.Client;
-using System.Text.RegularExpressions;
 using Audio.Shared;
 
 namespace Controllers.Shared {
     public static class ControlsManager {
         private static PlayerInputActions inputActions;
 
-        public static AbstractPlayer player = null;
+        private static AbstractPlayer player = null;
+
+        public static bool TryGetPlayer(out AbstractPlayer player) {
+            player = ControlsManager.player;
+            return player != null;
+        }
+
+        public static void SetPlayer(AbstractPlayer player) {
+            ControlsManager.player = player;
+        }
+
+        public static bool HasPlayer => player != null;
 
         public static TimestampedCircularTickBuffer<WInputsSerializable> inputs = new();
 

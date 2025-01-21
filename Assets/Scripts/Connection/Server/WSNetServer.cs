@@ -71,8 +71,8 @@ namespace Networking.Server {
             WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
-            ControlsManager.player = player;
-            ControlsManager.player.EnablePlayer();
+            ControlsManager.SetPlayer(player);
+            player.EnablePlayer();
 
             HostPlayer = new(null, playerEntity);
         }
@@ -87,11 +87,11 @@ namespace Networking.Server {
 
             // Run inputs of each client
             foreach (var peer in WNetManager.ConnectedPeers) {
-                if(!WSPlayer.FromPeer(peer, out WSPlayer netPlayer))
+                if(!peer.TryGetWSPlayer(out WSPlayer player))
                     continue;
                 
                 WInputsSerializable inputs = WSPlayerInputsSlotterManager.Instance.GetInputsOfAPlayer(tick, peer.Id) ?? noInputs;
-                netPlayer.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
+                player.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
     
             WSEntityManager.PollFinalizeAdvanceEntities();
@@ -109,8 +109,7 @@ namespace Networking.Server {
             WSChunkManager.ResetChunkUpdatesAndSnapshots();
         }
         private void SendUpdatesToPlayer(NetPeer peer) {
-            WSPlayer player = WSPlayer.FromPeer(peer);
-            if (player == null)
+            if(!peer.TryGetWSPlayer(out var player))
                 return;
 
             // Get the initial snapshot packet from the chunk the player is in
@@ -218,7 +217,7 @@ namespace Networking.Server {
             }
         }
         private bool TryAddPlayer(NetPeer peer, string userName) {
-            if(WSPlayer.FromPeer(peer) != null)
+            if(peer.TryGetWSPlayer(out _))
                 return false;
 
             WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
@@ -251,9 +250,9 @@ namespace Networking.Server {
             return true;
         }
         private bool TryRemovePlayer(NetPeer peer) {
-            WSPlayer player = WSPlayer.FromPeer(peer);
-            if(player == null)
+            if(!peer.TryGetWSPlayer(out var player)) {
                 return false;
+            }
 
             player.Entity.Kill(WEntityKillReason.Unload);
             //WSEntityManager.KillEntity(player.Entity.Id);

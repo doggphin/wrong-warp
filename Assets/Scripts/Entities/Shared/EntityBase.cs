@@ -21,10 +21,7 @@ namespace Networking.Shared {
             }
         }
 
-        public Vector3 LerpBufferedPositions(int toTick, float percentage) {
-            return Vector3.Lerp(positionsBuffer[toTick - 1], positionsBuffer[toTick], percentage);
-        }
-            
+        public Vector3 LerpBufferedPositions(int toTick, float percentage) => Vector3.Lerp(positionsBuffer[toTick - 1], positionsBuffer[toTick], percentage);
         public Quaternion LerpBufferedRotations(int startingFromTick, float percentage) =>
             Quaternion.Lerp(rotationsBuffer[startingFromTick - 1], rotationsBuffer[startingFromTick], percentage);   
         public Vector3 LerpBufferedScales(int toTick, float percentage) =>

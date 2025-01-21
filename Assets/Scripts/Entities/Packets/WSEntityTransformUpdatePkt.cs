@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Networking.Shared {
     public class WSEntityTransformUpdatePkt : INetEntityUpdatePacketForClient {
         public WTransformSerializable transform;
-        public int EntityId { get; set; }
+        public int CEntityId { get; set; }
         
         public void Deserialize(NetDataReader reader) {
             transform.Deserialize(reader);
