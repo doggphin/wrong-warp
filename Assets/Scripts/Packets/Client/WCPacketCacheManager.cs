@@ -6,7 +6,7 @@ namespace Networking.Client {
     public class WCPacketCacheManager : BaseSingleton<WCPacketCacheManager> {
         private class PacketCache {
             public bool applied = false;
-            public List<INetPacketForClient> applicablePackets = new();
+            public List<NetPacketForClient> applicablePackets = new();
 
             public void Reset() {
                 applied = false;
@@ -16,7 +16,7 @@ namespace Networking.Client {
 
         private TimestampedCircularTickBuffer<PacketCache> caches = TimestampedCircularTickBufferClassInitializer<PacketCache>.GetInitialized(0);
 
-        public static bool CachePacket(int tick, INetPacketForClient packet) {
+        public static bool CachePacket(int tick, NetPacketForClient packet) {
             int cachedTimestamp = Instance.caches.GetTimestamp(tick);
             var cache = Instance.caches[tick];
 

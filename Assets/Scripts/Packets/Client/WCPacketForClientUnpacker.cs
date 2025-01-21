@@ -7,13 +7,13 @@ using Networking.Client;
 public static class WCPacketForClientUnpacker {
     ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
     ///<returns> The deserialized packet </returns>
-    private static INetPacketForClient Deserialize<T>(NetDataReader reader) where T : class, INetPacketForClient, new() {
+    private static NetPacketForClient Deserialize<T>(NetDataReader reader) where T : NetPacketForClient, new() {
         T ret = new();
         ret.Deserialize(reader);
         return ret;
     }
 
-    private static readonly Dictionary<WPacketIdentifier, Func<NetDataReader, INetPacketForClient>> packetDeserializers = new() {
+    private static readonly Dictionary<WPacketIdentifier, Func<NetDataReader, NetPacketForClient>> packetDeserializers = new() {
         { WPacketIdentifier.SJoinAccept, Deserialize<WSJoinAcceptPkt> },
         { WPacketIdentifier.SChunkDeltaSnapshot, Deserialize<WSChunkDeltaSnapshotPkt> },
         { WPacketIdentifier.SEntitiesLoadedDelta, Deserialize<WSEntitiesLoadedDeltaPkt> },
@@ -30,7 +30,7 @@ public static class WCPacketForClientUnpacker {
 
     ///<summary> Reads out a packet type and then a packet that matches that type from a NetDataReader </summary>
     ///<returns> The deserialized packet </returns>
-    public static INetPacketForClient DeserializeNextPacket(NetDataReader reader) {
+    public static NetPacketForClient DeserializeNextPacket(NetDataReader reader) {
         ushort packetTypeUShort = reader.GetUShort();
         if(!packetDeserializers.TryGetValue((WPacketIdentifier)packetTypeUShort, out var function)) {
             throw new Exception($"No handler for {(WPacketIdentifier)packetTypeUShort} (Code {packetTypeUShort})!");
@@ -39,7 +39,7 @@ public static class WCPacketForClientUnpacker {
     }
 
     ///<summary> Either caches or immediatedly applies a packet based on its logic </summary>
-    public static void ConsumePacket(int tick, INetPacketForClient packet) {
+    public static void ConsumePacket(int tick, NetPacketForClient packet) {
         if(packet.ShouldCache) {
             WCPacketCacheManager.CachePacket(tick, packet);
         } else {
@@ -49,7 +49,7 @@ public static class WCPacketForClientUnpacker {
 
     ///<summary> Reads through next packet in NetDataReader, applying or caching it as per the packet's logic  </summary>
     public static void ConsumeNextPacket(int tick, NetDataReader reader) {
-        INetPacketForClient packet = DeserializeNextPacket(reader);
+        NetPacketForClient packet = DeserializeNextPacket(reader);
         ConsumePacket(tick, packet);
     }
 

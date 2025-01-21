@@ -7,19 +7,28 @@ using Networking.Shared;
 namespace Networking.Client {
     public class WCEntityManager : BaseSingleton<WCEntityManager> {
         private Dictionary<int, WCEntity> entities = new();
+        public static WCEntity GetEntityById(int id) => Instance.entities.GetValueOrDefault(id, null);
 
-        public static void KillEntity(WSEntityKillPkt killPacket) {
-            if (!Instance.entities.TryGetValue(killPacket.entityId, out WCEntity entity)) {
-                Debug.LogWarning("Tried to delete an entity that did not exist!");
-                return;
-            }
+        protected override void Awake() {
+            NetPacketForClient<WSEntitySpawnPkt>.ApplyUnticked += HandleSpawnEntity;
+            NetPacketForClient<WSEntityKillPkt>.ApplyUnticked += KillEntity;
+            NetPacketForClient<WSFullEntitiesSnapshotPkt>.ApplyUnticked += HandleFullEntitiesSnapshot;
+            NetPacketForClient<WSEntityTransformUpdatePkt>.Apply += SetEntityTransformForTick;
+            base.Awake();
+        }
 
-            entity.Kill(killPacket.reason);
-            Instance.entities.Remove(killPacket.entityId);
+        protected override void OnDestroy()
+        {
+            NetPacketForClient<WSEntitySpawnPkt>.ApplyUnticked -= HandleSpawnEntity;
+            NetPacketForClient<WSEntityKillPkt>.ApplyUnticked -= KillEntity;
+            NetPacketForClient<WSFullEntitiesSnapshotPkt>.ApplyUnticked -= HandleFullEntitiesSnapshot;
+            NetPacketForClient<WSEntityTransformUpdatePkt>.Apply -= SetEntityTransformForTick;
+            base.OnDestroy();
         }
 
 
-        public static WCEntity Spawn(WSEntitySpawnPkt spawnPacket) {
+        private void HandleSpawnEntity(WSEntitySpawnPkt pkt) => SpawnEntity(pkt);
+        private WCEntity SpawnEntity(WSEntitySpawnPkt spawnPacket) {
             if(Instance.entities.ContainsKey(spawnPacket.entity.entityId)) {
                 Debug.Log($"Entity with ID {spawnPacket.entity.entityId} already exists");
                 return null;
@@ -43,10 +52,18 @@ namespace Networking.Client {
         }
 
 
-        public static WCEntity GetEntityById(int id) => Instance.entities.GetValueOrDefault(id, null);
+        private void KillEntity(WSEntityKillPkt killPacket) {
+            if (!Instance.entities.TryGetValue(killPacket.entityId, out WCEntity entity)) {
+                Debug.LogWarning("Tried to delete an entity that did not exist!");
+                return;
+            }
+
+            entity.Kill(killPacket.reason);
+            Instance.entities.Remove(killPacket.entityId);
+        }
 
         
-        public static void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
+        private void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
             if(!Instance.entities.TryGetValue(transformPacket.CEntityId, out WCEntity entity))
                 return;
 
@@ -54,7 +71,7 @@ namespace Networking.Client {
         }
 
 
-        public static void HandleFullEntitiesSnapshot(WSFullEntitiesSnapshotPkt pkt) {
+        private void HandleFullEntitiesSnapshot(WSFullEntitiesSnapshotPkt pkt) {
             Dictionary<int, WEntitySerializable> receivedEntities = new();
             foreach(var serializedEntity in pkt.entities) {
                 receivedEntities.Add(serializedEntity.entityId, serializedEntity);
@@ -73,11 +90,9 @@ namespace Networking.Client {
                 if(!Instance.entities.ContainsKey(receivedEntity.Key)) {
                     // Does not exist on client; must create new entity for it
                     Debug.Log("Spawning an entity that exists on the server but not the client!");
-                    Spawn(new WSEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
+                    SpawnEntity(new WSEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
                 }
             }
-
-            
         }
     }
 }

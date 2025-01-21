@@ -1,15 +1,13 @@
 using System.Collections.Generic;
 using LiteNetLib.Utils;
-using Networking.Client;
-using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSEntitiesLoadedDeltaPkt : INetPacketForClient
+    public class WSEntitiesLoadedDeltaPkt : NetPacketForClient<WSEntitiesLoadedDeltaPkt>
     {
         public List<int> entityIdsToRemove;
         public List<WEntitySerializable> entitiesToAdd;
 
-        public void Deserialize(NetDataReader reader)
+        public override void Deserialize(NetDataReader reader)
         {
             int entityIdsToRemoveCount = (int)reader.GetVarUInt();
             entityIdsToRemove = new(entityIdsToRemoveCount);
@@ -31,7 +29,7 @@ namespace Networking.Shared {
             }
         }
 
-        public void Serialize(NetDataWriter writer)
+        public override void Serialize(NetDataWriter writer)
         {
             writer.Put(WPacketIdentifier.SEntitiesLoadedDelta);
 
@@ -46,10 +44,6 @@ namespace Networking.Shared {
             }
         }
 
-        public bool ShouldCache => false;
-        public void ApplyOnClient(int tick)
-        {
-            WCNetClient.HandleEntitiesLoadedDelta(tick, this);
-        }
+        public override bool ShouldCache => false;
     }
 }

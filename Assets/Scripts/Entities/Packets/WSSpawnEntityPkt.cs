@@ -8,27 +8,23 @@ namespace Networking.Shared {
         Load,
     }
 
-    public class WSEntitySpawnPkt : INetPacketForClient {
+    public class WSEntitySpawnPkt : NetPacketForClient<WSEntitySpawnPkt> {
         public WEntitySerializable entity;
         public WEntitySpawnReason reason;
 
-        public void Deserialize(NetDataReader reader) {
+        public override void Deserialize(NetDataReader reader) {
             entity.Deserialize(reader);
             reason = (WEntitySpawnReason)reader.GetByte();
         }
 
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             writer.Put(WPacketIdentifier.SEntitySpawn);
 
             entity.Serialize(writer);
             writer.Put((byte)reason);
         }
 
-        public bool ShouldCache => true;
-        public void ApplyOnClient(int _)
-        {
-            WCEntityManager.Spawn(this);
-        }
+        public override bool ShouldCache => true;
     }
 }

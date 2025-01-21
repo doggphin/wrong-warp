@@ -8,9 +8,9 @@ namespace Networking.Server {
     public class WSChunk {
         private HashSet<WSEntity> presentLoaders = new();
         public HashSet<WSEntity> PresentEntities { get; private set; } = new();
-        public List<INetPacketForClient>[] ReliableUpdates { get; private set; } = new List<INetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
-        private List<INetPacketForClient>[] unreliableGeneralUpdates = new List<INetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
-        private Dictionary<int, List<INetPacketForClient>>[] unreliableEntityUpdates = new Dictionary<int, List<INetPacketForClient>>[WCommon.TICKS_PER_SNAPSHOT];
+        public List<NetPacketForClient>[] ReliableUpdates { get; private set; } = new List<NetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
+        private List<NetPacketForClient>[] unreliableGeneralUpdates = new List<NetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
+        private Dictionary<int, List<NetPacketForClient>>[] unreliableEntityUpdates = new Dictionary<int, List<NetPacketForClient>>[WCommon.TICKS_PER_SNAPSHOT];
         private bool isLoaded = false;
         public Vector2Int Coords { get; private set; }
 
@@ -62,7 +62,7 @@ namespace Networking.Server {
                 return reliableUpdates3x3PktWriter.Length == 0 ? null : reliableUpdates3x3PktWriter;
 
             // All reliable updates within a one-chunk radius will be added to the same list
-            List<INetSerializable>[] updates = new List<INetSerializable>[WCommon.TICKS_PER_SNAPSHOT];
+            List<NetPacketForClient>[] updates = new List<NetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
             var chunks = WSChunkManager.GetNeighboringChunks(Coords, true, false);
             bool containsUpdates = false;
             for(int updateIndex=0; updateIndex<WCommon.TICKS_PER_SNAPSHOT; updateIndex++) {
@@ -104,7 +104,7 @@ namespace Networking.Server {
 
 
         /// <returns> Whether this chunk is loaded. </returns>
-        public bool AddEntityUpdate(int tick, int id, INetPacketForClient update) {
+        public bool AddEntityUpdate(int tick, int id, NetPacketForClient update) {
             if (!isLoaded)
                 return false;
 
@@ -112,7 +112,7 @@ namespace Networking.Server {
             int insertAt = (tick + WCommon.TICKS_PER_SNAPSHOT - 1) % WCommon.TICKS_PER_SNAPSHOT;
 
             if (!unreliableEntityUpdates[insertAt].TryGetValue(id, out var entityUpdatesList)) {
-                List<INetPacketForClient> newEntityUpdatesList = new();
+                List<NetPacketForClient> newEntityUpdatesList = new();
 
                 unreliableEntityUpdates[insertAt][id] = newEntityUpdatesList;
                 entityUpdatesList = newEntityUpdatesList;
@@ -125,11 +125,11 @@ namespace Networking.Server {
 
 
         /// <returns> Whether the chunk is loaded. </returns>
-        public bool AddGenericUpdate(int tick, INetPacketForClient update, bool reliable) {
+        public bool AddGenericUpdate(int tick, NetPacketForClient update, bool reliable) {
             if (!isLoaded)
                 return false;
             
-            List<INetPacketForClient>[] updatesToAppendTo = reliable ? ReliableUpdates : unreliableGeneralUpdates;
+            List<NetPacketForClient>[] updatesToAppendTo = reliable ? ReliableUpdates : unreliableGeneralUpdates;
             updatesToAppendTo[tick % WCommon.TICKS_PER_SNAPSHOT].Add(update);
 
             return true;

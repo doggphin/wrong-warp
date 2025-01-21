@@ -53,7 +53,7 @@ namespace Networking.Client {
             float percentageThroughTick = WCNetClient.Instance.GetPercentageThroughTick();
             // Use different logic for player and non-player entities
             if(!ReferenceEquals(WCNetClient.PlayerEntity, this)) {
-                // For non-player entities, 
+                // For non-player entities --
                 if(TryGetObservedTransformValue(updatePositionsLocally, receivedPositions, Vector3.Lerp, ref lastReceivedPosition, percentageThroughTick, out var position))
                     transform.position = position;
                 if(TryGetObservedTransformValue(updateRotationsLocally, receivedRotations, Quaternion.Lerp, ref lastReceivedRotation, percentageThroughTick, out var rotation))
@@ -61,6 +61,7 @@ namespace Networking.Client {
                 if(TryGetObservedTransformValue(updateScalesLocally, receivedScales, Vector3.Lerp, ref lastReceivedScale, percentageThroughTick, out var scale))
                     transform.localScale = scale;
             } else {
+                // For the main player --
                 transform.position = LerpBufferedPositions(WCNetClient.SendingTick - 1, percentageThroughTick);
                 //        rotations are always set within player controllers, ignore it here
                 transform.localScale = LerpBufferedScales(WCNetClient.SendingTick - 1, percentageThroughTick);

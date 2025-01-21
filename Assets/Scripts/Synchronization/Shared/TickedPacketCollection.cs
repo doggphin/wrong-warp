@@ -3,11 +3,11 @@ using UnityEngine;
 using LiteNetLib.Utils;
 using Networking.Shared;
 
-public class TickedPacketCollection : INetPacketForClient {
-    private Dictionary<int, List<INetPacketForClient>> tickedPacketCollections = new();
+public class TickedPacketCollection : NetPacketForClient {
+    private Dictionary<int, List<NetPacketForClient>> tickedPacketCollections = new();
     public bool HasPackets => tickedPacketCollections.Count > 0;
 
-    public void AddPacket(int tick, INetPacketForClient packet) {
+    public void AddPacket(int tick, NetPacketForClient packet) {
         if(!tickedPacketCollections.TryGetValue(tick, out var list)) {
             list = new(1);
             tickedPacketCollections[tick] = list;
@@ -16,7 +16,7 @@ public class TickedPacketCollection : INetPacketForClient {
         list.Add(packet);
     }
 
-    public void Serialize(NetDataWriter writer)
+    public override void Serialize(NetDataWriter writer)
     {
         writer.Put(WPacketIdentifier.SGenericUpdatesCollection);
 
@@ -29,16 +29,16 @@ public class TickedPacketCollection : INetPacketForClient {
         tickedPacketCollections.Clear();
     }
 
-    public void Deserialize(NetDataReader reader)
+    public override void Deserialize(NetDataReader reader)
     {
         tickedPacketCollections = reader.GetTickedPacketCollection();
     }
 
-    public bool ShouldCache => false;
-    public void ApplyOnClient(int tick)
+    public override bool ShouldCache => false;
+    protected override void BroadcastApply(int tick)
     {
         foreach(var kvp in tickedPacketCollections) {
-            foreach(INetPacketForClient packet in kvp.Value) {
+            foreach(NetPacketForClient packet in kvp.Value) {
                 WCPacketForClientUnpacker.ConsumePacket(kvp.Key, packet);
             }  
         }

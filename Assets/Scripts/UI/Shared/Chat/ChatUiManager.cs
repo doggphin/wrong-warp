@@ -1,7 +1,6 @@
 using System;
 using Controllers.Shared;
 using Networking.Shared;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ChatUiManager : BaseUiElement
@@ -15,6 +14,15 @@ public class ChatUiManager : BaseUiElement
 
     public static Action<string> SendChatMessage;
     
+    void Awake() {
+        NetPacketForClient<WSChatMessagePkt>.ApplyUnticked += ReceiveChatMessage;
+    }
+
+    void OnDestroy() {
+        NetPacketForClient<WSChatMessagePkt>.ApplyUnticked -= ReceiveChatMessage;
+    }
+
+
     void Start() {
         if(Instance) {
             Destroy(gameObject);

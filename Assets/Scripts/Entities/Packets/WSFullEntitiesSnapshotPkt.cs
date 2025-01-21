@@ -3,11 +3,11 @@ using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSFullEntitiesSnapshotPkt : INetPacketForClient {
+    public class WSFullEntitiesSnapshotPkt : NetPacketForClient<WSFullEntitiesSnapshotPkt> {
         public WEntitySerializable[] entities;
         public bool isFullReset;
 
-        public void Deserialize(NetDataReader reader) {
+        public override void Deserialize(NetDataReader reader) {
             isFullReset = reader.GetBool();
 
             uint entitiesCount = reader.GetVarUInt();
@@ -18,7 +18,7 @@ namespace Networking.Shared {
             }
         }
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             writer.Put(WPacketIdentifier.SFullEntitiesSnapshot);
 
             writer.Put(isFullReset);
@@ -28,9 +28,6 @@ namespace Networking.Shared {
             }
         }
 
-        public bool ShouldCache =>true;
-        public void ApplyOnClient(int tick) {
-            WCEntityManager.HandleFullEntitiesSnapshot(this);
-        }
+        public override bool ShouldCache =>true;
     }
 }

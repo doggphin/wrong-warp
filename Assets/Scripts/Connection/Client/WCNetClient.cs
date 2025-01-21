@@ -61,18 +61,25 @@ namespace Networking.Client {
             watch = new();
 
             ControlsManager.Activate();
-            ChatUiManager.SendChatMessage += SendChatMessage;
 
             isActivated = true;
+
+            ChatUiManager.SendChatMessage += SendChatMessage;
+            NetPacketForClient<WSDefaultControllerStatePkt>.Apply += HandleDefaultControllerState;
+            NetPacketForClient<WSEntitiesLoadedDeltaPkt>.Apply += HandleEntitiesLoadedDelta;
+            NetPacketForClient<WSSetPlayerEntityPkt>.ApplyUnticked += HandleSetPlayerEntity;
+            NetPacketForClient<WSJoinAcceptPkt>.ApplyUnticked += HandleJoinAccept;
         }
 
         public Action<WDisconnectInfo> Disconnected;
-        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-            WNetManager.Disconnect(new WDisconnectInfo { reason = disconnectInfo.Reason.ToString(), wasExpected = false});
-        }
+        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) => WNetManager.Disconnect(new WDisconnectInfo { reason = disconnectInfo.Reason.ToString(), wasExpected = false});
+
         protected override void OnDestroy() {
             ChatUiManager.SendChatMessage -= SendChatMessage;
-            
+            NetPacketForClient<WSDefaultControllerStatePkt>.Apply -= HandleDefaultControllerState;
+            NetPacketForClient<WSEntitiesLoadedDeltaPkt>.Apply -= HandleEntitiesLoadedDelta;
+            NetPacketForClient<WSSetPlayerEntityPkt>.ApplyUnticked -= HandleSetPlayerEntity;
+            NetPacketForClient<WSJoinAcceptPkt>.ApplyUnticked -= HandleJoinAccept;
             base.OnDestroy();
         }
 
@@ -176,18 +183,20 @@ namespace Networking.Client {
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) => Debug.Log($"Socket error: {socketError}");
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
         
-        public static void HandleSetPlayerEntity(WSSetPlayerEntityPkt pkt) {
+        private void HandleSetPlayerEntity(WSSetPlayerEntityPkt pkt) {
             Instance.myEntityId = pkt.entityId;
             Debug.Log($"Setting entity id to {pkt.entityId}!");
         } 
 
-        public static void HandleJoinAccept(WSJoinAcceptPkt pkt) { 
+        private void HandleJoinAccept(WSJoinAcceptPkt pkt) { 
             CentralTimingTick = pkt.tick;
             Debug.Log($"Being told to start at tick {pkt.tick}!");
 
             Instance.isJoined = true;
         }
-        public static void HandleEntitiesLoadedDelta(int tick, WSEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
+
+        
+        private void HandleEntitiesLoadedDelta(int tick, WSEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
             foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
                 WCPacketCacheManager.CachePacket(
                     tick,
@@ -208,8 +217,9 @@ namespace Networking.Client {
                 );
             }
         }
-        public static void HandleDefaultControllerState(int receivedTick, WSDefaultControllerStatePkt confirmedControllerState) {
-            //Debug.Log($"Received a default controller state for tick {tick}! Observing tick is {ObservingTick}! Sending tick is {SendingTick}");
+
+
+        private void HandleDefaultControllerState(int receivedTick, WSDefaultControllerStatePkt confirmedControllerState) {
             bool isInSync = WCRollbackManager.ReceiveDefaultControllerStateConfirmation(receivedTick, confirmedControllerState);
             if(isInSync)
                 return;

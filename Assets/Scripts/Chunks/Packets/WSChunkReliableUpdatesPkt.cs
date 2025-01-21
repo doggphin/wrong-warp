@@ -5,12 +5,12 @@ using Networking.Client;
 
 namespace Networking.Shared {
     ///<summary> A bundle of reliable updates </summary>
-    public class WSChunkReliableUpdatesPkt : INetPacketForClient {
+    public class WSChunkReliableUpdatesPkt : NetPacketForClient {
         public void SetStartTick(int currentServerTick) => startTick = currentServerTick - WCommon.TICKS_PER_SNAPSHOT;
         public int startTick;
-        public List<INetSerializable>[] updates;
+        public List<NetPacketForClient>[] updates;
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             writer.Put(WPacketIdentifier.SChunkReliableUpdates);
 
             writer.Put(startTick);
@@ -28,7 +28,7 @@ namespace Networking.Shared {
                     writer.PutVarUInt((uint)updates[i].Count);
                     Debug.Log($"Putting {updates[i].Count} updates!");
                     // Put updates
-                    foreach(INetSerializable update in updates[i]) {
+                    foreach(NetPacketForClient update in updates[i]) {
                         update.Serialize(writer);
                     }
                 }
@@ -42,27 +42,31 @@ namespace Networking.Shared {
         }
 
     
-        public void Deserialize(NetDataReader reader) {
+        public override void Deserialize(NetDataReader reader) {
             startTick = reader.GetInt();
 
             int updatesExistBitflags = reader.GetByte();
 
             for(int i=0, bitMask = 1; i<WCommon.TICKS_PER_SNAPSHOT; i++, bitMask <<= 1) {
-                if((updatesExistBitflags & bitMask) == 0)
+                if((updatesExistBitflags & bitMask) == 0) {
+                    updates[i] = new();
                     continue;
-
+                }
+                
                 int amountOfUpdates = (int)reader.GetVarUInt();
-                Debug.Log($"There are {amountOfUpdates} updates in here!");
+                updates[i] = new(amountOfUpdates);
                 
                 for(int j=0; j<amountOfUpdates; j++) {
-                    WCPacketForClientUnpacker.ConsumeNextPacket(startTick + i, reader);
+                    updates[i].Add(WCPacketForClientUnpacker.DeserializeNextPacket(reader));
                 }
             }
         }
 
-        public bool ShouldCache => false;
-        public void ApplyOnClient(int tick) { 
-            // This packet is applied during its deserialization
+        public override bool ShouldCache => false;
+        protected override void BroadcastApply(int tick) {
+            for(int i=0; i<updates.Length; i++)
+                foreach(var packet in updates[i])
+                    WCPacketForClientUnpacker.ConsumePacket(tick - (updates.Length - 1) + i, packet);
         }
     }
 }

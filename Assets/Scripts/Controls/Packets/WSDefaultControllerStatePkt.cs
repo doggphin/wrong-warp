@@ -3,14 +3,14 @@ using Networking.Client;
 using Networking.Shared;
 using UnityEngine;
 
-public class WSDefaultControllerStatePkt : INetPacketForClient {
+public class WSDefaultControllerStatePkt : NetPacketForClient<WSDefaultControllerStatePkt> {
     public Vector3 velocity;
     public bool canDoubleJump;
     public WInputsSerializable previousInputs;
     public Vector2 boundedRotatorRotation;
     public Vector3 position;    // This is really just a convenience; could probably check transform update instead
 
-    public void Deserialize(NetDataReader reader)
+    public override void Deserialize(NetDataReader reader)
     {
         velocity = reader.GetVector3();
         canDoubleJump = reader.GetBool();
@@ -22,7 +22,7 @@ public class WSDefaultControllerStatePkt : INetPacketForClient {
         position = reader.GetVector3();
     }
 
-    public void Serialize(NetDataWriter writer)
+    public override void Serialize(NetDataWriter writer)
     {
         writer.Put(WPacketIdentifier.SDefaultControllerState);
 
@@ -33,9 +33,5 @@ public class WSDefaultControllerStatePkt : INetPacketForClient {
         writer.Put(position);
     }
 
-    public bool ShouldCache => false;
-    public void ApplyOnClient(int tick)
-    {
-        WCNetClient.HandleDefaultControllerState(tick, this);
-    }
+    public override bool ShouldCache => false;
 }

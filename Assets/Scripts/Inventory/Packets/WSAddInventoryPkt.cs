@@ -3,27 +3,22 @@ using Inventories;
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSAddInventoryPkt : INetPacketForClient {
+    public class WSAddInventoryPkt : NetPacketForClient<WSAddInventoryPkt> {
         int id;
         public Inventory fullInventory;
 
-        public void Deserialize(NetDataReader reader) {
+        public override void Deserialize(NetDataReader reader) {
             id = reader.GetInt();
             fullInventory.Deserialize(reader);
         }
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             writer.Put(WPacketIdentifier.SAddInventory);
 
             writer.Put(id);
             fullInventory.Serialize(writer);
         }
 
-        public bool ShouldCache => throw new System.NotImplementedException();
-        // TODO: implement this!!!!!
-        public void ApplyOnClient(int tick)
-        {
-            throw new System.NotImplementedException();
-        }
+        public override bool ShouldCache => throw new System.NotImplementedException();
     }
 }

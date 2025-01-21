@@ -3,23 +3,19 @@ using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSSetPlayerEntityPkt : INetPacketForClient {
+    public class WSSetPlayerEntityPkt : NetPacketForClient<WSSetPlayerEntityPkt> {
         public int entityId;
 
-        public void Deserialize(NetDataReader reader) {
+        public override void Deserialize(NetDataReader reader) {
             entityId = reader.GetInt();
         }
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             writer.Put(WPacketIdentifier.SSetPlayerEntity);
 
             writer.Put(entityId);     
         }
 
-        public bool ShouldCache => false;
-        public void ApplyOnClient(int _)
-        {
-            WCNetClient.HandleSetPlayerEntity(this);
-        }
+        public override bool ShouldCache => false;
     }
 }

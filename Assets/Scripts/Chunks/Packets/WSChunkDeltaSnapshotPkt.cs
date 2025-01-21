@@ -1,17 +1,15 @@
 using LiteNetLib.Utils;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Networking.Shared {
     ///<summary> A collection of updates that have occured within a chunk across several ticks </summary>
-    public class WSChunkDeltaSnapshotPkt : INetPacketForClient {
-        public List<INetPacketForClient>[] generalUpdates;
-        public Dictionary<int, List<INetPacketForClient>>[] entityUpdates;
+    public class WSChunkDeltaSnapshotPkt : NetPacketForClient {
+        public List<NetPacketForClient>[] generalUpdates;
+        public Dictionary<int, List<NetPacketForClient>>[] entityUpdates;
 
-        public void Deserialize(NetDataReader reader) {
-            generalUpdates = new List<INetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
-            entityUpdates = new Dictionary<int, List<INetPacketForClient>>[WCommon.TICKS_PER_SNAPSHOT];
+        public override void Deserialize(NetDataReader reader) {
+            generalUpdates = new List<NetPacketForClient>[WCommon.TICKS_PER_SNAPSHOT];
+            entityUpdates = new Dictionary<int, List<NetPacketForClient>>[WCommon.TICKS_PER_SNAPSHOT];
 
             for(int i=0; i < WCommon.TICKS_PER_SNAPSHOT; i++) {
                 generalUpdates[i] = new();
@@ -56,7 +54,7 @@ namespace Networking.Shared {
         }
 
 
-        public void Serialize(NetDataWriter writer) {
+        public override void Serialize(NetDataWriter writer) {
             // Put packet type
             writer.Put(WPacketIdentifier.SChunkDeltaSnapshot);
 
@@ -110,7 +108,7 @@ namespace Networking.Shared {
                 writer.PutVarUInt((uint)entitiesInTick);
 
                 // For each entity ID and list of updates
-                foreach(KeyValuePair<int, List<INetPacketForClient>> entityIdAndUpdates in entityUpdates[tick]) {
+                foreach(KeyValuePair<int, List<NetPacketForClient>> entityIdAndUpdates in entityUpdates[tick]) {
 
                     // Put entity ID
                     int entityId = entityIdAndUpdates.Key;
@@ -131,20 +129,21 @@ namespace Networking.Shared {
             }
         }
 
-        public bool ShouldCache => false;
-        public void ApplyOnClient(int tick)
+        public override bool ShouldCache => false;
+
+        protected override void BroadcastApply(int tick)
         {
             for(int i=0; i<WCommon.TICKS_PER_SNAPSHOT; i++) {
                 int offsetTick = tick - (WCommon.TICKS_PER_SNAPSHOT - i - 1);
 
-                foreach(INetPacketForClient update in generalUpdates[i]) {
+                foreach(NetPacketForClient update in generalUpdates[i]) {
                     WCPacketForClientUnpacker.ConsumePacket(offsetTick, update);
                 }
 
                 foreach(var(entityId, updates) in entityUpdates[i]) {
                     
-                    foreach(INetPacketForClient update in updates) {
-                        var entityUpdate = (INetEntityUpdatePacketForClient)update;
+                    foreach(NetPacketForClient update in updates) {
+                        var entityUpdate = (IEntityUpdate)update;
                         entityUpdate.CEntityId = entityId;
                         WCPacketForClientUnpacker.ConsumePacket(offsetTick, update);
                     }
