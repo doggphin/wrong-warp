@@ -31,8 +31,7 @@ namespace Networking.Client {
             var entity = instantiatedPrefab.AddComponent<WCEntity>();
             WTransformSerializable transform = spawnPacket.entity.transform;
             
-            instantiatedPrefab.transform.position = transform.position.Value;
-            instantiatedPrefab.transform.rotation = transform.rotation.Value;
+            instantiatedPrefab.transform.SetPositionAndRotation(transform.position.Value, transform.rotation.Value);
             instantiatedPrefab.transform.localScale = transform.scale.Value;
             
 

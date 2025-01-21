@@ -10,32 +10,59 @@ namespace Networking.Client {
         public TimestampedCircularTickBuffer<Quaternion> receivedRotations = new();
         public TimestampedCircularTickBuffer<Vector3> receivedScales = new();
 
-        public bool isMyPlayer;
-
-        ///<summary> Tries to lerp a given transform value (position, rotation, or scale) between its values in the past and current times. </summary>
-        private T? SetObservedTransformValue<T>(bool updateLocally, TimestampedCircularTickBuffer<T> receivedTransformValues, Func<T, T, float, T> lerpFunction, float percentageThroughTick) where T : struct {
-            if(updateLocally || !receivedTransformValues.TryGetByTimestamp(WCNetClient.ObservingTick - 1, out T currentTransformValue))
-                return null;
-
-            if(receivedTransformValues.TryGetByTimestamp(WCNetClient.ObservingTick - 2, out T previousTransformValue))
-                return lerpFunction(previousTransformValue, currentTransformValue, percentageThroughTick);
-            
-            return currentTransformValue;
-        }
-
+        Vector3 lastReceivedPosition = Vector3.zero;
+        Quaternion lastReceivedRotation = Quaternion.identity;
+        Vector3 lastReceivedScale = Vector3.one;
         void Update() {
-            float percentageThroughTick = WCNetClient.Instance.GetPercentageThroughTick();
+            ///<summary> Given a tick, try to lerp a given transform value (position, rotation, or scale) between its current value and a previous value. </summary>
+            ///<returns> Whether the position of the object changed </returns>
+            static bool TryGetObservedTransformValue<T>(
+            bool updateLocally, TimestampedCircularTickBuffer<T> receivedTransformValues, Func<T, T, float, T> lerpFunction, ref T lastReceivedTransformValue, float percentageThroughTick, out T outTransformValue)
+            where T : struct {
+                // If this entity is updated locally 
+                if(updateLocally) {
+                    outTransformValue = default;
+                    return false;
+                }
 
-            // Non-player entities use ObservingTick
-            if(!isMyPlayer) {
-                SetObservedTransformValue(updatePositionsLocally, receivedPositions, Vector3.Lerp, percentageThroughTick);
-                SetObservedTransformValue(updateRotationsLocally, receivedRotations, Quaternion.Lerp, percentageThroughTick);
-                SetObservedTransformValue(updateScalesLocally, receivedScales, Vector3.Lerp, percentageThroughTick);
+                // If received a transform value this tick, lerp between a previous value and the current value
+                if(receivedTransformValues.TryGetByTimestamp(WCNetClient.ObservingTick - 1, out T currentTransformValue)) {
+                    // Try to use the value from the previous tick if possible
+                    if(receivedTransformValues.TryGetByTimestamp(WCNetClient.ObservingTick - 2, out T previousTransformValue)) {
+                        outTransformValue = lerpFunction(previousTransformValue, currentTransformValue, percentageThroughTick);
+                        lastReceivedTransformValue = previousTransformValue;
+                    // If it doesn't exist, use the last received value
+                    } else {
+                        outTransformValue = lerpFunction(lastReceivedTransformValue, currentTransformValue, percentageThroughTick);
+                    }                
+                } else {
+                    // If didn't receive a transform value the last tick either, set transform value to the last received value
+                    // This is done because lerping between past and current values will get close to the last transform value, but not actually reach it
+                    // This fixes that
+                    if(receivedTransformValues.TryGetByTimestamp(WCNetClient.ObservingTick - 2, out T previousTransformValue)) {
+                        lastReceivedTransformValue = previousTransformValue;
+                    }
+
+                    outTransformValue = lastReceivedTransformValue;
+                }
+
+                // As a low-hanging optimization in the future, consider finding places where false can be returned instead
+                return true;
             }
 
-            else {
+            float percentageThroughTick = WCNetClient.Instance.GetPercentageThroughTick();
+            // Use different logic for player and non-player entities
+            if(!ReferenceEquals(WCNetClient.PlayerEntity, this)) {
+                // For non-player entities, 
+                if(TryGetObservedTransformValue(updatePositionsLocally, receivedPositions, Vector3.Lerp, ref lastReceivedPosition, percentageThroughTick, out var position))
+                    transform.position = position;
+                if(TryGetObservedTransformValue(updateRotationsLocally, receivedRotations, Quaternion.Lerp, ref lastReceivedRotation, percentageThroughTick, out var rotation))
+                    transform.rotation = rotation;
+                if(TryGetObservedTransformValue(updateScalesLocally, receivedScales, Vector3.Lerp, ref lastReceivedScale, percentageThroughTick, out var scale))
+                    transform.localScale = scale;
+            } else {
                 transform.position = LerpBufferedPositions(WCNetClient.SendingTick - 1, percentageThroughTick);
-                // Never do rotations. These are always handled by the client
+                //        rotations are always set within player controllers, ignore it here
                 transform.localScale = LerpBufferedScales(WCNetClient.SendingTick - 1, percentageThroughTick);
             }
         }
@@ -54,13 +81,12 @@ namespace Networking.Client {
             SetTransformValueIfNotNull(serializedTransform.scale, scalesBuffer, receivedScales);
         }
 
-
         public void Init(WSEntitySpawnPkt spawnPkt) {
             Id = spawnPkt.entity.entityId;
 
-            positionsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.position.GetValueOrDefault(Vector3.zero);
-            rotationsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.rotation.GetValueOrDefault(Quaternion.identity);
-            scalesBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.scale.GetValueOrDefault(Vector3.one);
+            lastReceivedPosition = positionsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.position ?? Vector3.zero;
+            lastReceivedRotation = rotationsBuffer[WCNetClient.ObservingTick] = spawnPkt.entity.transform.rotation ?? Quaternion.identity;
+            lastReceivedScale =    scalesBuffer[WCNetClient.ObservingTick]    = spawnPkt.entity.transform.scale ?? Vector3.one;
         }
 
         public override void Kill(WEntityKillReason reason) {

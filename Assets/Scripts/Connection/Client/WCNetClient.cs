@@ -102,7 +102,6 @@ namespace Networking.Client {
                 Player = PlayerEntity.GetComponent<AbstractPlayer>();
                 Player.EnablePlayer();
                 ControlsManager.SetPlayer(Player);
-                entity.isMyPlayer = true;
             }
 
             if(!isJoined)

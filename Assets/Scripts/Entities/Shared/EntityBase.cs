@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine;
 
 namespace Networking.Shared {
@@ -21,11 +22,13 @@ namespace Networking.Shared {
             }
         }
 
-        public Vector3 LerpBufferedPositions(int toTick, float percentage) => Vector3.Lerp(positionsBuffer[toTick - 1], positionsBuffer[toTick], percentage);
-        public Quaternion LerpBufferedRotations(int startingFromTick, float percentage) =>
-            Quaternion.Lerp(rotationsBuffer[startingFromTick - 1], rotationsBuffer[startingFromTick], percentage);   
-        public Vector3 LerpBufferedScales(int toTick, float percentage) =>
-            Vector3.Lerp(scalesBuffer[toTick - 1], scalesBuffer[toTick], percentage);
+        ///<summary> Lerps percentage way between the transform value on the tick before endTick and endTick </summary>
+        private T LerpTransformValues<T>(Func<T, T, float, T> lerpFunction, CircularTickBuffer<T> transformValueBuffer, int endTick, float percentage) =>
+            lerpFunction(transformValueBuffer[endTick - 1], transformValueBuffer[endTick], percentage);
+
+        public Vector3 LerpBufferedPositions(int endTick, float percentage) => LerpTransformValues(Vector3.Lerp, positionsBuffer, endTick, percentage);
+        public Quaternion LerpBufferedRotations(int endTick, float percentage) => LerpTransformValues(Quaternion.Lerp, rotationsBuffer, endTick, percentage);
+        public Vector3 LerpBufferedScales(int endTick, float percentage) => LerpTransformValues(Vector3.Lerp, scalesBuffer, endTick, percentage);
 
         public abstract void Kill(WEntityKillReason reason);
     }
