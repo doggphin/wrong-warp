@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Networking.Shared;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Networking.Server {
@@ -9,9 +10,23 @@ namespace Networking.Server {
         {
             SEntity entity = GenerateBaseEntity(identifier, out EntitySO entitySO);
 
-            entity.updatePosition = entitySO.updatePosition;
-            entity.updateRotation = entitySO.updateRotation;
-            entity.updateScale = entitySO.updateScale;
+            entity.updatePositionOverNetwork = entitySO.updatePositionOverNetwork;
+            entity.updateRotationOverNetwork = entitySO.updateRotationOverNetwork;
+            entity.updateScaleOverNetwork = entitySO.updateScaleOverNetwork;
+
+            switch(entitySO.autoMovementType) {
+                case AutomaticMovementType.Velocity:
+                    entity.AddComponent<EntityVelocity>();
+                    break;
+                case AutomaticMovementType.Rigidbody:
+                    entity.AddComponent<Rigidbody>();
+                    entity.setVisualPositionAutomatically = false;
+                    entity.setVisualRotationAutomatically = false;
+                    entity.isRigidbody = true;
+                    break;
+                default:
+                    break;
+            }
 
             return entity;
         }

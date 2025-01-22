@@ -4,6 +4,7 @@ using System.Linq;
 
 using Networking.Shared;
 using System;
+using Unity.Burst.Intrinsics;
 
 namespace Networking.Server {
     [RequireComponent(typeof(SEntityFactory))]
@@ -43,6 +44,7 @@ namespace Networking.Server {
 
 
         public static void PollFinalizeAdvanceEntities() {
+            Physics.Simulate(NetCommon.SECONDS_PER_TICK);
             foreach (SEntity netEntity in Instance.entities.Values.ToList()) {
                 netEntity.PollAndFinalizeTransform();
             }

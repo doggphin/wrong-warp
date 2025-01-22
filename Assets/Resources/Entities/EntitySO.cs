@@ -5,9 +5,17 @@ public class EntitySO : ScriptableObject
 {
     public GameObject entityPrefab;
 
-    public bool updatePosition = false;
-    public bool updateRotation = false;
-    public bool updateScale = false;
+    [Space(10)]
+    public bool updatePositionOverNetwork = false;
+    public bool updateRotationOverNetwork = false;
+    public bool updateScaleOverNetwork = false;
 
-    public bool hasVelocity = false;
+    [Space(10)]
+    public AutomaticMovementType autoMovementType = AutomaticMovementType.None;
+}
+
+public enum AutomaticMovementType {
+    None,
+    Velocity,
+    Rigidbody,
 }

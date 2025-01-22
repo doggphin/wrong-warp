@@ -56,7 +56,7 @@ namespace Controllers.Shared {
             if(entity == null)
                 return;
 
-            if(!entity.updateRotationsLocally && inputs.inputFlags.GetFlag(InputType.Look))
+            if(inputs.inputFlags.GetFlag(InputType.Look))
                 boundedRotator.rotation = inputs.look.Value;
 
             Quaternion rotation = boundedRotator.BodyQuatRotation;

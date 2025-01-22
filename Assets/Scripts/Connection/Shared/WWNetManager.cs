@@ -38,10 +38,10 @@ namespace Networking.Shared {
             DontDestroyOnLoad(gameObject);
 
             ControlsManager.Init();
+            Physics.simulationMode = SimulationMode.Script;
         }
 
         void Update() => BaseNetManager?.PollEvents();
- 
 
         
         public void StartClient(string address, ushort port) {

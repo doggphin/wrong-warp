@@ -17,10 +17,11 @@ namespace Networking.Client {
             ///<summary> Given a tick, try to lerp a given transform value (position, rotation, or scale) between its current value and a previous value. </summary>
             ///<returns> Whether the position of the object changed </returns>
             static bool TryGetObservedTransformValue<T>(
-            bool updateLocally, TimestampedCircularTickBuffer<T> receivedTransformValues, Func<T, T, float, T> lerpFunction, ref T lastReceivedTransformValue, float percentageThroughTick, out T outTransformValue)
+            bool setTransformValueAutomatically, TimestampedCircularTickBuffer<T> receivedTransformValues, Func<T, T, float, T> lerpFunction,
+            ref T lastReceivedTransformValue, float percentageThroughTick, out T outTransformValue)
             where T : struct {
                 // If this entity is updated locally 
-                if(updateLocally) {
+                if(!setTransformValueAutomatically) {
                     outTransformValue = default;
                     return false;
                 }
@@ -54,11 +55,11 @@ namespace Networking.Client {
             // Use different logic for player and non-player entities
             if(!ReferenceEquals(CNetManager.PlayerEntity, this)) {
                 // For non-player entities --
-                if(TryGetObservedTransformValue(updatePositionsLocally, receivedPositions, Vector3.Lerp, ref lastReceivedPosition, percentageThroughTick, out var position))
+                if(TryGetObservedTransformValue(setVisualPositionAutomatically, receivedPositions, Vector3.Lerp, ref lastReceivedPosition, percentageThroughTick, out var position))
                     transform.position = position;
-                if(TryGetObservedTransformValue(updateRotationsLocally, receivedRotations, Quaternion.Lerp, ref lastReceivedRotation, percentageThroughTick, out var rotation))
+                if(TryGetObservedTransformValue(setVisualRotationAutomatically, receivedRotations, Quaternion.Lerp, ref lastReceivedRotation, percentageThroughTick, out var rotation))
                     transform.rotation = rotation;
-                if(TryGetObservedTransformValue(updateScalesLocally, receivedScales, Vector3.Lerp, ref lastReceivedScale, percentageThroughTick, out var scale))
+                if(TryGetObservedTransformValue(setVisualScaleAutomatically, receivedScales, Vector3.Lerp, ref lastReceivedScale, percentageThroughTick, out var scale))
                     transform.localScale = scale;
             } else {
                 // For the main player --

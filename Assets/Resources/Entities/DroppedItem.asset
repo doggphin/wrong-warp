@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d185638c1a6db2a4dba384d3e365e243, type: 3}
-  m_Name: Player
+  m_Name: DroppedItem
   m_EditorClassIdentifier: 
-  entityPrefab: {fileID: 6414707779472385658, guid: 07c7a6503ccd1f642be011e5d88e8a26, type: 3}
+  entityPrefab: {fileID: 8834579135381088521, guid: 4f07cab42bcf25d42b0b9cb24f9ba5cc, type: 3}
   updatePosition: 1
   updateRotation: 1
   updateScale: 0
-  autoMovementType: 1
+  autoMovementType: 2

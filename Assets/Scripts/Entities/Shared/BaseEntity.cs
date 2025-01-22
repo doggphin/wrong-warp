@@ -8,7 +8,9 @@ namespace Networking.Shared {
         public EntityPrefabId PrefabId { get; protected set; }
         protected bool isDead;
         
-        public bool updatePositionsLocally, updateRotationsLocally, updateScalesLocally;
+        public bool setVisualPositionAutomatically = true;
+        public bool setVisualRotationAutomatically = true;
+        public bool setVisualScaleAutomatically = true;
 
         public CircularTickBuffer<Vector3> positionsBuffer = new();
         public CircularTickBuffer<Quaternion> rotationsBuffer = new();

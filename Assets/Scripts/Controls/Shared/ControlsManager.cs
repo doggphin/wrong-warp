@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine;
 using System;
 using Audio.Shared;
+using Networking.Server;
 
 namespace Controllers.Shared {
     public static class ControlsManager {
@@ -144,6 +145,7 @@ namespace Controllers.Shared {
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
                     AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
+                    SEntityManager.SpawnEntity(EntityPrefabId.DroppedItem);
                     break;
                 case InputType.AltFireDownEvent:
                     altFireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();

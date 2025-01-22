@@ -7,7 +7,8 @@ using System;
 
 namespace Networking.Server {
     public class SEntity : BaseEntity {
-        public bool updatePosition, updateRotation, updateScale;  
+        public bool updatePositionOverNetwork, updateRotationOverNetwork, updateScaleOverNetwork;
+        public bool isRigidbody;
 
         ///<summary> Will be null if this is not attached to a player. </summary>
         public SPlayer Player { get; private set; }
@@ -73,17 +74,17 @@ namespace Networking.Server {
         }
 
 
-        private void Update() {
+        void Update() {
             float percentageThroughTick = SNetManager.Instance.GetPercentageThroughTick();
             int tick = SNetManager.Instance.GetTick();
 
-            //if(!updatePositionsLocally)
+            if(setVisualPositionAutomatically)
                 transform.position = LerpBufferedPositions(tick, percentageThroughTick);
 
-            if(!updateRotationsLocally)  
+            if(setVisualRotationAutomatically)  
                 transform.rotation = LerpBufferedRotations(tick, percentageThroughTick);
 
-            if(!updateScalesLocally)
+            if(setVisualScaleAutomatically)
                 transform.localScale = LerpBufferedScales(tick, percentageThroughTick);
         }
 
@@ -93,9 +94,14 @@ namespace Networking.Server {
             int previousTick = tick - 1;
             int futureTick = tick + 1;
 
-            positionsBuffer[futureTick] = positionsBuffer[tick];
-            rotationsBuffer[futureTick] = rotationsBuffer[tick];
-            scalesBuffer[futureTick] = scalesBuffer[tick];
+            if(isRigidbody) {
+                positionsBuffer[tick] = transform.position;
+                rotationsBuffer[tick] = transform.rotation;
+            } else {
+                positionsBuffer[futureTick] = positionsBuffer[tick];
+                rotationsBuffer[futureTick] = rotationsBuffer[tick];
+                scalesBuffer[futureTick] = scalesBuffer[tick];
+            }
 
             if (!gameObject.activeInHierarchy || isDead)
                 return;

@@ -17,7 +17,6 @@ namespace Networking.Server {
     [RequireComponent(typeof(SChatHandler))]
     [RequireComponent(typeof(SChunkManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
-        private SEntityManager entityManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
@@ -37,7 +36,6 @@ namespace Networking.Server {
             if(isActivated)
                 return;
 
-            entityManager = GetComponent<SEntityManager>();
             CreateHostPlayer();
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = NetCommon.TICKS_PER_SECOND;

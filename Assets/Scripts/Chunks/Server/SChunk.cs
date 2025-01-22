@@ -5,7 +5,7 @@ using UnityEngine;
 using Networking.Shared;
 
 namespace Networking.Server {
-    // TODO: rewrite this abomination
+    // TODO: rewrite this abomination (1/22/25)
     public class SChunk {
         private HashSet<SEntity> presentLoaders = new();
         public HashSet<SEntity> PresentEntities { get; private set; } = new();

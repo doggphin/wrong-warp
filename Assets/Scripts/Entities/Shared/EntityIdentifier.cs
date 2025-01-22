@@ -3,6 +3,7 @@ namespace Networking.Shared {
     {
         Test,
         Player,
-        Spectator
+        Spectator,
+        DroppedItem
     }
 }

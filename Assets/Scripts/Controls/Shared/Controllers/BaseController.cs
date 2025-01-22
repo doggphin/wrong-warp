@@ -25,8 +25,8 @@ namespace Controllers.Shared {
 
             entity = GetComponent<BaseEntity>();
 
-            entity.updateRotationsLocally = true;
-            entity.updatePositionsLocally = true;
+            //entity.setVisualRotationAutomatically = false;
+            //entity.setVisualPositionAutomatically = false;
         }
 
 
@@ -35,8 +35,8 @@ namespace Controllers.Shared {
             cam.gameObject.tag = "Untagged";
             cam.gameObject.GetComponent<AudioListener>().enabled = false;
 
-            entity.updateRotationsLocally = false;
-            entity.updatePositionsLocally = false;
+            //entity.setVisualRotationAutomatically = true;
+            //entity.setVisualPositionAutomatically = true;
         }
 
 
