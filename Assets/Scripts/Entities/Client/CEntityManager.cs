@@ -5,6 +5,7 @@ using UnityEngine;
 using Networking.Shared;
 
 namespace Networking.Client {
+    [RequireComponent(typeof(CEntityFactory))]
     public class CEntityManager : BaseSingleton<CEntityManager> {
         private Dictionary<int, CEntity> entities = new();
         public static CEntity GetEntityById(int id) => Instance.entities.GetValueOrDefault(id, null);
@@ -34,16 +35,12 @@ namespace Networking.Client {
                 return null;
             }
 
-            GameObject prefabToSpawn = NetPrefabLookup.Lookup(spawnPacket.entity.prefabId);
+            CEntity entity = CEntityFactory.GenerateEntity(spawnPacket.entity.entityPrefabId);
 
-            var instantiatedPrefab = Instantiate(prefabToSpawn, Instance.transform);
-            var entity = instantiatedPrefab.AddComponent<CEntity>();
-            TransformSerializable transform = spawnPacket.entity.transform;
+            TransformSerializable serializedTransform = spawnPacket.entity.transform;
+            entity.transform.SetPositionAndRotation(serializedTransform.position.Value, serializedTransform.rotation.Value);
+            entity.transform.localScale = serializedTransform.scale.Value;
             
-            instantiatedPrefab.transform.SetPositionAndRotation(transform.position.Value, transform.rotation.Value);
-            instantiatedPrefab.transform.localScale = transform.scale.Value;
-            
-
             Instance.entities[spawnPacket.entity.entityId] = entity;
 
             entity.Init(spawnPacket);

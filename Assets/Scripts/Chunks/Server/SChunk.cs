@@ -5,9 +5,10 @@ using UnityEngine;
 using Networking.Shared;
 
 namespace Networking.Server {
+    // TODO: rewrite this abomination
     public class SChunk {
-        private HashSet<WSEntity> presentLoaders = new();
-        public HashSet<WSEntity> PresentEntities { get; private set; } = new();
+        private HashSet<SEntity> presentLoaders = new();
+        public HashSet<SEntity> PresentEntities { get; private set; } = new();
         public List<BasePacket>[] ReliableUpdates { get; private set; } = new List<BasePacket>[NetCommon.TICKS_PER_SNAPSHOT];
         private List<BasePacket>[] unreliableGeneralUpdates = new List<BasePacket>[NetCommon.TICKS_PER_SNAPSHOT];
         private Dictionary<int, List<BasePacket>>[] unreliableEntityUpdates = new Dictionary<int, List<BasePacket>>[NetCommon.TICKS_PER_SNAPSHOT];
@@ -141,25 +142,25 @@ namespace Networking.Server {
         }
 
 
-        public void AddChunkLoader(WSEntity entity) {
+        public void AddChunkLoader(SEntity entity) {
             if (presentLoaders.Count == 0) {
-                SChunkManager.chunksMarkedToUnload.Remove(Coords);
+                SChunkManager.Instance.chunksMarkedToUnload.Remove(Coords);
             }
 
             presentLoaders.Add(entity);
         }
 
 
-        public void RemoveChunkLoader(WSEntity loader) {
+        public void RemoveChunkLoader(SEntity loader) {
             presentLoaders.Remove(loader);
 
             if (presentLoaders.Count == 0) {
-                SChunkManager.chunksMarkedToUnload.Add(Coords);
+                SChunkManager.Instance.chunksMarkedToUnload.Add(Coords);
             }  
         }
 
         // This is called from WSEntityManager
-        public void KillEntity(WSEntity entity, WEntityKillReason killReason) {
+        public void KillEntity(SEntity entity, WEntityKillReason killReason) {
             PresentEntities.Remove(entity);
             WSEntityKillPkt packet = new() { reason = killReason };
             AddEntityUpdate(SNetManager.Instance.GetTick(), entity.Id, packet);
@@ -170,14 +171,15 @@ namespace Networking.Server {
         }
 
         // This is called from WSEntityManager
-        public void SpawnEntity(WSEntity entity, WEntitySpawnReason reason) {
+        public void SpawnEntity(SEntity entity, WEntitySpawnReason reason) {
             PresentEntities.Add(entity);
             WSEntitySpawnPkt packet = new()
             {
                 entity = entity.GetSerializedEntity(SNetManager.Instance.GetTick()),
                 reason = reason
             };
-            //AddEntityUpdate(WSNetServer.Tick, entity.Id, packet);
+            
+            AddEntityUpdate(SNetManager.Tick, entity.Id, packet);
         }
     }
 }

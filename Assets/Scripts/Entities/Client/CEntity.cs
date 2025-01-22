@@ -5,7 +5,7 @@ using UnityEngine.UIElements.Experimental;
 using System;
 
 namespace Networking.Client {
-    public class CEntity : EntityBase {
+    public class CEntity : BaseEntity {
         public TimestampedCircularTickBuffer<Vector3> receivedPositions = new();
         public TimestampedCircularTickBuffer<Quaternion> receivedRotations = new();
         public TimestampedCircularTickBuffer<Vector3> receivedScales = new();

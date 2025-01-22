@@ -1,23 +1,30 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using LiteNetLib.Utils;
 using Networking.Shared;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem.Interactions;
-using UnityEngine.UIElements;
 
+// TODO: rewrite this abomination (1/22/25)
 namespace Networking.Server {
-    public static class SChunkManager {
+    public class SChunkManager : BaseSingleton<SChunkManager> {
         private const float chunkSize = 32;
-        private static Dictionary<Vector2Int, SChunk> loadedChunks = new();
+        private Dictionary<Vector2Int, SChunk> loadedChunks = new();
 
-        public static HashSet<Vector2Int> chunksMarkedToUnload = new();
+        public HashSet<Vector2Int> chunksMarkedToUnload = new();
 
+        protected override void Awake() {
+            SEntity.SetAsChunkLoader += AddChunkLoader;
+            SEntity.RemoveChunkLoader += RemoveChunkLoader;
+            base.Awake();
+        }
+
+        protected override void OnDestroy() {
+            SEntity.SetAsChunkLoader -= AddChunkLoader;
+            SEntity.RemoveChunkLoader -= RemoveChunkLoader;
+            base.OnDestroy();
+        }
 
         public static void ResetChunkUpdatesAndSnapshots() {
-            foreach(SChunk chunk in loadedChunks.Values) {
+            foreach(SChunk chunk in Instance.loadedChunks.Values) {
                 chunk.ResetUpdates();
             }
         }
@@ -90,11 +97,11 @@ namespace Networking.Server {
         /// Stop receiving chunk loader updates, unloading all chunks that should be unloaded.
         /// </summary>
         public static void UnloadChunksMarkedForUnloading() {
-            foreach(Vector2Int coords in chunksMarkedToUnload) {
-                loadedChunks[coords].Unload();
-                loadedChunks.Remove(coords);
+            foreach(Vector2Int coords in Instance.chunksMarkedToUnload) {
+                Instance.loadedChunks[coords].Unload();
+                Instance.loadedChunks.Remove(coords);
             }
-            chunksMarkedToUnload.Clear();
+            Instance.chunksMarkedToUnload.Clear();
         }
 
 
@@ -105,13 +112,13 @@ namespace Networking.Server {
         /// <param name="createIfNotExists"> Should a new chunk be created if it isn't found? </param>
         /// <returns></returns>
         public static SChunk GetChunk(Vector2Int coords, bool createIfNotExists = false) {
-            if(loadedChunks.TryGetValue(coords, out SChunk chunk))
+            if(Instance.loadedChunks.TryGetValue(coords, out SChunk chunk))
                 return chunk;
 
             if(createIfNotExists) {
                 SChunk newChunk = new();
                 newChunk.Load(coords);
-                loadedChunks.Add(coords, newChunk);
+                Instance.loadedChunks.Add(coords, newChunk);
                 return newChunk;
             }
 
@@ -125,7 +132,7 @@ namespace Networking.Server {
         /// <param name="coords"> The coordinates of the chunk to act on </param>
         /// <param name="entity"> The chunk loader </param>
         /// <param name="removeFromAllNearbyChunks"> Should this act on all nearby chunks? </param>
-        public static void RemoveChunkLoader(Vector2Int coords, WSEntity entity, bool removeFromAllNearbyChunks = false) {
+        public static void RemoveChunkLoader(Vector2Int coords, SEntity entity, bool removeFromAllNearbyChunks = false) {
             if(removeFromAllNearbyChunks) {
                 foreach(Vector2Int offset in GetOffsets(coords)) {
                     RemoveChunkLoader(offset, entity, false);
@@ -139,6 +146,9 @@ namespace Networking.Server {
             chunk.RemoveChunkLoader(entity);
             //Debug.Log($"Removed chunk loader from {coords}");
         }
+        private void RemoveChunkLoader(SEntity entity) {
+            AddChunkLoader(entity.CurrentChunk.Coords, entity, true);
+        }
 
 
         /// <summary>
@@ -147,7 +157,7 @@ namespace Networking.Server {
         /// <param name="coords"> The coordinates of the chunk to act on </param>
         /// <param name="entity"> The chunk loader </param>
         /// <param name="addToAllNearbyChunks"> Should this act on all nearby chunks? </param>
-        public static void AddChunkLoader(Vector2Int coords, WSEntity entity, bool addToAllNearbyChunks = false) {
+        public static void AddChunkLoader(Vector2Int coords, SEntity entity, bool addToAllNearbyChunks = false) {
             if(addToAllNearbyChunks) {
                 foreach(Vector2Int offset in GetOffsets(coords)) {
                     AddChunkLoader(offset, entity, false);
@@ -158,6 +168,9 @@ namespace Networking.Server {
             GetChunk(coords, true).AddChunkLoader(entity);
             //Debug.Log($"Added chunk loader to {coords}");
         }
+        private void AddChunkLoader(SEntity entity) {
+            AddChunkLoader(entity.CurrentChunk.Coords, entity, true);
+        }
 
 
         /// <summary>
@@ -167,7 +180,7 @@ namespace Networking.Server {
         /// <param name="entity"> The chunk loader </param>
         /// <param name="from"> From chunk coords </param>
         /// <param name="to"> To chunk coords </param>
-        private static void MoveChunkLoader(WSEntity entity, Vector2Int from, Vector2Int to) {
+        private static void MoveChunkLoader(SEntity entity, Vector2Int from, Vector2Int to) {
             Vector2Int[] startingLoadedChunks = GetOffsets(from);
 
             HashSet<Vector2Int> endingLoadedChunks = new();
@@ -197,7 +210,7 @@ namespace Networking.Server {
         /// Moves an entity from chunk "from" to chunk "to".
         /// </summary>
         /// <returns> The chunk the entity was moved to if it exists, or null. </returns>
-        public static SChunk MoveEntityBetweenChunks(WSEntity entity, Vector2Int from, Vector2Int to) {
+        public static SChunk MoveEntityBetweenChunks(SEntity entity, Vector2Int from, Vector2Int to) {
             if (entity.IsChunkLoader) {
                 MoveChunkLoader(entity, from, to);
             }

@@ -11,7 +11,7 @@ namespace Networking.Server {
 
         private HashSet<SInventory> wsInventoriesWithUpdatesCache = new();
         
-        public static SInventory CreateNewInventoryForEntity(WSEntity entity, InventoryTemplate inventoryTemplate) {
+        public static SInventory CreateNewInventoryForEntity(SEntity entity, InventoryTemplate inventoryTemplate) {
             if(entity.GetComponent<SInventory>() != null) {
                 Debug.Log($"{entity.name} already had an attached inventory!");
                 return null;
@@ -31,7 +31,7 @@ namespace Networking.Server {
         }
 
 
-        private static SInventory AttachInventoryToEntity(WSEntity entity, int inventoryId, Inventory inventory) {
+        private static SInventory AttachInventoryToEntity(SEntity entity, int inventoryId, Inventory inventory) {
             SInventory entityWsInventory = entity.AddComponent<SInventory>();
             entityWsInventory.Init(inventory, inventoryId);
 

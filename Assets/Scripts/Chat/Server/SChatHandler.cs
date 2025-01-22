@@ -144,7 +144,7 @@ namespace Networking.Server {
                     if(!float.TryParse(args[0], out float posX) || !float.TryParse(args[1], out float posY) || !float.TryParse(args[2], out float posZ))
                         return false;
 
-                    WSEntity playerEntity = ((SPlayer)sender.Tag).Entity;
+                    SEntity playerEntity = ((SPlayer)sender.Tag).Entity;
 
                     if(playerEntity != null)
                         playerEntity.positionsBuffer[SNetManager.Instance.GetTick()] = new Vector3(posX, posY, posZ);

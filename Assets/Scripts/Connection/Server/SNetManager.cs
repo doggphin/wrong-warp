@@ -10,13 +10,14 @@ using System.Linq;
 using System;
 
 namespace Networking.Server {
-    [RequireComponent(typeof(WSEntityManager))]
+    [RequireComponent(typeof(SEntityManager))]
     [RequireComponent(typeof(SPlayerInputsSlotterManager))]
     [RequireComponent(typeof(SInventoryManager))]
     [RequireComponent(typeof(SPacketUnpacker))]
     [RequireComponent(typeof(SChatHandler))]
+    [RequireComponent(typeof(SChunkManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
-        private WSEntityManager entityManager;
+        private SEntityManager entityManager;
         private static NetDataWriter writer = new();
 
         private static int tick;
@@ -33,11 +34,10 @@ namespace Networking.Server {
 
         private bool isActivated;
         public void Activate() {
-            Debug.Log("Activating!");
             if(isActivated)
                 return;
 
-            entityManager = GetComponent<WSEntityManager>();
+            entityManager = GetComponent<SEntityManager>();
             CreateHostPlayer();
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = NetCommon.TICKS_PER_SECOND;
@@ -73,7 +73,7 @@ namespace Networking.Server {
         }
 
         private void CreateHostPlayer() {
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
+            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, true);
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
             ControlsManager.SetPlayer(player);
@@ -101,7 +101,7 @@ namespace Networking.Server {
                 player.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
     
-            WSEntityManager.PollFinalizeAdvanceEntities();
+            SEntityManager.PollFinalizeAdvanceEntities();
 
             // Only run further code if it's time for a snapshot
             if (tick % NetCommon.TICKS_PER_SNAPSHOT == 0)
@@ -129,7 +129,7 @@ namespace Networking.Server {
                 
                 // If the player changed chunks, append a packet for changed entities
                 if(player.previousChunk != null) {
-                    WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = WSChunkManager.GetEntitiesLoadedDeltaPkt(
+                    WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = SChunkManager.GetEntitiesLoadedDeltaPkt(
                         player.previousChunk.Coords,
                         player.Entity.ChunkPosition);
 
@@ -179,7 +179,7 @@ namespace Networking.Server {
             if(peer.TryGetWSPlayer(out _))
                 return false;
 
-            WSEntity playerEntity = WSEntityManager.SpawnEntity(NetPrefabType.Player, true);
+            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, true);
             SPlayer wsPlayer = new(peer, playerEntity);
             peer.Tag = wsPlayer;
             PlayerJoined?.Invoke(wsPlayer);
@@ -199,7 +199,7 @@ namespace Networking.Server {
                 isFullReset = true
             };
             int i=0;
-            foreach(WSEntity entity in chunk.PresentEntities) {
+            foreach(SEntity entity in chunk.PresentEntities) {
                 fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(tick);
             }
             fullEntitiesSnapshotPacket.Serialize(writer);

@@ -5,6 +5,7 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Controllers.Shared {
+    [RequireComponent(typeof(CharacterController))]
     public class DefaultController : BaseController {
         const float groundedMaxSpeed = 7f;
         const float aerialMaxSpeed = 5f;
@@ -26,7 +27,7 @@ namespace Controllers.Shared {
         }
 
         void Start() {
-            entity = GetComponent<EntityBase>();
+            entity = GetComponent<BaseEntity>();
         }
 
         public override void RollbackToTick(int tick)

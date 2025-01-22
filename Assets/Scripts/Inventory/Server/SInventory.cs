@@ -9,7 +9,7 @@ namespace Networking.Server {
     public class SInventory : MonoBehaviour {
         public int Id { get; private set; }
         private Inventory inventory;
-        private WSEntity entityRef;
+        private SEntity entityRef;
 
         private HashSet<int> indicesThatHaveChanged;
         private HashSet<SPlayer> observers;
@@ -17,7 +17,7 @@ namespace Networking.Server {
         public Action<SInventory> Modified;
 
         void Awake() {
-            entityRef = GetComponent<WSEntity>();
+            entityRef = GetComponent<SEntity>();
             // This is done instead of using RequireComponent as WSEntities must be added via WSEntityManager
             if(entityRef == null) {
                 Debug.LogError("Can't add to a non-entity object!");

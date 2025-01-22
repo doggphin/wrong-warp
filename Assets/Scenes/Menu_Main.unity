@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!4 &60222817 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2642073418528213077, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-  m_PrefabInstance: {fileID: 7858416553204224972}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &259361836
 GameObject:
   m_ObjectHideFlags: 0
@@ -448,60 +443,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1388407854 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-  m_PrefabInstance: {fileID: 7858416553204224972}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1388407857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1388407854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78e149e5a6301f744ad58b1a8fa9da30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  audioPlayerPrefab: {fileID: 2084596415460089726, guid: 3fceb37a1ace87d4fb2f256772f7d0eb, type: 3}
---- !u!114 &1388407860
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1388407854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5a10f94ed326aa408746f72e9705aa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1388407861
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1388407854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d19d56c3a879c93418032c54eeed23a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1388407862
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1388407854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ddca983adfc7c74dab8f6399496825e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1413630973
 GameObject:
   m_ObjectHideFlags: 0
@@ -964,10 +905,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetManager
       objectReference: {fileID: 0}
-    - target: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6882363457806970582, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1008,38 +945,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8608626494055877048, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      propertyPath: clientPort
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8608626494055877048, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      propertyPath: serverPort
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8608626494055877048, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      propertyPath: clientAddress
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8608626494055877048, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      propertyPath: entitiesHolder
-      value: 
-      objectReference: {fileID: 60222817}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1388407857}
-    - targetCorrespondingSourceObject: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1388407861}
-    - targetCorrespondingSourceObject: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1388407860}
-    - targetCorrespondingSourceObject: {fileID: 1169605499544715939, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1388407862}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a7d6886faabc1334aa77323ff51de8b7, type: 3}
 --- !u!23 &8190459156919717717
 MeshRenderer:

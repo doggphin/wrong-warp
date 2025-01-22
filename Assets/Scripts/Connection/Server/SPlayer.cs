@@ -23,7 +23,7 @@ namespace Networking.Server {
         }
 
         public SChunk previousChunk = null;
-        public WSEntity Entity { get; private set; }
+        public SEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
         private SInventory personalInventory;
 
@@ -34,13 +34,13 @@ namespace Networking.Server {
             personalInventory = inventory;
         }
 
-        public SPlayer(NetPeer peer, WSEntity entity) {
+        public SPlayer(NetPeer peer, SEntity entity) {
             Peer = peer;
             SetEntity(entity);
         }
         
         ///<summary> Sets the entity of this player and sends a notification to the peer that their entity has changed. </summary>
-        public void SetEntity(WSEntity entity) {
+        public void SetEntity(SEntity entity) {
             if(ReferenceEquals(entity, Entity))
                 return;
             

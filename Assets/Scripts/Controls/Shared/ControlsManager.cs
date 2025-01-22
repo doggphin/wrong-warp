@@ -74,13 +74,11 @@ namespace Controllers.Shared {
         }
 
         public static void Activate() {
-            Debug.Log("Enabling controls!");
             SetGameplayControlsEnabled(true);
             SetUiControlsEnabled(true);
         }
 
         public static void Deactivate() {
-            Debug.Log("Disabling controls!");
             SetGameplayControlsEnabled(false);
             SetUiControlsEnabled(false);
         }

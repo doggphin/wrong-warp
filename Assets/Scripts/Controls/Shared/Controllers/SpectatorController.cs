@@ -10,7 +10,7 @@ namespace Controllers.Shared {
         
         
         void Awake() {
-            entity = GetComponent<EntityBase>();
+            entity = GetComponent<BaseEntity>();
         }
 
         public override void RollbackToTick(int tick)

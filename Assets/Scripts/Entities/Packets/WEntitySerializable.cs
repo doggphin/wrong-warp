@@ -4,18 +4,18 @@ using Networking.Server;
 namespace Networking.Shared {
     public class WEntitySerializable : INetSerializable {
         public int entityId;
-        public NetPrefabType prefabId;
+        public EntityPrefabId entityPrefabId;
         public TransformSerializable transform;
 
         public void Deserialize(NetDataReader reader) {
             entityId = reader.GetInt();
-            prefabId = reader.GetPrefabId();
+            entityPrefabId = reader.GetPrefabId();
             transform.Deserialize(reader);
         }
 
         public void Serialize(NetDataWriter writer) {
             writer.Put(entityId);
-            writer.Put(prefabId);
+            writer.Put(entityPrefabId);
             transform.Serialize(writer);
         }
     }

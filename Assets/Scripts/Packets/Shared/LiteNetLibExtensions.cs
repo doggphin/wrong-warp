@@ -123,11 +123,11 @@ public static class LiteNetLibExtensions {
     }
 
 
-    public static void Put(this NetDataWriter writer, NetPrefabType prefabId) {
+    public static void Put(this NetDataWriter writer, EntityPrefabId prefabId) {
         writer.Put((ushort)prefabId);
     }
-    public static NetPrefabType GetPrefabId(this NetDataReader reader) {
-        return (NetPrefabType)reader.GetUShort();
+    public static EntityPrefabId GetPrefabId(this NetDataReader reader) {
+        return (EntityPrefabId)reader.GetUShort();
     }
 
 
