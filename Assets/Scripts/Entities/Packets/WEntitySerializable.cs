@@ -5,7 +5,7 @@ namespace Networking.Shared {
     public class WEntitySerializable : INetSerializable {
         public int entityId;
         public NetPrefabType prefabId;
-        public WTransformSerializable transform;
+        public TransformSerializable transform;
 
         public void Deserialize(NetDataReader reader) {
             entityId = reader.GetInt();

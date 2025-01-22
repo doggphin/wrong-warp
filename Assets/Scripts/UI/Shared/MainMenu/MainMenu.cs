@@ -13,11 +13,11 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private TMP_Text statusInfoText;
 
     void Awake() {
-        WNetManager.Disconnected += SetStatusDisconnected;
+        WWNetManager.Disconnected += SetStatusDisconnected;
     }
 
     void OnDestroy() {
-        WNetManager.Disconnected -= SetStatusDisconnected;
+        WWNetManager.Disconnected -= SetStatusDisconnected;
     }
 
     private void SetStatusDisconnected(WDisconnectInfo info) {
@@ -28,12 +28,12 @@ public class MainMenu : MonoBehaviour
 
     public void StartServer() {
         ushort port = ushort.Parse(serverPort.text);
-        WNetManager.Instance.StartServer(port);
+        WWNetManager.Instance.StartServer(port);
     }
 
     public void StartClient() {
         string address = clientAddress.text;
         ushort port = ushort.Parse(clientPort.text);
-        WNetManager.Instance.StartClient(address, port);
+        WWNetManager.Instance.StartClient(address, port);
     }
 }

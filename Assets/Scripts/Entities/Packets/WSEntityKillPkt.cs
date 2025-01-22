@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Unload
     }
 
-    public class WSEntityKillPkt : NetPacketForClient<WSEntityKillPkt> {
+    public class WSEntityKillPkt : SPacket<WSEntityKillPkt> {
         public int entityId;
         public WEntityKillReason reason;
 
@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketIdentifier.SEntityKill);
+            writer.Put(PacketIdentifier.SEntityKill);
 
             writer.Put(entityId);
             writer.Put((byte)reason);

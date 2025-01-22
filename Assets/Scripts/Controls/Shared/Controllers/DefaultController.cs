@@ -18,7 +18,7 @@ namespace Controllers.Shared {
 
         private Vector3 velocity = Vector3.zero;
         private bool canDoubleJump = false;
-        private WInputsSerializable previousInputs = new();
+        private InputsSerializable previousInputs = new();
 
         private void Awake() {
             boundedRotator = new();
@@ -31,7 +31,7 @@ namespace Controllers.Shared {
 
         public override void RollbackToTick(int tick)
         {
-            var state = WCRollbackManager.GetDefaultControllerState(tick);
+            var state = CRollbackManager.GetDefaultControllerState(tick);
 
             velocity = state.velocity;
             canDoubleJump = state.canDoubleJump;
@@ -41,8 +41,8 @@ namespace Controllers.Shared {
             // Prep position for next tick as well
             entity.positionsBuffer[tick + 1] = state.position;
         }
-        public WSDefaultControllerStatePkt GetSerializableState(int tick) {
-            return new WSDefaultControllerStatePkt() {
+        public SDefaultControllerStatePkt GetSerializableState(int tick) {
+            return new SDefaultControllerStatePkt() {
                 velocity = velocity,
                 canDoubleJump = canDoubleJump,
                 previousInputs = previousInputs,
@@ -51,7 +51,7 @@ namespace Controllers.Shared {
             };
         }
 
-        public override void Control(WInputsSerializable inputs, int onTick) {
+        public override void Control(InputsSerializable inputs, int onTick) {
             if(entity == null)
                 return;
 
@@ -72,8 +72,8 @@ namespace Controllers.Shared {
             bool isGrounded = Physics.Raycast(entity.positionsBuffer[onTick], Vector3.down, 1.1f);
             
             // Set constants dependent on being grounded or not
-            float gravityAcceleration = isGrounded ? 0 : -gravity * WCommon.SECONDS_PER_TICK;
-            float drag = isGrounded ? Mathf.Pow(0.00002f, WCommon.SECONDS_PER_TICK) : Mathf.Pow(0.5f, WCommon.SECONDS_PER_TICK);
+            float gravityAcceleration = isGrounded ? 0 : -gravity * NetCommon.SECONDS_PER_TICK;
+            float drag = isGrounded ? Mathf.Pow(0.00002f, NetCommon.SECONDS_PER_TICK) : Mathf.Pow(0.5f, NetCommon.SECONDS_PER_TICK);
             float movementAccelerationFactor = isGrounded ? groundedAcceleration : aerialAcceleration;
             float maxSpeed = isGrounded ? groundedMaxSpeed : aerialMaxSpeed;
 
@@ -82,7 +82,7 @@ namespace Controllers.Shared {
             Vector2 xzVelocity = new(velocity.x, velocity.z);
             float xzSpeed = xzVelocity.magnitude;
 
-            Vector3 movement = rotation * (movementAccelerationFactor * WCommon.SECONDS_PER_TICK * wasdInput);
+            Vector3 movement = rotation * (movementAccelerationFactor * NetCommon.SECONDS_PER_TICK * wasdInput);
             Vector2 xzMovement = new(movement.x, movement.z);
             Vector2 xzVelocityAfterMovement = xzVelocity + xzMovement;
             float xzSpeedAfterMovement = xzVelocityAfterMovement.magnitude;
@@ -129,7 +129,7 @@ namespace Controllers.Shared {
             transform.position = entity.positionsBuffer[onTick];
             characterController.enabled = true;
 
-            characterController.Move(velocity * WCommon.SECONDS_PER_TICK);
+            characterController.Move(velocity * NetCommon.SECONDS_PER_TICK);
 
             Vector3 difference = transform.position - entity.positionsBuffer[onTick];
 
@@ -143,9 +143,9 @@ namespace Controllers.Shared {
             // Visual position will be set before next frame is shown, not important to set here
             previousInputs = inputs;
 
-            if(WNetManager.IsClient) {
+            if(WWNetManager.IsClient) {
                 var state = GetSerializableState(onTick);
-                WCRollbackManager.SetDefaultControllerState(onTick, state);
+                CRollbackManager.SetDefaultControllerState(onTick, state);
             }         
         } 
     }

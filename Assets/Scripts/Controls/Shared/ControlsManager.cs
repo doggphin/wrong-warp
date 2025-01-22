@@ -21,7 +21,7 @@ namespace Controllers.Shared {
 
         public static bool HasPlayer => player != null;
 
-        public static TimestampedCircularTickBuffer<WInputsSerializable> inputs = new();
+        public static TimestampedCircularTickBuffer<InputsSerializable> inputs = new();
 
         private static InputFlags finalInputs = new();
         private static InputFlags heldInputs = new();
@@ -38,7 +38,7 @@ namespace Controllers.Shared {
 
         private static bool inputsInitialized = false;
         public static void Init() {      
-            inputs = TimestampedCircularTickBufferClassInitializer<WInputsSerializable>.GetInitialized(-1);
+            inputs = TimestampedCircularTickBufferClassInitializer<InputsSerializable>.GetInitialized(-1);
 
             if(inputsInitialized)
                 return;
@@ -141,14 +141,14 @@ namespace Controllers.Shared {
             finalInputs.SetFlag(inputType, true);
             switch(inputType) {
                 case InputType.FireDownEvent:
-                    fireDownSubtickFraction = WNetManager.GetPercentageThroughTickCurrentFrame();
+                    fireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();
                     Debug.Log(fireDownSubtickFraction);
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
                     AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
                     break;
                 case InputType.AltFireDownEvent:
-                    altFireDownSubtickFraction = WNetManager.GetPercentageThroughTickCurrentFrame();
+                    altFireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();
                     altFireDownLookVector = player.GetLook();
                     break;
             }
@@ -159,7 +159,7 @@ namespace Controllers.Shared {
             if(player == null)
                 return;
             
-            WInputsSerializable serializedInputs = inputs[onTick];
+            InputsSerializable serializedInputs = inputs[onTick];
 
             if(inputs.CheckTickIsMoreRecent(onTick)) {
                 Vector2? rotation = player?.PollLook();

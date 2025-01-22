@@ -1,8 +1,8 @@
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSEntityTransformUpdatePkt : NetPacketForClient<WSEntityTransformUpdatePkt>, IEntityUpdate {
-        public WTransformSerializable transform;
+    public class WSEntityTransformUpdatePkt : SPacket<WSEntityTransformUpdatePkt>, IEntityUpdate {
+        public TransformSerializable transform;
         public int CEntityId { get; set; }
 
         public override void Deserialize(NetDataReader reader) {
@@ -10,7 +10,7 @@ namespace Networking.Shared {
         }
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketIdentifier.SEntityTransformUpdate);
+            writer.Put(PacketIdentifier.SEntityTransformUpdate);
 
             transform.Serialize(writer);
         }

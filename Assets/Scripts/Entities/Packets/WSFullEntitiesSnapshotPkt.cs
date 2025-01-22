@@ -3,7 +3,7 @@ using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSFullEntitiesSnapshotPkt : NetPacketForClient<WSFullEntitiesSnapshotPkt> {
+    public class WSFullEntitiesSnapshotPkt : SPacket<WSFullEntitiesSnapshotPkt> {
         public WEntitySerializable[] entities;
         public bool isFullReset;
 
@@ -19,7 +19,7 @@ namespace Networking.Shared {
         }
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketIdentifier.SFullEntitiesSnapshot);
+            writer.Put(PacketIdentifier.SFullEntitiesSnapshot);
 
             writer.Put(isFullReset);
             writer.PutVarUInt((uint)entities.Length);

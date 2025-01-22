@@ -8,7 +8,7 @@ namespace Controllers.Shared {
         public abstract void EnablePlayer();
         public abstract void DisablePlayer();
 
-        public abstract void Control(WInputsSerializable inputs, int onTick);
+        public abstract void Control(InputsSerializable inputs, int onTick);
 
         public abstract void AddRotationDelta(Vector2 delta);
         public abstract Vector2? PollLook();

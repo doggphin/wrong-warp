@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSEntitiesLoadedDeltaPkt : NetPacketForClient<WSEntitiesLoadedDeltaPkt>
+    public class WSEntitiesLoadedDeltaPkt : SPacket<WSEntitiesLoadedDeltaPkt>
     {
         public List<int> entityIdsToRemove;
         public List<WEntitySerializable> entitiesToAdd;
@@ -31,7 +31,7 @@ namespace Networking.Shared {
 
         public override void Serialize(NetDataWriter writer)
         {
-            writer.Put(WPacketIdentifier.SEntitiesLoadedDelta);
+            writer.Put(PacketIdentifier.SEntitiesLoadedDelta);
 
             writer.PutVarUInt((uint)entityIdsToRemove.Count);
             foreach(int entityId in entityIdsToRemove) {

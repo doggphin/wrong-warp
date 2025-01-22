@@ -53,7 +53,7 @@ namespace Controllers.Shared {
         public override Vector2 GetLook() => boundedRotator.GetLook();
 
         // These need to be implemented by a higher level class
-        public override void Control(WInputsSerializable inputs, int onTick)
+        public override void Control(InputsSerializable inputs, int onTick)
         {
             throw new System.NotImplementedException();
         }

@@ -3,7 +3,7 @@ using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSSetPlayerEntityPkt : NetPacketForClient<WSSetPlayerEntityPkt> {
+    public class WSSetPlayerEntityPkt : SPacket<WSSetPlayerEntityPkt> {
         public int entityId;
 
         public override void Deserialize(NetDataReader reader) {
@@ -11,7 +11,7 @@ namespace Networking.Shared {
         }
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketIdentifier.SSetPlayerEntity);
+            writer.Put(PacketIdentifier.SSetPlayerEntity);
 
             writer.Put(entityId);     
         }

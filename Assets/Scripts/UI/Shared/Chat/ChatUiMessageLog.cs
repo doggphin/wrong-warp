@@ -19,7 +19,7 @@ public class ChatUiMessageLog : MonoBehaviour {
         }
     }
 
-    public void AddMessage(WSChatMessagePkt newMessage) {
+    public void AddMessage(SChatMessagePkt newMessage) {
         messageLogIndex = (messageLogIndex + 1) % BACKLOG_CAPACITY;
 
         ChatUiMessage uiMessage = messageLog[messageLogIndex];

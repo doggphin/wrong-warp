@@ -20,7 +20,7 @@ public class EscapeUiManager : BaseUiElement
     }
 
     public void Disconnect() {
-        WNetManager.Disconnect(new WDisconnectInfo { reason = "Clicked Disconnect", wasExpected = true});
+        WWNetManager.Disconnect(new WDisconnectInfo { reason = "Clicked Disconnect", wasExpected = true});
         UiManager.CloseActiveUiElement();
         Cursor.lockState = CursorLockMode.None;
     }

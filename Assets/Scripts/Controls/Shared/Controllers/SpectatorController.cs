@@ -18,7 +18,7 @@ namespace Controllers.Shared {
             Debug.LogError("Not implemented");
         }
 
-        public override void Control(WInputsSerializable inputs, int onTick)
+        public override void Control(InputsSerializable inputs, int onTick)
         {
             if(entity == null) {
                 Debug.LogError("No entity to control!");
@@ -40,12 +40,12 @@ namespace Controllers.Shared {
 
             Quaternion rotation = boundedRotator.FullQuatRotation;
 
-            velocity *= (float)Math.Pow(0.5f, WCommon.SECONDS_PER_TICK);
+            velocity *= (float)Math.Pow(0.5f, NetCommon.SECONDS_PER_TICK);
 
             Vector3 acceleration = rotation * movementInput * speed;
-            velocity += acceleration * WCommon.SECONDS_PER_TICK;
+            velocity += acceleration * NetCommon.SECONDS_PER_TICK;
             
-            entity.positionsBuffer[onTick] += velocity * WCommon.SECONDS_PER_TICK;
+            entity.positionsBuffer[onTick] += velocity * NetCommon.SECONDS_PER_TICK;
         }
     }
 }

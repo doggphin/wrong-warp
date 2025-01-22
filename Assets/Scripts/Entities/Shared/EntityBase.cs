@@ -15,7 +15,7 @@ namespace Networking.Shared {
         public CircularTickBuffer<Vector3> scalesBuffer = new();
 
         private void Awake() {
-            for(int i=0; i<WCommon.TICKS_PER_SECOND; i++) {
+            for(int i=0; i<NetCommon.TICKS_PER_SECOND; i++) {
                 positionsBuffer[i] = Vector3.zero;
                 rotationsBuffer[i] = Quaternion.identity;
                 scalesBuffer[i] = Vector3.one;

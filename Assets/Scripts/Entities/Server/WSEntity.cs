@@ -10,9 +10,9 @@ namespace Networking.Server {
         public bool updatePosition, updateRotation, updateScale;  
 
         ///<summary> Will be null if this is not attached to a player. </summary>
-        public WSPlayer Player { get; private set; }
+        public SPlayer Player { get; private set; }
         public Vector2Int ChunkPosition { get; private set; }
-        public WSChunk CurrentChunk { get; private set; } = null;
+        public SChunk CurrentChunk { get; private set; } = null;
 
         public Action<WSEntity, WEntityKillReason> Killed;
 
@@ -23,10 +23,10 @@ namespace Networking.Server {
             }
             set {
                 if (isChunkLoader && !value) {
-                    WSChunkManager.RemoveChunkLoader(ChunkPosition, this, true);
+                    SChunkManager.RemoveChunkLoader(ChunkPosition, this, true);
                 }
                 else if (!isChunkLoader && value) {
-                    WSChunkManager.AddChunkLoader(ChunkPosition, this, true);
+                    SChunkManager.AddChunkLoader(ChunkPosition, this, true);
                 }
                 
                 isChunkLoader = value;
@@ -40,7 +40,7 @@ namespace Networking.Server {
                 serializedEntity.entityId = Id;
                 serializedEntity.prefabId = PrefabId;
 
-                serializedEntity.transform = new WTransformSerializable {
+                serializedEntity.transform = new TransformSerializable {
                     position = positionsBuffer[tick],
                     rotation = rotationsBuffer[tick],
                     scale = scalesBuffer[tick]
@@ -55,13 +55,13 @@ namespace Networking.Server {
         public void Init(int entityId, NetPrefabType prefabId, bool isChunkLoader) {
             Id = entityId;
             PrefabId = prefabId;
-            ChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[WSNetServer.Instance.GetTick()]);
+            ChunkPosition = SChunkManager.ProjectToGrid(positionsBuffer[SNetManager.Instance.GetTick()]);
             IsChunkLoader = isChunkLoader;
-            CurrentChunk = WSChunkManager.GetChunk(ChunkPosition, false);
+            CurrentChunk = SChunkManager.GetChunk(ChunkPosition, false);
         }
 
         ///<summary> This should only ever be called from WSPlayer </summary>
-        public void SetPlayer(WSPlayer player) {
+        public void SetPlayer(SPlayer player) {
             if(Player != null && player != null)
                 throw new Exception("Cannot set an entity's player without unsetting player first! Call this from WSPlayer.SetEntity!");
             
@@ -70,8 +70,8 @@ namespace Networking.Server {
 
 
         private void Update() {
-            float percentageThroughTick = WSNetServer.Instance.GetPercentageThroughTick();
-            int tick = WSNetServer.Instance.GetTick();
+            float percentageThroughTick = SNetManager.Instance.GetPercentageThroughTick();
+            int tick = SNetManager.Instance.GetTick();
 
             //if(!updatePositionsLocally)
                 transform.position = LerpBufferedPositions(tick, percentageThroughTick);
@@ -85,7 +85,7 @@ namespace Networking.Server {
 
 
         public void PollAndFinalizeTransform() {
-            int tick = WSNetServer.Instance.GetTick();
+            int tick = SNetManager.Instance.GetTick();
             int previousTick = tick - 1;
             int futureTick = tick + 1;
 
@@ -104,7 +104,7 @@ namespace Networking.Server {
                 return;
 
             WSEntityTransformUpdatePkt transformPacket = new() {
-                transform = new WTransformSerializable() {
+                transform = new TransformSerializable() {
                     position = hasMoved ? positionsBuffer[tick] : null,
                     rotation = hasRotated ? rotationsBuffer[tick] : null,
                     scale = hasScaled ? scalesBuffer[tick] : null
@@ -112,10 +112,10 @@ namespace Networking.Server {
             };
 
             if (hasMoved) {
-                Vector2Int newChunkPosition = WSChunkManager.ProjectToGrid(positionsBuffer[tick]);
+                Vector2Int newChunkPosition = SChunkManager.ProjectToGrid(positionsBuffer[tick]);
         
                 if (newChunkPosition != ChunkPosition)
-                    CurrentChunk = WSChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
+                    CurrentChunk = SChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
 
                 ChunkPosition = newChunkPosition;
             } 
@@ -140,7 +140,7 @@ namespace Networking.Server {
         }
 
 
-        private void PushUpdates(NetPacketForClient packet) {
+        private void PushUpdates(BasePacket packet) {
             isSerialized = false;
 
             if (isDead) {
@@ -148,7 +148,7 @@ namespace Networking.Server {
                 return;
             }
 
-            CurrentChunk.AddEntityUpdate(WSNetServer.Instance.GetTick(), Id, packet);
+            CurrentChunk.AddEntityUpdate(SNetManager.Instance.GetTick(), Id, packet);
         }
     }
 }

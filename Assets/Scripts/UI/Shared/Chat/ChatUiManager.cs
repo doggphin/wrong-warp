@@ -15,11 +15,11 @@ public class ChatUiManager : BaseUiElement
     public static Action<string> SendChatMessage;
     
     void Awake() {
-        NetPacketForClient<WSChatMessagePkt>.ApplyUnticked += ReceiveChatMessage;
+        SPacket<SChatMessagePkt>.ApplyUnticked += ReceiveChatMessage;
     }
 
     void OnDestroy() {
-        NetPacketForClient<WSChatMessagePkt>.ApplyUnticked -= ReceiveChatMessage;
+        SPacket<SChatMessagePkt>.ApplyUnticked -= ReceiveChatMessage;
     }
 
 
@@ -83,7 +83,7 @@ public class ChatUiManager : BaseUiElement
     }
 
 
-    public static void ReceiveChatMessage(WSChatMessagePkt chatMessageInfo) {
+    public static void ReceiveChatMessage(SChatMessagePkt chatMessageInfo) {
         Instance.messageLog.AddMessage(chatMessageInfo);
     }
 }

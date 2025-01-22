@@ -27,7 +27,7 @@ public class ChatUiMessage : MonoBehaviour {
         gameObject.SetActive(false);
     }
 
-    public void SetNewMessage(WSChatMessagePkt chatMessagePkt) {
+    public void SetNewMessage(SChatMessagePkt chatMessagePkt) {
         message.text = chatMessagePkt.message;
         bust.sprite = chatMessagePkt.isServerMessage ? serverBust : playerBust;
         // 40 is base, 5 is padding

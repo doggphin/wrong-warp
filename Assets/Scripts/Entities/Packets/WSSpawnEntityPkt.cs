@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Load,
     }
 
-    public class WSEntitySpawnPkt : NetPacketForClient<WSEntitySpawnPkt> {
+    public class WSEntitySpawnPkt : SPacket<WSEntitySpawnPkt> {
         public WEntitySerializable entity;
         public WEntitySpawnReason reason;
 
@@ -19,7 +19,7 @@ namespace Networking.Shared {
 
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(WPacketIdentifier.SEntitySpawn);
+            writer.Put(PacketIdentifier.SEntitySpawn);
 
             entity.Serialize(writer);
             writer.Put((byte)reason);
