@@ -16,12 +16,14 @@ namespace Networking.Server {
     [RequireComponent(typeof(SPacketUnpacker))]
     [RequireComponent(typeof(SChatHandler))]
     [RequireComponent(typeof(SChunkManager))]
+    [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
-        private static NetDataWriter writer = new();
-
         private static int tick;
         public int GetTick() => tick;
         public static int Tick => Instance.GetTick();
+
+        private static NetDataWriter writer = new();
+        private ControlsManager controlsManager;
         private static WWatch watch;
         private float percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
@@ -40,7 +42,8 @@ namespace Networking.Server {
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = NetCommon.TICKS_PER_SECOND;
             
-            ControlsManager.Activate();
+            controlsManager = GetComponent<ControlsManager>();
+            ControlsManager.ActivateControls();
             ChatUiManager.SendChatMessage += SendHostChatMessage;
             CPacket<CJoinRequestPkt>.ApplyUnticked += HandleJoinRequest;
 
@@ -65,7 +68,7 @@ namespace Networking.Server {
         protected override void OnDestroy() {
             ChatUiManager.SendChatMessage -= SendHostChatMessage;
             CPacket<CJoinRequestPkt>.ApplyUnticked -= HandleJoinRequest;
-            ControlsManager.Deactivate();
+            ControlsManager.DeactivateControls();
 
             base.OnDestroy();
         }
@@ -86,7 +89,7 @@ namespace Networking.Server {
             tick += 1;
 
             // Run server player inputs
-            ControlsManager.PollAndControl(tick);
+            controlsManager.PollAndControl(tick);
 
             // Run inputs of each client
             foreach(NetPeer peer in WWNetManager.ConnectedPeers) {

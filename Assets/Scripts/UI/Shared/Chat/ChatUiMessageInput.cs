@@ -19,7 +19,6 @@ public class ChatUiMessageInput : MonoBehaviour {
     }
 
     private void ReselectInputField(string _) {
-        Debug.Log("Reselecting input!");
         StartTyping();
     }
 

@@ -13,6 +13,7 @@ namespace Networking.Shared {
         public WEntitySpawnReason reason;
 
         public override void Deserialize(NetDataReader reader) {
+            entity = new();
             entity.Deserialize(reader);
             reason = (WEntitySpawnReason)reader.GetByte();
         }

@@ -80,6 +80,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bcfd5946f23f8544993757462ebd1ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainMenuPrefab: {fileID: 3092673357874164032, guid: e51cc51b7202ff943888227bc76a8971, type: 3}
   serverPrefab: {fileID: 19734313211102582, guid: 0cc9e0f01b4bca841941c9b87a25b8d8, type: 3}
   clientPrefab: {fileID: 7551337991915338098, guid: 5c1b27a3123d05843871f7c39a925755, type: 3}
 --- !u!114 &4367907739066650954

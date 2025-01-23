@@ -1,20 +1,21 @@
 using LiteNetLib;
 using UnityEngine;
-using Scenes;
-using UnityEngine.SceneManagement;
 
 using Networking.Server;
 using Networking.Client;
 using Controllers.Shared;
-using Audio.Shared;
 
 using System.Collections.Generic;
 using System;
-using System.Collections;
+using Audio.Shared;
 using Inventories;
 
 namespace Networking.Shared {
+    [RequireComponent(typeof(AudioLookup))]
+    [RequireComponent(typeof(EntityPrefabLookup))]
+    [RequireComponent(typeof(ItemLookup))]
     public class WWNetManager : BaseSingleton<WWNetManager> {
+        [SerializeField] private GameObject mainMenuPrefab;
         [SerializeField] private GameObject serverPrefab;
         [SerializeField] private GameObject clientPrefab;
 
@@ -32,13 +33,22 @@ namespace Networking.Shared {
         
         public static Action<WDisconnectInfo> Disconnected;
 
+        private MainMenu mainMenu;
+
+        private void StartMainMenu() {
+            mainMenu = Instantiate(mainMenuPrefab).GetComponent<MainMenu>();
+        }
+
+        private void StopMainMenu() {
+            Destroy(mainMenu.gameObject);
+        }
+
         protected override void Awake() {
             base.Awake();
 
-            DontDestroyOnLoad(gameObject);
-
-            ControlsManager.Init();
             Physics.simulationMode = SimulationMode.Script;
+            
+            StartMainMenu();
         }
 
         void Update() => BaseNetManager?.PollEvents();
@@ -57,7 +67,7 @@ namespace Networking.Shared {
 
             ticker = WcNetClient;
 
-            SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
+            StopMainMenu();
         }
         
         
@@ -75,7 +85,7 @@ namespace Networking.Shared {
 
             ticker = WsNetServer;
 
-            SceneManager.LoadScene(sceneBuildIndex: (int)SceneType.Game);
+            StopMainMenu();
         }
 
 
@@ -85,7 +95,7 @@ namespace Networking.Shared {
 
             // Not great to do this here, but it's common between both client/server OnDestroy()s
             ControlsManager.SetPlayer(null);
-            ControlsManager.Deactivate();
+            ControlsManager.DeactivateControls();
             UiManager.CloseActiveUiElement();
 
             if(Instance.WcNetClient != null)
@@ -97,18 +107,10 @@ namespace Networking.Shared {
             Instance.WsNetServer = null;
             Instance.ticker = null;
 
-            Instance.StartCoroutine(LoadMenuFromDisconnect(info));
-        }
-
-        private static IEnumerator LoadMenuFromDisconnect(WDisconnectInfo info) {
-            var asyncLoadScene = SceneManager.LoadSceneAsync(sceneBuildIndex: (int)SceneType.MainMenu);
-
-            while (!asyncLoadScene.isDone){
-                yield return null;
-            }
-
             Cursor.lockState = CursorLockMode.None;
             Disconnected?.Invoke(info);
+
+            Instance.StartMainMenu();
         }
 
 

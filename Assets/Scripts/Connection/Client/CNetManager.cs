@@ -14,8 +14,9 @@ namespace Networking.Client {
     [RequireComponent(typeof(PacketCacheManager))]
     [RequireComponent(typeof(CRollbackManager))]
     [RequireComponent(typeof(CPacketUnpacker))]
+    [RequireComponent(typeof(ControlsManager))]
     public class CNetManager : BaseSingleton<CNetManager>, ITicker, INetEventListener {
-        private CEntityManager entityManager;
+        private ControlsManager controlsManager;
         private NetPeer serverPeer;
         private NetDataWriter writer = new();
         private string userName = "";
@@ -56,12 +57,11 @@ namespace Networking.Client {
             if(isActivated)
                 return;
             
-            DontDestroyOnLoad(gameObject);
-            entityManager = GetComponent<CEntityManager>();
             userName = $"{Environment.MachineName}_{new System.Random().Next(1000000)}";
             watch = new();
 
-            ControlsManager.Activate();
+            controlsManager = GetComponent<ControlsManager>();
+            ControlsManager.ActivateControls();
 
             isActivated = true;
 
@@ -86,8 +86,11 @@ namespace Networking.Client {
 
         private float percentageThroughTickCurrentFrame;
         void Update() {
+            if(!isActivated)
+                return;
+            
             percentageThroughTickCurrentFrame = GetPercentageThroughTick();
-            if(isActivated && GetPercentageThroughTick() > 1) {
+            if(GetPercentageThroughTick() > 1) {
                 watch.AdvanceTick();
                 AdvanceTick(true);
             }
@@ -95,13 +98,14 @@ namespace Networking.Client {
 
         private int mostRecentlySentTick = 0;
         public void AdvanceTick(bool allowTickCompensation = false) {
+            // Surely there's a better way of doing this, right?
+            // Maybe check for whether playerEntity ID is equal to myEntityId, and if not, then search
             void GetPlayerReference() {
                 if(PlayerEntity != null || myEntityId == null)
                     return;
 
                 CEntity entity = CEntityManager.GetEntityById(myEntityId.Value);
 
-                Debug.Log($"Entity is {entity}!");
                 if(entity == null)
                     return;
 
@@ -130,7 +134,7 @@ namespace Networking.Client {
 
             // This should be done in a better way...
             GetPlayerReference();
-            ControlsManager.PollAndControl(SendingTick);
+            controlsManager.PollAndControl(SendingTick);
 
             // Send inputs to the server
             if(CentralTimingTick > mostRecentlySentTick) {
@@ -139,7 +143,7 @@ namespace Networking.Client {
                     writer, 
                     serverPeer, 
                     SendingTick,
-                    new CGroupedInputsPkt() { inputsSerialized = new InputsSerializable[]{ ControlsManager.inputs[SendingTick] } },
+                    new CGroupedInputsPkt() { inputsSerialized = new InputsSerializable[]{ controlsManager.inputs[SendingTick] } },
                     DeliveryMethod.Unreliable);
                 mostRecentlySentTick = CentralTimingTick;
             }

@@ -6,8 +6,8 @@ using Audio.Shared;
 using Networking.Server;
 
 namespace Controllers.Shared {
-    public static class ControlsManager {
-        private static PlayerInputActions inputActions;
+    public class ControlsManager : BaseSingleton<ControlsManager> {
+        private PlayerInputActions inputActions;
 
         private static AbstractPlayer player = null;
 
@@ -22,27 +22,25 @@ namespace Controllers.Shared {
 
         public static bool HasPlayer => player != null;
 
-        public static TimestampedCircularTickBuffer<InputsSerializable> inputs = new();
+        public TimestampedCircularTickBuffer<InputsSerializable> inputs = new();
 
-        private static InputFlags finalInputs = new();
-        private static InputFlags heldInputs = new();
+        private InputFlags finalInputs = new();
+        private InputFlags heldInputs = new();
 
-        private static float fireDownSubtickFraction;
-        private static Vector2 fireDownLookVector;
-        private static float altFireDownSubtickFraction;
-        private static Vector2 altFireDownLookVector;
+        private float fireDownSubtickFraction;
+        private Vector2 fireDownLookVector;
+        private float altFireDownSubtickFraction;
+        private Vector2 altFireDownLookVector;
 
         public static Action ChatClicked;
         public static Action EscapeClicked;
         public static Action ConfirmClicked;
         public static Action InventoryClicked;
 
-        private static bool inputsInitialized = false;
-        public static void Init() {      
+        protected override void Awake() {    
+            base.Awake();
+              
             inputs = TimestampedCircularTickBufferClassInitializer<InputsSerializable>.GetInitialized(-1);
-
-            if(inputsInitialized)
-                return;
 
             void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
                 inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
@@ -70,16 +68,14 @@ namespace Controllers.Shared {
             inputActions.Ui.Escape.started += (_) => EscapeClicked?.Invoke();
             inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
             inputActions.Ui.Inventory.started += (_) => InventoryClicked?.Invoke();
-
-            inputsInitialized = true;
         }
 
-        public static void Activate() {
+        public static void ActivateControls() {
             SetGameplayControlsEnabled(true);
             SetUiControlsEnabled(true);
         }
 
-        public static void Deactivate() {
+        public static void DeactivateControls() {
             SetGameplayControlsEnabled(false);
             SetUiControlsEnabled(false);
         }
@@ -88,31 +84,31 @@ namespace Controllers.Shared {
         // Gameplay and Ui don't share a base class, can't be made more efficient
         public static void SetGameplayControlsEnabled(bool value) {
             if(value) {
-                inputActions.Gameplay.Enable();
+                Instance.inputActions.Gameplay.Enable();
             } else {
-                inputActions.Gameplay.Disable();
+                Instance.inputActions.Gameplay.Disable();
             }
         }
         public static void SetUiControlsEnabled(bool value) {
             if(value) {
-                inputActions.Ui.Enable();
+                Instance.inputActions.Ui.Enable();
             } else {
-                inputActions.Ui.Disable();
+                Instance.inputActions.Ui.Disable();
             }
         }
         public static bool GameplayControlsEnabled {
-            get => inputActions.Gameplay.enabled;
+            get => Instance.inputActions.Gameplay.enabled;
             private set {
                 if(value) {
-                    inputActions.Gameplay.Enable();
+                    Instance.inputActions.Gameplay.Enable();
                 } else {
-                    inputActions.Gameplay.Disable();
+                    Instance.inputActions.Gameplay.Disable();
                 }
             }
         }
 
 
-        private static void HandleBufferedAction(InputAction.CallbackContext ctx, InputType inputType) {
+        private void HandleBufferedAction(InputAction.CallbackContext ctx, InputType inputType) {
             if(player == null)
                 return;
             
@@ -131,7 +127,7 @@ namespace Controllers.Shared {
         }
 
 
-        private static void HandleOneOffAction(InputAction.CallbackContext ctx, InputType inputType) {
+        private void HandleOneOffAction(InputAction.CallbackContext ctx, InputType inputType) {
             // Side effects of one-off actions should only be calculated once a tick
             // So if one-off action has already been done this tick, return early
             if(player == null || ctx.phase != InputActionPhase.Started || finalInputs.GetFlag(inputType))
@@ -155,7 +151,7 @@ namespace Controllers.Shared {
         }
 
 
-        public static void PollAndControl(int onTick) {
+        public void PollAndControl(int onTick) {
             if(player == null)
                 return;
             

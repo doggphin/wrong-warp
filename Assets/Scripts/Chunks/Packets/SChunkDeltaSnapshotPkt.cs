@@ -1,5 +1,6 @@
 using LiteNetLib.Utils;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Networking.Shared {
     ///<summary> A collection of updates that have occured within a chunk across several ticks </summary>
@@ -143,8 +144,12 @@ namespace Networking.Shared {
                 foreach(var(entityId, updates) in entityUpdates[i]) {
                     
                     foreach(BasePacket update in updates) {
-                        var entityUpdate = (IEntityUpdate)update;
-                        entityUpdate.CEntityId = entityId;
+                        // only set entityId of base packet if it inherits from IEntityUpdate
+                        // this is smelly as fuck
+                        if(update.GetType().BaseType.IsAssignableFrom(typeof(IEntityUpdate))) {
+                            var iEntityUpdate = (IEntityUpdate)update;
+                            iEntityUpdate.CEntityId = entityId;
+                        }
                         CPacketUnpacker.ConsumePacket(offsetTick, update);
                     }
                 }

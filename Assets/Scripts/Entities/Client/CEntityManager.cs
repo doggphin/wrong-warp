@@ -36,6 +36,7 @@ namespace Networking.Client {
             }
 
             CEntity entity = CEntityFactory.GenerateEntity(spawnPacket.entity.entityPrefabId);
+            entity.transform.parent = transform;
 
             TransformSerializable serializedTransform = spawnPacket.entity.transform;
             entity.transform.SetPositionAndRotation(serializedTransform.position.Value, serializedTransform.rotation.Value);
