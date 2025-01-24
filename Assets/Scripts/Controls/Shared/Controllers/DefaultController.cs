@@ -56,6 +56,7 @@ namespace Controllers.Shared {
             if(entity == null)
                 return;
 
+            Debug.Log($"Applying to {gameObject.name}!");
             if(inputs.inputFlags.GetFlag(InputType.Look))
                 boundedRotator.rotation = inputs.look.Value;
 
@@ -70,7 +71,7 @@ namespace Controllers.Shared {
 
             // ===========
 
-            bool isGrounded = Physics.Raycast(entity.positionsBuffer[onTick], Vector3.down, 1.1f);
+            bool isGrounded = Physics.Raycast(entity.positionsBuffer[onTick], Vector3.down, 1.1f, LayerMask.GetMask("World"));
             
             // Set constants dependent on being grounded or not
             float gravityAcceleration = isGrounded ? 0 : -gravity * NetCommon.SECONDS_PER_TICK;

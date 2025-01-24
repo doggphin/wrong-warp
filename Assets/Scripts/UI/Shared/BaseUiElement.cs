@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class BaseUiElement : MonoBehaviour, IUiElement
+public class BaseUiElement<T> : BaseSingleton<T>, IUiElement where T : MonoBehaviour
 {
     public bool IsOpen { get; protected set; }
     public bool RequiresMouse { get; protected set; }

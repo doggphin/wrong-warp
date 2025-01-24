@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 5336793337198282204}
   - component: {fileID: 936295147746806879}
   - component: {fileID: 9098830398541193062}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -245,7 +245,7 @@ CharacterController:
     m_Bits: 64
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 2147483831
   m_LayerOverridePriority: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -343,8 +343,8 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
+  near clip plane: 0.1
+  far clip plane: 512
   field of view: 90
   orthographic: 0
   orthographic size: 5

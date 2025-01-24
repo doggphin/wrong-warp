@@ -7,6 +7,7 @@ public class UiManager : BaseSingleton<UiManager>
     [SerializeField] private GameObject chatUiPrefab;
     [SerializeField] private GameObject escapeUiPrefab;
     [SerializeField] private GameObject inventoryUiPrefab;
+    [SerializeField] private GameObject interactableUiPrefab;
 
     private EscapeUiManager escapeUi;
 
@@ -14,6 +15,8 @@ public class UiManager : BaseSingleton<UiManager>
 
     void Start() {
         ControlsManager.EscapeClicked += OpenEscape;
+        
+        Instantiate(interactableUiPrefab, transform);
         Instantiate(chatUiPrefab, transform);
         Instantiate(inventoryUiPrefab, transform);
         escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeUiManager>();

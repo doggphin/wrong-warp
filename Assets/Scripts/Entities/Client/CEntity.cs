@@ -79,13 +79,16 @@ namespace Networking.Client {
             }
 
             SetTransformValueIfNotNull(serializedTransform.position, positionsBuffer, receivedPositions);
+            if(serializedTransform.position.HasValue) {
+                Debug.Log($"Setting position of {gameObject.name} to {serializedTransform.position.Value}");
+            }
             SetTransformValueIfNotNull(serializedTransform.rotation, rotationsBuffer, receivedRotations);
             SetTransformValueIfNotNull(serializedTransform.scale, scalesBuffer, receivedScales);
         }
 
         public void Init(WSEntitySpawnPkt spawnPkt) {
             Id = spawnPkt.entity.entityId;
-
+            
             lastReceivedPosition = positionsBuffer[CNetManager.ObservingTick] = spawnPkt.entity.transform.position ?? Vector3.zero;
             lastReceivedRotation = rotationsBuffer[CNetManager.ObservingTick] = spawnPkt.entity.transform.rotation ?? Quaternion.identity;
             lastReceivedScale =    scalesBuffer[CNetManager.ObservingTick]    = spawnPkt.entity.transform.scale ?? Vector3.one;

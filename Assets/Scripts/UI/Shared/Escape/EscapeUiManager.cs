@@ -1,17 +1,9 @@
 using Networking.Shared;
 using UnityEngine;
 
-public class EscapeUiManager : BaseUiElement
+public class EscapeUiManager : BaseUiElement<EscapeUiManager>
 {
-    public static EscapeUiManager Instance { get; private set; }
-
-    
     void Start() {
-        if(Instance) {
-            Destroy(gameObject);
-        }
-
-        Instance = this;
         Close();
     }
 

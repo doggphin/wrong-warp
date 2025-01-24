@@ -3,32 +3,27 @@ using Controllers.Shared;
 using Networking.Shared;
 using UnityEngine;
 
-public class ChatUiManager : BaseUiElement
+public class ChatUiManager : BaseUiElement<ChatUiManager>
 {
     public const float MAX_LOCAL_CHAT_DISTANCE = 32;
 
     [SerializeField] private ChatUiMessageLog messageLog;
     [SerializeField] private ChatUiMessageInput messageInput;
 
-    public static ChatUiManager Instance { get; private set; }
-
     public static Action<string> SendChatMessage;
     
-    void Awake() {
+    protected override void Awake() {
         SPacket<SChatMessagePkt>.ApplyUnticked += ReceiveChatMessage;
+        base.Awake();
     }
 
-    void OnDestroy() {
+    protected override void OnDestroy() {
         SPacket<SChatMessagePkt>.ApplyUnticked -= ReceiveChatMessage;
+        base.OnDestroy();
     }
 
 
     void Start() {
-        if(Instance) {
-            Destroy(gameObject);
-        }
-        Instance = this;
-
         DisableMessageInput();
     }
 
@@ -75,7 +70,7 @@ public class ChatUiManager : BaseUiElement
     
     private void DisableMessageInput() {
         messageInput.gameObject.SetActive(false);
-        Instance.messageInput.ClearInput();
+        messageInput.ClearInput();
         messageInput.StopTyping();
 
         ControlsManager.ConfirmClicked -= ConfirmChatMessage;

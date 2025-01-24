@@ -14,7 +14,13 @@ namespace Networking.Server {
             entity.updateRotationOverNetwork = entitySO.updateRotationOverNetwork;
             entity.updateScaleOverNetwork = entitySO.updateScaleOverNetwork;
 
-            switch(entitySO.autoMovementType) {
+            if(entity.GetComponent<Rigidbody>()) {
+                entity.setVisualPositionAutomatically = false;
+                entity.setVisualRotationAutomatically = false;
+                entity.isRigidbody = true;
+            }
+            
+            /*switch(entitySO.autoMovementType) {
                 case AutomaticMovementType.Velocity:
                     entity.AddComponent<EntityVelocity>();
                     break;
@@ -26,7 +32,7 @@ namespace Networking.Server {
                     break;
                 default:
                     break;
-            }
+            }*/
 
             return entity;
         }

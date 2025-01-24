@@ -14,6 +14,7 @@ namespace Networking.Shared {
     [RequireComponent(typeof(AudioLookup))]
     [RequireComponent(typeof(EntityPrefabLookup))]
     [RequireComponent(typeof(ItemLookup))]
+    [RequireComponent(typeof(InteractableIconLookup))]
     public class WWNetManager : BaseSingleton<WWNetManager> {
         [SerializeField] private GameObject mainMenuPrefab;
         [SerializeField] private GameObject serverPrefab;

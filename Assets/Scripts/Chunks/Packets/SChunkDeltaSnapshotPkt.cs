@@ -146,9 +146,12 @@ namespace Networking.Shared {
                     foreach(BasePacket update in updates) {
                         // only set entityId of base packet if it inherits from IEntityUpdate
                         // this is smelly as fuck
-                        if(update.GetType().BaseType.IsAssignableFrom(typeof(IEntityUpdate))) {
-                            var iEntityUpdate = (IEntityUpdate)update;
+                        UnityEngine.Debug.Log($"Received an {update.GetType().BaseType} packet with entity ID {entityId}");
+                        if(update is IEntityUpdate iEntityUpdate) {
+                            UnityEngine.Debug.Log("It is an entity update!");
                             iEntityUpdate.CEntityId = entityId;
+                        } else {
+                            UnityEngine.Debug.Log("It is not an entity update!");
                         }
                         CPacketUnpacker.ConsumePacket(offsetTick, update);
                     }

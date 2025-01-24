@@ -18,5 +18,6 @@ namespace Controllers.Shared {
         public abstract Vector2 GetRotation();
 
         public abstract void RollbackToTick(int tick);
+        public abstract bool PollForInteractable(out Interactable outInteractable);
     }
 }

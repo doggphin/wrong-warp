@@ -30,20 +30,21 @@ namespace Networking.Client {
 
         private void HandleSpawnEntity(WSEntitySpawnPkt pkt) => SpawnEntity(pkt);
         private CEntity SpawnEntity(WSEntitySpawnPkt spawnPacket) {
-            if(Instance.entities.ContainsKey(spawnPacket.entity.entityId)) {
+            if(entities.ContainsKey(spawnPacket.entity.entityId)) {
                 Debug.Log($"Entity with ID {spawnPacket.entity.entityId} already exists");
                 return null;
             }
 
-            CEntity entity = CEntityFactory.GenerateEntity(spawnPacket.entity.entityPrefabId);
+            Debug.Log("Spawning entity!");
+            CEntity entity = CEntityFactory.GenerateEntity(spawnPacket.entity.entityPrefabId, spawnPacket.entity.entityId);
             entity.transform.parent = transform;
 
             TransformSerializable serializedTransform = spawnPacket.entity.transform;
             entity.transform.SetPositionAndRotation(serializedTransform.position.Value, serializedTransform.rotation.Value);
             entity.transform.localScale = serializedTransform.scale.Value;
-            
-            Instance.entities[spawnPacket.entity.entityId] = entity;
 
+            entities[spawnPacket.entity.entityId] = entity;
+            
             entity.Init(spawnPacket);
 
             return entity;
@@ -62,6 +63,7 @@ namespace Networking.Client {
 
         
         private void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
+            Debug.Log($"Received an entity transform for {transformPacket.CEntityId}");
             if(!Instance.entities.TryGetValue(transformPacket.CEntityId, out CEntity entity))
                 return;
 

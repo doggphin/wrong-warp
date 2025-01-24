@@ -12,31 +12,36 @@ public class ViewableObject : MonoBehaviour
 
     void Awake() {
         layersCache = new int[viewableObjects.Length];
+        SaveLayers();
     }
 
     bool layersAreSet = false;
-    public void ResetLayers() {
-        if(!layersAreSet) {
-            return;
-        }
-        
-        for(int i=0; i<layersCache.Length; i++) {
-            viewableObjects[i].layer = viewableObjects[i].layer;
-        }
-
-        layersAreSet = false;
-    }
-
     public void CacheAndSetLayers(int layer) {
         if(layersAreSet) {
             return;
         }
 
-        layersAreSet = true;
-
         for(int i=0; i<viewableObjects.Length; i++) {
             layersCache[i] = viewableObjects[i].layer;
             viewableObjects[i].layer = layer;
+        }
+
+        layersAreSet = true;
+    }
+
+    public void ResetLayers() {
+        if(!layersAreSet) {
+            return;
+        }
+        
+        SaveLayers();
+
+        layersAreSet = false;
+    }
+
+    private void SaveLayers() {
+        for(int i=0; i<layersCache.Length; i++) {
+            viewableObjects[i].layer = viewableObjects[i].layer;
         }
     }
 }

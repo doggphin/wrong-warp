@@ -16,13 +16,10 @@ namespace Networking.Server {
         //public static Action<WSEntity, WEntityKillReason> EntityKilled;
 
         public static SEntity SpawnEntity(EntityPrefabId entityIdentifier, bool isChunkLoader = false) {
-            var entity = SEntityFactory.GenerateEntity(entityIdentifier);
-            entity.transform.parent = Instance.transform;
-
             int entityId = idGenerator.GetNextEntityId(Instance.entities);
+            var entity = SEntityFactory.GenerateEntity(entityIdentifier, entityId);
             Instance.entities.Add(entityId, entity);
-
-            entity.gameObject.name = $"{entityId:0000000000}_{entityIdentifier}";
+            entity.transform.parent = Instance.transform;
 
             entity.Init(entityId, entityIdentifier, isChunkLoader);
         

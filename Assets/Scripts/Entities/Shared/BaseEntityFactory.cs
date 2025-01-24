@@ -16,6 +16,10 @@ namespace Networking.Shared {
             return GenerateBaseEntity(identifier, out _);
         }
 
-        public static T GenerateEntity(EntityPrefabId identifier) => Instance.OverrideableGenerateEntity(identifier);
+        public static T GenerateEntity(EntityPrefabId identifier, int id) {
+            T ret = Instance.OverrideableGenerateEntity(identifier);
+            ret.name = $"{id:D11}_{identifier}";
+            return ret;
+        }
     }
 }

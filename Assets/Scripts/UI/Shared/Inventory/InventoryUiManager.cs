@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 
 namespace Inventories {
-    public class InventoryUiManager : BaseUiElement {
+    public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
         public enum InventoryOwnershipType {
             MainInventory,
             OtherInventory
@@ -30,11 +30,6 @@ namespace Inventories {
         private ObjectPool<InventoryUiSlot> inventoryUiSlotPool;
 
         void Start() {
-            if(Instance) {
-                Destroy(gameObject);
-            }
-            Instance = this;
-
             IsOpen = true;
             Close();
             inventoryUiInfo = new();
@@ -61,8 +56,6 @@ namespace Inventories {
         public void AddInventorySlots(Transform to, Inventory inventory, int[] inventoryIndices) {
             
         }
-
-        public static InventoryUiManager Instance { get; private set; }
 
         public override void Open()
         {

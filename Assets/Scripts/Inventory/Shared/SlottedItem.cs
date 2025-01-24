@@ -6,21 +6,21 @@ using UnityEngine;
 namespace Inventories {
     public class SlottedItem : INetSerializable {
         public ItemType SlottedItemType { get; private set; }
-        public BaseItemSO BaseItemRef { get; private set;}
+        public BaseItemSO BaseItemRef { get; private set; }
 
         public int stackSize;
 
+        public SlottedItem() { }
         public SlottedItem(ItemType itemType) {
             Initialize(itemType, 0);
         }
-
-        public SlottedItem() { }
-
         private void Initialize(ItemType itemType, int stackSize) {
             SlottedItemType = itemType;
             this.stackSize = stackSize;
             BaseItemRef = BaseItemRef = ItemLookup.Lookup(itemType);
         }
+
+        
 
         ///<summary> Tries to merge otherSlottedItem into this slottedItem. </summary>
         ///<param name="amountToTryToAbsorb"> If left null, will fill out with otherSlottedItem stack size </param>

@@ -1,18 +1,24 @@
 using Networking.Shared;
+using UnityEditor.ShaderGraph;
 using UnityEngine;
 
 namespace Controllers.Shared {
     public abstract class BaseController : AbstractPlayer {
+        private static int layerMask;
+
         [SerializeField] protected Camera cam;
         protected BaseEntity entity;
         
         protected BoundedRotator boundedRotator;
 
+        void Awake() {
+            layerMask = LayerMask.GetMask("World", "Interactable");
+        }
+
         public override void SetRotation(Vector2 look)
         {
             boundedRotator.rotation = look;
         }
-
 
         public override Vector2 GetRotation() => boundedRotator.rotation;
 
@@ -46,6 +52,19 @@ namespace Controllers.Shared {
             cam.transform.localRotation = boundedRotator.CameraQuatRotation;
         }
 
+        protected virtual float InteractRange => 5.0f;
+        public override bool PollForInteractable(out Interactable outInteractable) {
+            Debug.Log("Polling!");
+            Debug.DrawLine(cam.transform.position, cam.transform.position + cam.transform.rotation * Vector3.forward * InteractRange, Color.red);
+            Debug.Log(InteractRange);
+            if(!Physics.Raycast(cam.transform.position, cam.transform.rotation * Vector3.forward, out var hit, InteractRange)) {
+                Debug.Log("Didn't find shit!");
+                outInteractable = null;
+                return false;
+            }
+
+            return hit.collider.TryGetComponent(out outInteractable);
+        }
 
         public override Vector2? PollLook() => boundedRotator.PollLook();
 
