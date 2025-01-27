@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Unload
     }
 
-    public class WSEntityKillPkt : SPacket<WSEntityKillPkt> {
+    public class SEntityKillPkt : SPacket<SEntityKillPkt> {
         public int entityId;
         public WEntityKillReason reason;
 

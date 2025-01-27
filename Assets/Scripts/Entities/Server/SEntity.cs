@@ -10,60 +10,55 @@ namespace Networking.Server {
         public bool updatePositionOverNetwork, updateRotationOverNetwork, updateScaleOverNetwork;
         public bool isRigidbody;
 
-        ///<summary> Will be null if this is not attached to a player. </summary>
-        public SPlayer Player { get; private set; }
-        public Vector2Int ChunkPosition { get; private set; }
-        public SChunk CurrentChunk { get; private set; } = null;
+        public NewSChunk Chunk { get; set; }
 
-        public Action<SEntity, WEntityKillReason> Killed;
-        public static Action<SEntity> SetAsChunkLoader;
-        public static Action<SEntity> RemoveChunkLoader;
+        public Action<SEntity> FinishedDying;
+        public static Action<SEntity, SPlayer> SetAsPlayer;
+        public static Action<SEntity, SPlayer> UnsetAsPlayer;
 
-        private bool isChunkLoader;
-        public bool IsChunkLoader {
-            get {
-                return isChunkLoader;
-            }
+        public Action<SEntity, BasePacket> PushUnreliableUpdate;
+
+        private SPlayer player;
+        public bool IsPlayer => player != null;
+        public SPlayer Player {
+            get => player; 
             set {
-                if (isChunkLoader && !value) {
-                    RemoveChunkLoader?.Invoke(this);
-                    //SChunkManager.RemoveChunkLoader(ChunkPosition, this, true);
+                if(IsPlayer && value == null) {
+                    UnsetAsPlayer?.Invoke(this, player);
                 }
-                else if (!isChunkLoader && value) {
-                    SetAsChunkLoader?.Invoke(this);
-                    //SChunkManager.AddChunkLoader(ChunkPosition, this, true);
+                else if(!IsPlayer && value != null) {
+                    SetAsPlayer?.Invoke(this, value);
                 }
-                
-                isChunkLoader = value;
+
+                player = value;
             }
         }
 
-        private bool isSerialized = false;
-        private WEntitySerializable serializedEntity = new();
-        public WEntitySerializable GetSerializedEntity(int tick) {
-            if(!isSerialized) {
-                serializedEntity.entityId = Id;
-                serializedEntity.entityPrefabId = PrefabId;
 
-                serializedEntity.transform = new TransformSerializable {
+        public WEntitySerializable GetSerializedEntity(int tick) {
+            return new WEntitySerializable() {
+                entityId = Id,
+                entityPrefabId = PrefabId,
+                transform = new TransformSerializable {
                     position = positionsBuffer[tick],
                     rotation = rotationsBuffer[tick],
                     scale = scalesBuffer[tick]
-                };
-            }
-            
-            isSerialized = true;
-            return serializedEntity;
+                }
+            };
         }
 
 
-        public void Init(int entityId, EntityPrefabId prefabId, bool isChunkLoader) {
+        public void Init(int entityId, EntityPrefabId prefabId, SPlayer player, Vector3 position, Quaternion rotation, Vector3 scale) {
             Id = entityId;
             PrefabId = prefabId;
-            ChunkPosition = SChunkManager.ProjectToGrid(positionsBuffer[SNetManager.Instance.GetTick()]);
-            CurrentChunk = SChunkManager.GetChunk(ChunkPosition, true);
-            IsChunkLoader = isChunkLoader;
+            
+            SetPosition(position, true);
+            SetRotation(rotation, true);
+            SetScale(position, true);
+
+            this.player = player;
         }
+
 
         ///<summary> This should only ever be called from WSPlayer </summary>
         public void SetPlayer(SPlayer player) {
@@ -88,6 +83,28 @@ namespace Networking.Server {
                 transform.localScale = LerpBufferedScales(tick, percentageThroughTick);
         }
 
+        
+        private void CopyTransformToNextTick(int tick) {
+            int nextTick = tick + 1;
+            positionsBuffer[nextTick] = positionsBuffer[tick];
+            rotationsBuffer[nextTick] = rotationsBuffer[tick];
+            scalesBuffer[nextTick] = scalesBuffer[tick];
+        }
+
+        private void SetTransformValue<T>
+        (T transformValue, CircularTickBuffer<T> transformBuffer, bool copyToNextTick = false, int? tickOrDefault = null) {
+            int tick = tickOrDefault.GetValueOrDefault(SNetManager.Tick);
+            transformBuffer[tick] = transformValue;
+            if(copyToNextTick)
+                transformBuffer[tick + 1] = transformValue;
+        }
+
+        public void SetPosition(Vector3 position, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(position, positionsBuffer, copyToNextTick, tickOrDefault);
+        public void SetRotation(Quaternion rotation, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(rotation, rotationsBuffer, copyToNextTick, tickOrDefault);
+        public void SetScale(Vector3 scale, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(scale, scalesBuffer, copyToNextTick, tickOrDefault);
 
         public void PollAndFinalizeTransform() {
             int tick = SNetManager.Instance.GetTick();
@@ -98,9 +115,7 @@ namespace Networking.Server {
                 positionsBuffer[tick] = transform.position;
                 rotationsBuffer[tick] = transform.rotation;
             } else {
-                positionsBuffer[futureTick] = positionsBuffer[tick];
-                rotationsBuffer[futureTick] = rotationsBuffer[tick];
-                scalesBuffer[futureTick] = scalesBuffer[tick];
+                CopyTransformToNextTick(tick);
             }
 
             if (!gameObject.activeInHierarchy || isDead)
@@ -113,7 +128,7 @@ namespace Networking.Server {
             if(!hasMoved && !hasRotated && !hasScaled)
                 return;
 
-            WSEntityTransformUpdatePkt transformPacket = new() {
+            SEntityTransformUpdatePkt transformPacket = new() {
                 transform = new TransformSerializable() {
                     position = hasMoved ? positionsBuffer[tick] : null,
                     rotation = hasRotated ? rotationsBuffer[tick] : null,
@@ -121,44 +136,40 @@ namespace Networking.Server {
                 }
             };
 
-            if (hasMoved) {
-                Vector2Int newChunkPosition = SChunkManager.ProjectToGrid(positionsBuffer[tick]);
-        
-                if (newChunkPosition != ChunkPosition)
-                    CurrentChunk = SChunkManager.MoveEntityBetweenChunks(this, ChunkPosition, newChunkPosition);
-
-                ChunkPosition = newChunkPosition;
-            } 
-
             if(transformPacket != null)
-                PushUpdates(transformPacket);
+                PushUnreliableUpdate?.Invoke(this, transformPacket);
         }
 
 
-        // This should be called from the entity manager.
-        public override void Kill(WEntityKillReason killReason) {
+        public override void StartDeath(WEntityKillReason reason) {
+            if(isDead)
+                return;
+            
             isDead = true;
-            Killed?.Invoke(this, killReason);
 
-            switch(killReason) {
+            switch(reason) {
                 // Start a coroutine playing death animation if dying maybe?
                 // Or just spawn an entity to play the death animation/ragdoll?
+                // Decide that here
                 default:
-                    Destroy(gameObject);
                     break;
             }
+
+            // Push an update to show visual death, then start a coroutine here or something?? Override "StartDeath" on different entity types
+
+            FinishDeath();
         }
 
 
-        private void PushUpdates(BasePacket packet) {
-            isSerialized = false;
+        private void FinishDeath() {
+            FinishedDying?.Invoke(this);
+        }
 
-            if (isDead) {
-                Debug.Log("I'm dead, I can't push an update out!");
-                return;
+        
+        void OnDestroy() {
+            if(!isDead) {
+                Debug.LogError("Destroyed an entity without letting it die first!");
             }
-
-            CurrentChunk.AddEntityUpdate(SNetManager.Instance.GetTick(), Id, packet);
         }
     }
 }

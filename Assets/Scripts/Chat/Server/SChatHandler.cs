@@ -120,7 +120,7 @@ namespace Networking.Server {
 
             // Non-server messages get sent locally
             if(!isServerMessage) {
-                player.Entity.CurrentChunk.AddGenericUpdate(SNetManager.Instance.GetTick(), chatMessagePkt, true);
+                player.Entity.Chunk.AddReliableGeneralUpdate(chatMessagePkt);
             // Server messages get sent globally
             } else {
                 // Send server messages directly to each client

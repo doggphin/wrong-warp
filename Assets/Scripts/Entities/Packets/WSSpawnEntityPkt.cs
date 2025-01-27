@@ -8,7 +8,7 @@ namespace Networking.Shared {
         Load,
     }
 
-    public class WSEntitySpawnPkt : SPacket<WSEntitySpawnPkt> {
+    public class SEntitySpawnPkt : SPacket<SEntitySpawnPkt> {
         public WEntitySerializable entity;
         public WEntitySpawnReason reason;
 

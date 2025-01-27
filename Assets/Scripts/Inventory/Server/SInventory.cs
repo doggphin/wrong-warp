@@ -38,7 +38,7 @@ namespace Networking.Server {
             }
 
             SAddInventoryPkt addInventoryPacket = new(){ fullInventory = inventory };
-            player.ReliablePackets.AddPacket(SNetManager.Tick, addInventoryPacket);
+            player.ReliablePackets?.AddPacket(SNetManager.Tick, addInventoryPacket);
         }
 
         public void RemoveObserver(SPlayer player) {

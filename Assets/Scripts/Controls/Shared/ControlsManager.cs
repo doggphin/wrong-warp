@@ -141,7 +141,7 @@ namespace Controllers.Shared {
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
                     AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
-                    SEntityManager.SpawnEntity(EntityPrefabId.DroppedItem);
+                    SEntityManager.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
                     break;
                 case InputType.AltFireDownEvent:
                     altFireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();

@@ -1,7 +1,7 @@
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSEntityTransformUpdatePkt : SPacket<WSEntityTransformUpdatePkt>, IEntityUpdate {
+    public class SEntityTransformUpdatePkt : SPacket<SEntityTransformUpdatePkt>, IEntityUpdate {
         public TransformSerializable transform;
         public int CEntityId { get; set; }
 

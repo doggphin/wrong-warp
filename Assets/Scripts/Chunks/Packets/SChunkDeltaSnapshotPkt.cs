@@ -80,7 +80,7 @@ namespace Networking.Shared {
                 writer.PutVarUInt((uint)generalUpdatesInTick);
 
                 // Write all the general updates
-                foreach (INetSerializable update in generalUpdates[i]) {
+                foreach (BasePacket update in generalUpdates[i]) {
                     update.Serialize(writer);
                 }
             }

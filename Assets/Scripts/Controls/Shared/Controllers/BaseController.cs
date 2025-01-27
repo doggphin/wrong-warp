@@ -53,7 +53,7 @@ namespace Controllers.Shared {
         }
 
         protected virtual float InteractRange => 5.0f;
-        public override bool PollForInteractable(out Interactable outInteractable) {
+        public override bool PollForInteractable(out BaseInteractable outInteractable) {
             Debug.Log("Polling!");
             Debug.DrawLine(cam.transform.position, cam.transform.position + cam.transform.rotation * Vector3.forward * InteractRange, Color.red);
             Debug.Log(InteractRange);

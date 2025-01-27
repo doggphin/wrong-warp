@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class WSEntitiesLoadedDeltaPkt : SPacket<WSEntitiesLoadedDeltaPkt>
+    public class SEntitiesLoadedDeltaPkt : SPacket<SEntitiesLoadedDeltaPkt>
     {
         public List<int> entityIdsToRemove;
         public List<WEntitySerializable> entitiesToAdd;

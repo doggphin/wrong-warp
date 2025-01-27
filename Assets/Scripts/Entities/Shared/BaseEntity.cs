@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 
 namespace Networking.Shared {
+    [RequireComponent(typeof(EntityTags))]
     public abstract class BaseEntity : MonoBehaviour {
         public int Id { get; protected set; }
         public EntityPrefabId PrefabId { get; protected set; }
@@ -32,6 +33,6 @@ namespace Networking.Shared {
         public Quaternion LerpBufferedRotations(int endTick, float percentage) => LerpTransformValues(Quaternion.Lerp, rotationsBuffer, endTick, percentage);
         public Vector3 LerpBufferedScales(int endTick, float percentage) => LerpTransformValues(Vector3.Lerp, scalesBuffer, endTick, percentage);
 
-        public abstract void Kill(WEntityKillReason reason);
+        public abstract void StartDeath(WEntityKillReason reason);
     }
 }

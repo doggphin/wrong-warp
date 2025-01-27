@@ -15,7 +15,7 @@ namespace Networking.Server {
     [RequireComponent(typeof(SInventoryManager))]
     [RequireComponent(typeof(SPacketUnpacker))]
     [RequireComponent(typeof(SChatHandler))]
-    [RequireComponent(typeof(SChunkManager))]
+    [RequireComponent(typeof(NewSChunkManager))]
     [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
         private static int tick;
@@ -73,14 +73,16 @@ namespace Networking.Server {
             base.OnDestroy();
         }
 
+
         private void CreateHostPlayer() {
-            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, true);
+            HostPlayer = new(null);
+            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, null, null, null, HostPlayer);
+            HostPlayer.SetEntity(playerEntity);
+            
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
             ControlsManager.SetPlayer(player);
             player.EnablePlayer();
-
-            HostPlayer = new(null, playerEntity);
         }
 
 
@@ -108,82 +110,64 @@ namespace Networking.Server {
             if (tick % NetCommon.TICKS_PER_SNAPSHOT == 0)
                 RunSnapshot();
         }
+
         private void RunSnapshot() {
             foreach (var peer in WWNetManager.ConnectedPeers) {
                 SendUpdatesToPlayer(peer);
             }
 
-            SChunkManager.UnloadChunksMarkedForUnloading();
-            SChunkManager.ResetChunkUpdatesAndSnapshots();
+            NewSChunkManager.CleanupAfterSnapshot();
         }
+        
+
         private void SendUpdatesToPlayer(NetPeer peer) {
             if(!peer.TryGetWSPlayer(out var player))
                 return;
 
-            // Get the initial snapshot packet from the chunk the player is in
+            bool hasReliableUpdates = false;
+            PacketCommunication.StartMultiPacket(writer, Tick);
             if(player.Entity != null) {
-                SChunk chunk = player.Entity.CurrentChunk;
-                NetDataWriter unreliableChunkWriter = chunk.GetPrepared3x3UnreliableDeltaSnapshotPacket();
-
-                // Save the position of the writer for this chunk for later use
-                int chunkWriterPositionBeforeModification = unreliableChunkWriter.Length;
-                
-                // If the player changed chunks, append a packet for changed entities
-                if(player.previousChunk != null) {
-                    WSEntitiesLoadedDeltaPkt entitiesLoadedDeltaPkt = SChunkManager.GetEntitiesLoadedDeltaPkt(
-                        player.previousChunk.Coords,
-                        player.Entity.ChunkPosition);
-
-                    entitiesLoadedDeltaPkt?.Serialize(unreliableChunkWriter);
+                NewSChunk chunk = player.Entity.Chunk;
+                if(NewSChunkManager.TryGetPlayerUpdates(player, true, out NetDataWriter reliableChunkUpdates)) {
+                    writer.Append(reliableChunkUpdates);
+                    hasReliableUpdates = true;
                 }
-                player.previousChunk = chunk;
-                
-                // Write player controller state
-                INetSerializable genericControllerState = null;
-                if(player.Entity.TryGetComponent(out DefaultController defaultController)) {
-                    var defaultControllerState = defaultController.GetSerializableState(tick);
-                    genericControllerState = defaultControllerState;
-                } // else if spectator, etc.
-
-                genericControllerState?.Serialize(unreliableChunkWriter);
-                    
-                // Send full snapshot to the player
-                peer.Send(unreliableChunkWriter, DeliveryMethod.Unreliable);
-
-                // Reset the writer from the chunk to before it was personalized
-                unreliableChunkWriter.SetPosition(chunkWriterPositionBeforeModification);
+                if((player.ReliablePackets?.SerializeAndReset(writer, false)).GetValueOrDefault(false)) {
+                    hasReliableUpdates = true;
+                }
+            }
+            if(hasReliableUpdates) {
+                peer.Send(writer, DeliveryMethod.ReliableOrdered);
+                PacketCommunication.StartMultiPacket(writer, Tick);
             }
 
-            // Also send reliable updates
-            var reliableChunkWriter = player.Entity.CurrentChunk.GetPrepared3x3ReliableUpdatesPacket();
-            // If no sources for reliable updates, don't send anything
-            if(!player.ReliablePackets.HasPackets && reliableChunkWriter == null)
-                return;
-
-            // If 3x3 chunk had no reliable updates, create own multipacket (and don't bother resetting it)
-            int? reliableChunkWriterPositionBeforeModification = reliableChunkWriter?.Length;
-            if(reliableChunkWriter == null) {
-                reliableChunkWriter = writer;
-                PacketCommunication.StartMultiPacket(writer, GetTick());
+            bool hasUnreliableUpdates = false;
+            if(NewSChunkManager.TryGetPlayerUpdates(player, false, out NetDataWriter unreliableChunkUpdates)) {
+                writer.Append(unreliableChunkUpdates);
+                hasUnreliableUpdates = true;
             }
-
-            player.ReliablePackets.SerializeAndReset(writer);
-
-            peer.Send(reliableChunkWriter, DeliveryMethod.ReliableOrdered);
-
-            // Reset writer to before modification
-            if(reliableChunkWriterPositionBeforeModification != null)
-                reliableChunkWriter.SetPosition(reliableChunkWriterPositionBeforeModification.Value);
+            // TODO: abstract this to work with any controller
+            if(player.Entity.TryGetComponent(out DefaultController defaultController)) {
+                var defaultControllerState = defaultController.GetSerializableState(tick);
+                defaultControllerState.Serialize(writer);
+                hasUnreliableUpdates = true;
+            }
+            if(hasUnreliableUpdates) {
+                peer.Send(writer, DeliveryMethod.Unreliable);
+            }
         }
 
         private bool TryAddPlayer(NetPeer peer, string userName) {
             if(peer.TryGetWSPlayer(out _))
                 return false;
 
-            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, true);
-            SPlayer wsPlayer = new(peer, playerEntity);
-            peer.Tag = wsPlayer;
-            PlayerJoined?.Invoke(wsPlayer);
+            SPlayer player = new(peer);
+            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, null, null, null, player);
+            player.SetEntity(playerEntity);
+
+            
+            peer.Tag = player;
+            PlayerJoined?.Invoke(player);
 
             PacketCommunication.StartMultiPacket(writer, tick);
             
@@ -193,27 +177,17 @@ namespace Networking.Server {
             };
             joinAcceptPacket.Serialize(writer);
 
-            SChunk chunk = playerEntity.CurrentChunk;
-            WSFullEntitiesSnapshotPkt fullEntitiesSnapshotPacket = new()
-            {
-                entities = new WEntitySerializable[chunk.PresentEntities.Count],
-                isFullReset = true
-            };
-            int i=0;
-            foreach(SEntity entity in chunk.PresentEntities) {
-                fullEntitiesSnapshotPacket.entities[i++] = entity.GetSerializedEntity(tick);
-            }
-            fullEntitiesSnapshotPacket.Serialize(writer);
+            SFullEntitiesSnapshotPkt fullEntitiesSnapshot = playerEntity.Chunk.GetFullEntitiesSnapshot(tick);
+            fullEntitiesSnapshot.Serialize(writer);
 
             peer.Send(writer, DeliveryMethod.ReliableOrdered);
-
             return true;
         }
         private bool TryRemovePlayer(NetPeer peer) {
             if(!peer.TryGetWSPlayer(out var player))
                 return false;
 
-            player.Entity.Kill(WEntityKillReason.Unload);
+            player.Entity.StartDeath(WEntityKillReason.Unload);
             //WSEntityManager.KillEntity(player.Entity.Id);
             
             SPlayerInputsSlotterManager.RemovePlayer(player);

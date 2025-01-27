@@ -3,7 +3,7 @@ using Networking.Client;
 using UnityEngine;
 
 namespace Networking.Shared {
-    public class WSFullEntitiesSnapshotPkt : SPacket<WSFullEntitiesSnapshotPkt> {
+    public class SFullEntitiesSnapshotPkt : SPacket<SFullEntitiesSnapshotPkt> {
         public WEntitySerializable[] entities;
         public bool isFullReset;
 

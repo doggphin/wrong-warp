@@ -8,15 +8,15 @@ public class CPacketUnpacker : PacketUnpacker<CPacketUnpacker>
     private readonly Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> packetDeserializers = new() {
         { PacketIdentifier.SJoinAccept, Deserialize<SJoinAcceptPkt> },
         { PacketIdentifier.SChunkDeltaSnapshot, Deserialize<SChunkDeltaSnapshotPkt> },
-        { PacketIdentifier.SEntitiesLoadedDelta, Deserialize<WSEntitiesLoadedDeltaPkt> },
+        { PacketIdentifier.SEntitiesLoadedDelta, Deserialize<SEntitiesLoadedDeltaPkt> },
         { PacketIdentifier.SDefaultControllerState, Deserialize<SDefaultControllerStatePkt> },
         { PacketIdentifier.SChunkReliableUpdates, Deserialize<SChunkReliableUpdatesPkt> },
         { PacketIdentifier.SChatMessage, Deserialize<SChatMessagePkt> },
-        { PacketIdentifier.SFullEntitiesSnapshot, Deserialize<WSFullEntitiesSnapshotPkt> },
-        { PacketIdentifier.SEntitySpawn, Deserialize<WSEntitySpawnPkt> },
-        { PacketIdentifier.SEntityKill, Deserialize<WSEntityKillPkt> },
-        { PacketIdentifier.SSetPlayerEntity, Deserialize<WSSetPlayerEntityPkt> },
-        { PacketIdentifier.SEntityTransformUpdate, Deserialize<WSEntityTransformUpdatePkt> },
+        { PacketIdentifier.SFullEntitiesSnapshot, Deserialize<SFullEntitiesSnapshotPkt> },
+        { PacketIdentifier.SEntitySpawn, Deserialize<SEntitySpawnPkt> },
+        { PacketIdentifier.SEntityKill, Deserialize<SEntityKillPkt> },
+        { PacketIdentifier.SSetPlayerEntity, Deserialize<SSetPlayerEntityPkt> },
+        { PacketIdentifier.SEntityTransformUpdate, Deserialize<SEntityTransformUpdatePkt> },
         { PacketIdentifier.SGenericUpdatesCollection, Deserialize<TickedPacketCollection> }
     };
 

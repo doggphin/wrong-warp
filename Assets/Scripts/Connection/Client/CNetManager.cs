@@ -67,8 +67,8 @@ namespace Networking.Client {
 
             ChatUiManager.SendChatMessage += SendChatMessage;
             SPacket<SDefaultControllerStatePkt>.Apply += HandleDefaultControllerState;
-            SPacket<WSEntitiesLoadedDeltaPkt>.Apply += HandleEntitiesLoadedDelta;
-            SPacket<WSSetPlayerEntityPkt>.ApplyUnticked += HandleSetPlayerEntity;
+            SPacket<SEntitiesLoadedDeltaPkt>.Apply += HandleEntitiesLoadedDelta;
+            SPacket<SSetPlayerEntityPkt>.ApplyUnticked += HandleSetPlayerEntity;
             SPacket<SJoinAcceptPkt>.ApplyUnticked += HandleJoinAccept;
         }
 
@@ -78,8 +78,8 @@ namespace Networking.Client {
         protected override void OnDestroy() {
             ChatUiManager.SendChatMessage -= SendChatMessage;
             SPacket<SDefaultControllerStatePkt>.Apply -= HandleDefaultControllerState;
-            SPacket<WSEntitiesLoadedDeltaPkt>.Apply -= HandleEntitiesLoadedDelta;
-            SPacket<WSSetPlayerEntityPkt>.ApplyUnticked -= HandleSetPlayerEntity;
+            SPacket<SEntitiesLoadedDeltaPkt>.Apply -= HandleEntitiesLoadedDelta;
+            SPacket<SSetPlayerEntityPkt>.ApplyUnticked -= HandleSetPlayerEntity;
             SPacket<SJoinAcceptPkt>.ApplyUnticked -= HandleJoinAccept;
             base.OnDestroy();
         }
@@ -188,7 +188,7 @@ namespace Networking.Client {
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) => Debug.Log($"Socket error: {socketError}");
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency) { }
         
-        private void HandleSetPlayerEntity(WSSetPlayerEntityPkt pkt) {
+        private void HandleSetPlayerEntity(SSetPlayerEntityPkt pkt) {
             Instance.myEntityId = pkt.entityId;
             Debug.Log($"Setting entity id to {pkt.entityId}!");
         } 
@@ -201,11 +201,11 @@ namespace Networking.Client {
         }
 
         
-        private void HandleEntitiesLoadedDelta(int tick, WSEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
+        private void HandleEntitiesLoadedDelta(int tick, SEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
             foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
                 PacketCacheManager.CachePacket(
                     tick,
-                    new WSEntityKillPkt() {
+                    new SEntityKillPkt() {
                         entityId = entityId,
                         reason = WEntityKillReason.Unload,
                     }
@@ -215,7 +215,7 @@ namespace Networking.Client {
             foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
                 PacketCacheManager.CachePacket(
                     tick,
-                    new WSEntitySpawnPkt() {
+                    new SEntitySpawnPkt() {
                         entity = entity,
                         reason = WEntitySpawnReason.Load
                     }

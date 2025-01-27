@@ -17,7 +17,7 @@ public class InteractableUiManager : BaseUiElement<InteractableUiManager> {
         base.Awake();
     }
 
-    Interactable lastSeenInteractable = null;
+    BaseInteractable lastSeenInteractable = null;
     void LateUpdate() {
         if(!ControlsManager.TryGetPlayer(out var player)) {
             canvasGroup.alpha = 0;

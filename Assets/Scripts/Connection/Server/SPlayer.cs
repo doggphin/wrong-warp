@@ -22,21 +22,25 @@ namespace Networking.Server {
             return peer.Tag == null ? null : (SPlayer)peer.Tag;
         }
 
-        public SChunk previousChunk = null;
+        public NewSChunk previousChunk = null;
         public SEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
         private SInventory personalInventory;
 
-        public TickedPacketCollection ReliablePackets { get; private set; } = new();
+        ///<summary> ! Is null on host players ! </summary>
+        public TickedPacketCollection ReliablePackets { get; private set; }
 
         public void SetPersonalInventory(SInventory inventory) {
             SSetPersonalInventoryIdPkt setPersonalInventoryPkt = new() { personalInventoryId = inventory.Id };
             personalInventory = inventory;
         }
 
-        public SPlayer(NetPeer peer, SEntity entity) {
+        public SPlayer(NetPeer peer) {
             Peer = peer;
-            SetEntity(entity);
+            // Only instantiate ReliablePackets if non-host player
+            ReliablePackets = peer == null ?
+                null :
+                new();
         }
         
         ///<summary> Sets the entity of this player and sends a notification to the peer that their entity has changed. </summary>
@@ -51,10 +55,11 @@ namespace Networking.Server {
             Entity = entity;
             
             // Notify player that their entity has changed
-            WSSetPlayerEntityPkt setPlayerPkt = new() {
+            SSetPlayerEntityPkt setPlayerPkt = new() {
                 entityId = entity.Id
             };
-            ReliablePackets.AddPacket(SNetManager.Tick, setPlayerPkt);
+
+            ReliablePackets?.AddPacket(SNetManager.Tick, setPlayerPkt);  
         }
     }
 }

@@ -86,7 +86,7 @@ namespace Networking.Client {
             SetTransformValueIfNotNull(serializedTransform.scale, scalesBuffer, receivedScales);
         }
 
-        public void Init(WSEntitySpawnPkt spawnPkt) {
+        public void Init(SEntitySpawnPkt spawnPkt) {
             Id = spawnPkt.entity.entityId;
             
             lastReceivedPosition = positionsBuffer[CNetManager.ObservingTick] = spawnPkt.entity.transform.position ?? Vector3.zero;
@@ -94,7 +94,7 @@ namespace Networking.Client {
             lastReceivedScale =    scalesBuffer[CNetManager.ObservingTick]    = spawnPkt.entity.transform.scale ?? Vector3.one;
         }
 
-        public override void Kill(WEntityKillReason reason) {
+        public override void StartDeath(WEntityKillReason reason) {
             Debug.Log("RIP!!!!!");
             Destroy(gameObject);
         }

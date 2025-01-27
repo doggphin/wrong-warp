@@ -11,25 +11,25 @@ namespace Networking.Client {
         public static CEntity GetEntityById(int id) => Instance.entities.GetValueOrDefault(id, null);
 
         protected override void Awake() {
-            SPacket<WSEntitySpawnPkt>.ApplyUnticked += HandleSpawnEntity;
-            SPacket<WSEntityKillPkt>.ApplyUnticked += KillEntity;
-            SPacket<WSFullEntitiesSnapshotPkt>.ApplyUnticked += HandleFullEntitiesSnapshot;
-            SPacket<WSEntityTransformUpdatePkt>.Apply += SetEntityTransformForTick;
+            SPacket<SEntitySpawnPkt>.ApplyUnticked += HandleSpawnEntity;
+            SPacket<SEntityKillPkt>.ApplyUnticked += KillEntity;
+            SPacket<SFullEntitiesSnapshotPkt>.ApplyUnticked += HandleFullEntitiesSnapshot;
+            SPacket<SEntityTransformUpdatePkt>.Apply += SetEntityTransformForTick;
             base.Awake();
         }
 
         protected override void OnDestroy()
         {
-            SPacket<WSEntitySpawnPkt>.ApplyUnticked -= HandleSpawnEntity;
-            SPacket<WSEntityKillPkt>.ApplyUnticked -= KillEntity;
-            SPacket<WSFullEntitiesSnapshotPkt>.ApplyUnticked -= HandleFullEntitiesSnapshot;
-            SPacket<WSEntityTransformUpdatePkt>.Apply -= SetEntityTransformForTick;
+            SPacket<SEntitySpawnPkt>.ApplyUnticked -= HandleSpawnEntity;
+            SPacket<SEntityKillPkt>.ApplyUnticked -= KillEntity;
+            SPacket<SFullEntitiesSnapshotPkt>.ApplyUnticked -= HandleFullEntitiesSnapshot;
+            SPacket<SEntityTransformUpdatePkt>.Apply -= SetEntityTransformForTick;
             base.OnDestroy();
         }
 
 
-        private void HandleSpawnEntity(WSEntitySpawnPkt pkt) => SpawnEntity(pkt);
-        private CEntity SpawnEntity(WSEntitySpawnPkt spawnPacket) {
+        private void HandleSpawnEntity(SEntitySpawnPkt pkt) => SpawnEntity(pkt);
+        private CEntity SpawnEntity(SEntitySpawnPkt spawnPacket) {
             if(entities.ContainsKey(spawnPacket.entity.entityId)) {
                 Debug.Log($"Entity with ID {spawnPacket.entity.entityId} already exists");
                 return null;
@@ -51,18 +51,18 @@ namespace Networking.Client {
         }
 
 
-        private void KillEntity(WSEntityKillPkt killPacket) {
+        private void KillEntity(SEntityKillPkt killPacket) {
             if (!Instance.entities.TryGetValue(killPacket.entityId, out CEntity entity)) {
                 Debug.LogWarning("Tried to delete an entity that did not exist!");
                 return;
             }
 
-            entity.Kill(killPacket.reason);
+            entity.StartDeath(killPacket.reason);
             Instance.entities.Remove(killPacket.entityId);
         }
 
         
-        private void SetEntityTransformForTick(int tick, WSEntityTransformUpdatePkt transformPacket) {
+        private void SetEntityTransformForTick(int tick, SEntityTransformUpdatePkt transformPacket) {
             Debug.Log($"Received an entity transform for {transformPacket.CEntityId}");
             if(!Instance.entities.TryGetValue(transformPacket.CEntityId, out CEntity entity))
                 return;
@@ -71,7 +71,7 @@ namespace Networking.Client {
         }
 
 
-        private void HandleFullEntitiesSnapshot(WSFullEntitiesSnapshotPkt pkt) {
+        private void HandleFullEntitiesSnapshot(SFullEntitiesSnapshotPkt pkt) {
             Dictionary<int, WEntitySerializable> receivedEntities = new();
             foreach(var serializedEntity in pkt.entities) {
                 receivedEntities.Add(serializedEntity.entityId, serializedEntity);
@@ -82,7 +82,7 @@ namespace Networking.Client {
             foreach(var clientEntityId in Instance.entities.Keys) {
                 if(!receivedEntities.ContainsKey(clientEntityId)) {
                     Debug.Log("Killing an entity that exists on the client but not the server!");
-                    KillEntity(new WSEntityKillPkt() { entityId = clientEntityId, reason = WEntityKillReason.Unload });
+                    KillEntity(new SEntityKillPkt() { entityId = clientEntityId, reason = WEntityKillReason.Unload });
                 }
             }
 
@@ -90,7 +90,7 @@ namespace Networking.Client {
                 if(!Instance.entities.ContainsKey(receivedEntity.Key)) {
                     // Does not exist on client; must create new entity for it
                     Debug.Log("Spawning an entity that exists on the server but not the client!");
-                    SpawnEntity(new WSEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
+                    SpawnEntity(new SEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
                 }
             }
         }
