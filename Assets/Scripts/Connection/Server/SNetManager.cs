@@ -76,8 +76,7 @@ namespace Networking.Server {
 
         private void CreateHostPlayer() {
             HostPlayer = new(null);
-            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, null, null, null, HostPlayer);
-            HostPlayer.SetEntity(playerEntity);
+            SEntity playerEntity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.Player, null, null, null, HostPlayer);
             
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
@@ -116,7 +115,7 @@ namespace Networking.Server {
                 SendUpdatesToPlayer(peer);
             }
 
-            NewSChunkManager.CleanupAfterSnapshot();
+            NewSChunkManager.Instance.CleanupAfterSnapshot();
         }
         
 
@@ -128,7 +127,7 @@ namespace Networking.Server {
             PacketCommunication.StartMultiPacket(writer, Tick);
             if(player.Entity != null) {
                 NewSChunk chunk = player.Entity.Chunk;
-                if(NewSChunkManager.TryGetPlayerUpdates(player, true, out NetDataWriter reliableChunkUpdates)) {
+                if(NewSChunkManager.Instance.TryGetPlayerUpdates(player, true, out NetDataWriter reliableChunkUpdates)) {
                     writer.Append(reliableChunkUpdates);
                     hasReliableUpdates = true;
                 }
@@ -142,7 +141,7 @@ namespace Networking.Server {
             }
 
             bool hasUnreliableUpdates = false;
-            if(NewSChunkManager.TryGetPlayerUpdates(player, false, out NetDataWriter unreliableChunkUpdates)) {
+            if(NewSChunkManager.Instance.TryGetPlayerUpdates(player, false, out NetDataWriter unreliableChunkUpdates)) {
                 writer.Append(unreliableChunkUpdates);
                 hasUnreliableUpdates = true;
             }
@@ -162,10 +161,8 @@ namespace Networking.Server {
                 return false;
 
             SPlayer player = new(peer);
-            SEntity playerEntity = SEntityManager.SpawnEntity(EntityPrefabId.Player, null, null, null, player);
-            player.SetEntity(playerEntity);
+            SEntity playerEntity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.Player, null, null, null, player);
 
-            
             peer.Tag = player;
             PlayerJoined?.Invoke(player);
 

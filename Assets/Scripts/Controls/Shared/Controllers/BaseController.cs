@@ -54,7 +54,9 @@ namespace Controllers.Shared {
 
         protected virtual float InteractRange => 5.0f;
         public override bool PollForInteractable(out BaseInteractable outInteractable) {
-            Debug.Log("Polling!");
+            outInteractable = null;
+            return false;
+            /*Debug.Log("Polling!");
             Debug.DrawLine(cam.transform.position, cam.transform.position + cam.transform.rotation * Vector3.forward * InteractRange, Color.red);
             Debug.Log(InteractRange);
             if(!Physics.Raycast(cam.transform.position, cam.transform.rotation * Vector3.forward, out var hit, InteractRange)) {
@@ -63,7 +65,9 @@ namespace Controllers.Shared {
                 return false;
             }
 
-            return hit.collider.TryGetComponent(out outInteractable);
+            outInteractable*/
+
+            //return hit.collider.TryGetComponent(out outInteractable);
         }
 
         public override Vector2? PollLook() => boundedRotator.PollLook();

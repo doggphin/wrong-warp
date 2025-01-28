@@ -25,6 +25,36 @@ namespace Networking.Shared {
             }
         }
 
+
+        protected void CopyTransformToNextTick(int tick) {
+            int nextTick = tick + 1;
+            positionsBuffer[nextTick] = positionsBuffer[tick];
+            rotationsBuffer[nextTick] = rotationsBuffer[tick];
+            scalesBuffer[nextTick] = scalesBuffer[tick];
+        }  
+
+
+        private void SetTransformValue<T>
+        (T transformValue, CircularTickBuffer<T> transformBuffer, bool copyToNextTick = false, int? tickOrDefault = null) {
+            int tick = tickOrDefault.GetValueOrDefault(WWNetManager.GetTick());
+            transformBuffer[tick] = transformValue;
+            if(copyToNextTick)
+                transformBuffer[tick + 1] = transformValue;
+        }
+
+        public void SetPosition(Vector3 position, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(position, positionsBuffer, copyToNextTick, tickOrDefault);
+        public void SetRotation(Quaternion rotation, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(rotation, rotationsBuffer, copyToNextTick, tickOrDefault);
+        public void SetScale(Vector3 scale, bool copyToNextTick = false, int? tickOrDefault = null) =>
+            SetTransformValue(scale, scalesBuffer, copyToNextTick, tickOrDefault);
+
+
+        public Vector3 GetPosition(int tick) => positionsBuffer[tick];
+        public Quaternion GetRotation(int tick) => rotationsBuffer[tick];
+        public Vector3 GetScale(int tick) => scalesBuffer[tick];
+
+
         ///<summary> Lerps percentage way between the transform value on the tick before endTick and endTick </summary>
         private T LerpTransformValues<T>(Func<T, T, float, T> lerpFunction, CircularTickBuffer<T> transformValueBuffer, int endTick, float percentage) =>
             lerpFunction(transformValueBuffer[endTick - 1], transformValueBuffer[endTick], percentage);

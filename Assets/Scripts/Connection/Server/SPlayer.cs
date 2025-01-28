@@ -44,6 +44,7 @@ namespace Networking.Server {
         }
         
         ///<summary> Sets the entity of this player and sends a notification to the peer that their entity has changed. </summary>
+        /*
         public void SetEntity(SEntity entity) {
             if(ReferenceEquals(entity, Entity))
                 return;
@@ -60,6 +61,26 @@ namespace Networking.Server {
             };
 
             ReliablePackets?.AddPacket(SNetManager.Tick, setPlayerPkt);  
+        }
+        */
+        
+        public void HandleSetEntity(SEntity entity) {
+            if(ReferenceEquals(entity, Entity)) {
+                return;
+            }
+
+            Entity = entity;
+            
+            if(entity == null) {
+                // TODO: Send unset player packet
+            } else {
+                // Send set player packet
+                SSetPlayerEntityPkt setPlayerPkt = new() {
+                    entityId = entity.Id
+                };
+
+                ReliablePackets?.AddPacket(SNetManager.Tick, setPlayerPkt);
+            }
         }
     }
 }

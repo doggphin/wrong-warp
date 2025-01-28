@@ -61,12 +61,11 @@ namespace Networking.Shared {
                 return;
 
             WcNetClient = Instantiate(clientPrefab).GetComponent<CNetManager>();
+            ticker = WcNetClient;
 
             BaseNetManager = SetNewNetManager(WcNetClient);
             BaseNetManager.Start();
             BaseNetManager.Connect(address, port, NetCommon.CONNECTION_KEY);
-
-            ticker = WcNetClient;
 
             StopMainMenu();
         }
@@ -79,12 +78,11 @@ namespace Networking.Shared {
                 return;
 
             WsNetServer = Instantiate(serverPrefab).GetComponent<SNetManager>();
+            ticker = WsNetServer;
 
             BaseNetManager = SetNewNetManager(WsNetServer);
             BaseNetManager.Start(port);
             WsNetServer.Activate();
-
-            ticker = WsNetServer;
 
             StopMainMenu();
         }
@@ -93,6 +91,8 @@ namespace Networking.Shared {
         public static void Disconnect(WDisconnectInfo info) {
             BaseNetManager.Stop();
             BaseNetManager = null;
+
+            Instance.ticker = null;
 
             // Not great to do this here, but it's common between both client/server OnDestroy()s
             ControlsManager.SetPlayer(null);

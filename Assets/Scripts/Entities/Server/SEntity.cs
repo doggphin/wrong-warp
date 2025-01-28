@@ -20,19 +20,7 @@ namespace Networking.Server {
 
         private SPlayer player;
         public bool IsPlayer => player != null;
-        public SPlayer Player {
-            get => player; 
-            set {
-                if(IsPlayer && value == null) {
-                    UnsetAsPlayer?.Invoke(this, player);
-                }
-                else if(!IsPlayer && value != null) {
-                    SetAsPlayer?.Invoke(this, value);
-                }
-
-                player = value;
-            }
-        }
+        public SPlayer Player => player;
 
 
         public WEntitySerializable GetSerializedEntity(int tick) {
@@ -48,24 +36,35 @@ namespace Networking.Server {
         }
 
 
-        public void Init(int entityId, EntityPrefabId prefabId, SPlayer player, Vector3 position, Quaternion rotation, Vector3 scale) {
+        public void Init(int entityId, EntityPrefabId prefabId, Vector3 position, Quaternion rotation, Vector3 scale) {
             Id = entityId;
             PrefabId = prefabId;
             
             SetPosition(position, true);
             SetRotation(rotation, true);
-            SetScale(position, true);
-
-            this.player = player;
+            SetScale(scale, true);
         }
 
 
         ///<summary> This should only ever be called from WSPlayer </summary>
-        public void SetPlayer(SPlayer player) {
-            if(Player != null && player != null)
-                throw new Exception("Cannot set an entity's player without unsetting player first! Call this from WSPlayer.SetEntity!");
+        public void ChangePlayer(SPlayer newPlayer) {
+            SPlayer currentPlayer = player;
             
-            Player = player;
+            if(ReferenceEquals(player, newPlayer)) {
+                return;
+            }
+
+            currentPlayer?.HandleSetEntity(null);
+            newPlayer?.HandleSetEntity(this);
+            
+            player = newPlayer;
+            
+            if(currentPlayer != null && newPlayer == null) {
+                UnsetAsPlayer?.Invoke(this, currentPlayer);
+            }
+            else if(currentPlayer == null && newPlayer != null) {
+                SetAsPlayer?.Invoke(this, newPlayer);
+            }
         }
 
 
@@ -82,29 +81,6 @@ namespace Networking.Server {
             if(setVisualScaleAutomatically)
                 transform.localScale = LerpBufferedScales(tick, percentageThroughTick);
         }
-
-        
-        private void CopyTransformToNextTick(int tick) {
-            int nextTick = tick + 1;
-            positionsBuffer[nextTick] = positionsBuffer[tick];
-            rotationsBuffer[nextTick] = rotationsBuffer[tick];
-            scalesBuffer[nextTick] = scalesBuffer[tick];
-        }
-
-        private void SetTransformValue<T>
-        (T transformValue, CircularTickBuffer<T> transformBuffer, bool copyToNextTick = false, int? tickOrDefault = null) {
-            int tick = tickOrDefault.GetValueOrDefault(SNetManager.Tick);
-            transformBuffer[tick] = transformValue;
-            if(copyToNextTick)
-                transformBuffer[tick + 1] = transformValue;
-        }
-
-        public void SetPosition(Vector3 position, bool copyToNextTick = false, int? tickOrDefault = null) =>
-            SetTransformValue(position, positionsBuffer, copyToNextTick, tickOrDefault);
-        public void SetRotation(Quaternion rotation, bool copyToNextTick = false, int? tickOrDefault = null) =>
-            SetTransformValue(rotation, rotationsBuffer, copyToNextTick, tickOrDefault);
-        public void SetScale(Vector3 scale, bool copyToNextTick = false, int? tickOrDefault = null) =>
-            SetTransformValue(scale, scalesBuffer, copyToNextTick, tickOrDefault);
 
         public void PollAndFinalizeTransform() {
             int tick = SNetManager.Instance.GetTick();
@@ -168,7 +144,7 @@ namespace Networking.Server {
         
         void OnDestroy() {
             if(!isDead) {
-                Debug.LogError("Destroyed an entity without letting it die first!");
+                FinishedDying?.Invoke(this);
             }
         }
     }

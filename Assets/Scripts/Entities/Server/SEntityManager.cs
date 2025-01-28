@@ -12,15 +12,29 @@ namespace Networking.Server {
         private Dictionary<int, SEntity> entities = new();
         private static BaseIdGenerator idGenerator = new();
 
-        public static SEntity SpawnEntity(EntityPrefabId entityIdentifier, Vector3? position, Quaternion? rotation = null, Vector3? scale = null, SPlayer player = null) {
+        public static Action<SEntity> EntityDeleted;
+
+        protected override void Awake()
+        {
+            NewSChunk.UnloadEntity += DeleteEntity;
+            base.Awake();
+        }
+
+        protected override void OnDestroy()
+        {
+            NewSChunk.UnloadEntity -= DeleteEntity;
+            base.OnDestroy();
+        }
+
+        
+        public SEntity SpawnEntity(EntityPrefabId entityIdentifier, Vector3? position, Quaternion? rotation = null, Vector3? scale = null, SPlayer player = null) {
             int entityId = idGenerator.GetNextEntityId(Instance.entities);
             var entity = SEntityFactory.GenerateEntity(entityIdentifier, entityId);
 
-            entity.transform.parent = Instance.transform;
+            entity.transform.parent = transform;
             entity.Init(
                 entityId,
                 entityIdentifier,
-                player,
                 position.GetValueOrDefault(Vector3.zero),
                 rotation.GetValueOrDefault(Quaternion.identity),
                 scale.GetValueOrDefault(Vector3.one)
@@ -28,40 +42,39 @@ namespace Networking.Server {
 
             // Don't allow spawning a non-player entity into an unloaded chunk
             Vector2Int entityChunkCoordinates = NewSChunkManager.ProjectToGrid(position.GetValueOrDefault(Vector3.zero));
-            if(!NewSChunkManager.AddEntityToSystem(entity, entityChunkCoordinates)) {
+            if(!NewSChunkManager.Instance.AddEntityAndOrPlayerToSystem(entity, entityChunkCoordinates, player)) {
                 Debug.Log("Couldn't add entity to the system!");
                 Destroy(entity.gameObject);
                 return null;
             }
 
-            Debug.Log("Added the entity to the system!");
-
             entity.FinishedDying += DeleteEntity;
 
-            Instance.entities.Add(entityId, entity);
-            Debug.Log($"Successfully created {entity}, with ID {entityId}!");
+            entities.Add(entityId, entity);
             return entity;
         }
 
 
-        public static void UpdateEntityChunks() {
-            foreach(SEntity entity in Instance.entities.Values) {
+        public void UpdateChunkOfAllEntities() {
+            foreach(SEntity entity in entities.Values) {
                 Vector2Int newChunkCoords = NewSChunkManager.ProjectToGrid(entity.positionsBuffer[SNetManager.Tick]);
                 if (newChunkCoords == entity.Chunk.Coords)
                     continue;
                 
-                NewSChunkManager.MoveEntity(entity, newChunkCoords);
+                NewSChunkManager.Instance.MoveEntity(entity, newChunkCoords);
             }
         }
 
 
-        public static void DeleteEntity(SEntity entity) {
+        private void DeleteEntity(SEntity entity) {
             if(entity == null)
                 return;
 
             entity.FinishedDying -= DeleteEntity;
-            NewSChunkManager.RemoveEntityFromSystem(entity);
-            Instance.entities.Remove(entity.Id);
+
+            EntityDeleted?.Invoke(entity);
+
+            entities.Remove(entity.Id);
             Destroy(entity.gameObject);
         }
 

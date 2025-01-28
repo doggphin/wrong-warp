@@ -46,6 +46,8 @@ public class NewSChunk {
 
     private bool hasAlreadyBroadcastHasAnUpdate;
     public static Action<NewSChunk> HasAnUpdate;
+
+    public static Action<SEntity> UnloadEntity;
     
     public NewSChunk(Vector2Int coords) {
         Coords = coords;
@@ -200,7 +202,7 @@ public class NewSChunk {
         }
     }
 
-
+    
     public void AddEntityUpdate(SEntity entity, TickedEntitiesUpdates tickedEntitiesUpdates, BasePacket packet) {
         if(playerObservers.Count > 0) {
             tickedEntitiesUpdates.Add(SNetManager.Tick, entity.Id, packet);
@@ -208,7 +210,7 @@ public class NewSChunk {
         }
     }
 
-
+    ///<summary> Notifies all players in this chunk that an entity has entered their render distance </summary>
     public void AddEntityIntoRenderDistance(SEntity entity) {
         AddEntityUpdate(entity, rLocalEUpdates, 
             new SEntitySpawnPkt() {
@@ -217,7 +219,7 @@ public class NewSChunk {
             });
     }
 
-
+    ///<summary> Notifies all players in this chunk that an entity has left their render distance </summary>
     public void RemoveEntityFromRenderDistance(SEntity entity) {
         AddEntityUpdate(entity, rLocalEUpdates, 
             new SEntityKillPkt() {
@@ -247,7 +249,7 @@ public class NewSChunk {
 
     public void Unload() {
         foreach(var entity in entities) {
-            SEntityManager.DeleteEntity(entity);
+            UnloadEntity?.Invoke(entity);
         }
     }
 }

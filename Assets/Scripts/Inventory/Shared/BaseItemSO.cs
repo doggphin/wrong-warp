@@ -19,7 +19,7 @@ namespace Inventories {
         public Sprite SlotSprite => slotSprite;
 
         [SerializeField] private int maxStackSize = 1;
-        public int MaxStackSize => MaxStackSize;
+        public int MaxStackSize => maxStackSize;
 
         void OnEnable() {
             ItemClassificationBitflags = InventoryTemplate.GenerateItemRestrictionFlags(ItemClassificationsArray);

@@ -1,6 +1,3 @@
-using System.Data.Common;
-using LiteNetLib.Utils;
-using Networking.Server;
 using Networking.Shared;
 using UnityEngine;
 
@@ -21,7 +18,7 @@ namespace Controllers.Shared {
         private bool canDoubleJump = false;
         private InputsSerializable previousInputs = new();
 
-        private void Awake() {
+        void Awake() {
             boundedRotator = new();
             characterController = GetComponent<CharacterController>();
         }
@@ -38,9 +35,11 @@ namespace Controllers.Shared {
             canDoubleJump = state.canDoubleJump;
             previousInputs = state.previousInputs;
             boundedRotator.rotation = state.boundedRotatorRotation;
-            entity.positionsBuffer[tick] = state.position;
-            // Prep position for next tick as well
-            entity.positionsBuffer[tick + 1] = state.position;
+
+            // TODO: remove if working
+            //entity.positionsBuffer[tick] = state.position;
+            //entity.positionsBuffer[tick + 1] = state.position;
+            entity.SetPosition(state.position, true, tick);
         }
         public SDefaultControllerStatePkt GetSerializableState(int tick) {
             return new SDefaultControllerStatePkt() {
@@ -48,6 +47,7 @@ namespace Controllers.Shared {
                 canDoubleJump = canDoubleJump,
                 previousInputs = previousInputs,
                 boundedRotatorRotation = boundedRotator.rotation,
+                // This throws an exception because "entity" field won't be initialized before this is called, can't be put in Awake since won't exist yet
                 position = entity.positionsBuffer[tick]
             };
         }
@@ -56,7 +56,6 @@ namespace Controllers.Shared {
             if(entity == null)
                 return;
 
-            Debug.Log($"Applying to {gameObject.name}!");
             if(inputs.inputFlags.GetFlag(InputType.Look))
                 boundedRotator.rotation = inputs.look.Value;
 
@@ -114,7 +113,6 @@ namespace Controllers.Shared {
             if(inputs.inputFlags.GetFlag(InputType.Jump) && !previousInputs.inputFlags.GetFlag(InputType.Jump)) {
                 if(isGrounded) {
                     velocity.y = groundedJumpForce;
-                    isGrounded = false;
                 } else if (canDoubleJump) {
                     velocity.y = Mathf.Max(aerialJumpForce, velocity.y + aerialJumpForce);
                     
@@ -134,12 +132,16 @@ namespace Controllers.Shared {
             characterController.Move(velocity * NetCommon.SECONDS_PER_TICK);
 
             Vector3 difference = transform.position - entity.positionsBuffer[onTick];
-
-            entity.positionsBuffer[onTick] += difference;
-            entity.positionsBuffer[onTick + 1] = entity.positionsBuffer[onTick];
-            entity.rotationsBuffer[onTick] = boundedRotator.BodyQuatRotation;
+            
+            //TODO: remove if working
+            //entity.positionsBuffer[onTick] += difference;
+            //entity.positionsBuffer[onTick + 1] = entity.positionsBuffer[onTick];
+            //entity.rotationsBuffer[onTick] = boundedRotator.BodyQuatRotation;
+            entity.SetPosition(entity.GetPosition(onTick) + difference, true, onTick);
+            entity.SetRotation(boundedRotator.BodyQuatRotation, false, onTick);
+            
             characterController.enabled = false;
-            transform.position = entity.positionsBuffer[onTick];        // consider deleting this
+            transform.position = entity.GetPosition(onTick);        // consider deleting this
             characterController.enabled = true;
 
             // Visual position will be set before next frame is shown, not important to set here
