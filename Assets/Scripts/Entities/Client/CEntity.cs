@@ -79,9 +79,6 @@ namespace Networking.Client {
             }
 
             SetTransformValueIfNotNull(serializedTransform.position, positionsBuffer, receivedPositions);
-            if(serializedTransform.position.HasValue) {
-                Debug.Log($"Setting position of {gameObject.name} to {serializedTransform.position.Value}");
-            }
             SetTransformValueIfNotNull(serializedTransform.rotation, rotationsBuffer, receivedRotations);
             SetTransformValueIfNotNull(serializedTransform.scale, scalesBuffer, receivedScales);
         }

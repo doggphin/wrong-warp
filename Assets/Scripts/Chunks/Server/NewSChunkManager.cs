@@ -24,7 +24,7 @@ namespace Networking.Server {
         
         ///<summary> Chunks with updates need to be reset every snapshot </summary>
         private List<NewSChunk> chunksWithUpdatesCache = new();
-        private readonly TimeSpan chunkExpirationTime = new(0, 0, 10);
+        private readonly TimeSpan chunkExpirationTime = new(0, 0, 0);
         ///<summary> Chunk coordinates and their expiration dates </summary>
         private Dictionary<Vector2Int, DateTime> expiringChunksCache = new();
 
@@ -57,7 +57,6 @@ namespace Networking.Server {
             if(!loadedChunks.TryGetValue(coords, out NewSChunk chunk)) {
                 chunk = new(coords);
                 loadedChunks[coords] = chunk;
-                Debug.Log($"Generated {chunk.Coords}");
             }
 
             return chunk;
@@ -210,8 +209,6 @@ namespace Networking.Server {
 
                 entity.Chunk = toChunk;
                 toChunk.AddEntity(entity);
-            } else {
-                Debug.Log($"Cannot move entity {entity} into {toCoords}!");
             }
             
             return canEnterNewChunk;
@@ -249,7 +246,6 @@ namespace Networking.Server {
             
             // Unload chunks that need to be unloaded
             foreach(var(coords, timeToUnload) in expiringChunksCache.ToList()) {
-                Debug.Log($"{coords} will be unloaded in {timeToUnload - DateTime.Now}!");
                 if(timeToUnload < DateTime.Now) {
                     loadedChunks[coords].Unload();
                     expiringChunksCache.Remove(coords);

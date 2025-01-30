@@ -26,6 +26,5 @@ public class ObjectViewer : MonoBehaviour
         cam.Render();
 
         viewableObject.ResetLayers();
-        Debug.Log($"{viewableObject.gameObject.name} layer is {viewableObject.gameObject.layer}");
     }
 }

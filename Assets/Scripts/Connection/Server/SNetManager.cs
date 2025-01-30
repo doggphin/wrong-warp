@@ -52,7 +52,6 @@ namespace Networking.Server {
 
         void Update() {
             if(!isActivated) {
-                Debug.Log("Not activated!");
                 return;
             }
             

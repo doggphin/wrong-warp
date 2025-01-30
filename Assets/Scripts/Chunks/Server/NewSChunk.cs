@@ -146,9 +146,12 @@ public class NewSChunk {
     public void ResetUpdates() {
         foreach(var writer in writers)
             writer.Reset();
+
         foreach(var container in tickedContainers)
             container.Reset();
 
+        isRSharedEUpdatesWritten = isUSharedEUpdatesWritten = isRLocalEUpdatesWritten = 
+        isRSharedGUpdatesWritten = isU3x3UpdatesWritten = isR3x3UpdatesWritten =
         hasAlreadyBroadcastHasAnUpdate = false;
     }
 
@@ -162,22 +165,16 @@ public class NewSChunk {
     
 
     public void AddEntity(SEntity entity) {
-        Debug.Log($"Trying to add an entity from {Coords}...");
         if(!entities.Add(entity))
             return;
-        
-        Debug.Log($"Added an entity to {Coords}, which now has {entities.Count} entities.");
 
         entity.PushUnreliableUpdate += AddUnreliableEntityUpdate;
     }
 
 
     public void RemoveEntity(SEntity entity) {
-        Debug.Log($"Trying to remove entity from {Coords}...");
         if(!entities.Remove(entity))
             return;
-
-        Debug.Log($"Removed an entity to {Coords}, which now has {entities.Count} entities.");
 
         entity.PushUnreliableUpdate -= AddUnreliableEntityUpdate;
     }
@@ -253,7 +250,6 @@ public class NewSChunk {
 
     public void Unload() {
         foreach(var entity in entities.ToList()) {
-            Debug.Log($"Unloading {entity}!");
             UnloadEntity?.Invoke(entity);
         }
     }
