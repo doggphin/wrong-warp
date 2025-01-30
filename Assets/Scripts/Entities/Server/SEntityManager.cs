@@ -55,17 +55,6 @@ namespace Networking.Server {
         }
 
 
-        public void UpdateChunkOfAllEntities() {
-            foreach(SEntity entity in entities.Values) {
-                Vector2Int newChunkCoords = NewSChunkManager.ProjectToGrid(entity.positionsBuffer[SNetManager.Tick]);
-                if (newChunkCoords == entity.Chunk.Coords)
-                    continue;
-                
-                NewSChunkManager.Instance.MoveEntity(entity, newChunkCoords);
-            }
-        }
-
-
         private void DeleteEntity(SEntity entity) {
             if(entity == null)
                 return;
@@ -79,10 +68,17 @@ namespace Networking.Server {
         }
 
 
-        public static void PollFinalizeAdvanceEntities() {
+        public void AdvanceEntities() {
             Physics.Simulate(NetCommon.SECONDS_PER_TICK);
             foreach (SEntity netEntity in Instance.entities.Values.ToList()) {
                 netEntity.PollAndFinalizeTransform();
+            }
+        }
+
+
+        public void UpdateChunksOfEntities() {
+            foreach(SEntity entity in NewSChunkManager.Instance.UpdateEntityChunkLocations(entities.Values.ToList(), SNetManager.Tick)) {
+                DeleteEntity(entity);
             }
         }
     }

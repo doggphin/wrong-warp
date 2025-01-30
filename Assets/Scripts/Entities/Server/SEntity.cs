@@ -112,8 +112,9 @@ namespace Networking.Server {
                 }
             };
 
-            if(transformPacket != null)
+            if(transformPacket != null) {
                 PushUnreliableUpdate?.Invoke(this, transformPacket);
+            }     
         }
 
 

@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Networking.Shared {
     public static class PacketCommunication {
+        public const int PACKET_START_LENGTH = 4;
         private static NetDataWriter defaultWriter = new();
 
         /// <param name="writer"> If left null, will (safely) use default writer </param>

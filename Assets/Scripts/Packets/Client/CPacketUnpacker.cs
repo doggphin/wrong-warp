@@ -7,17 +7,18 @@ public class CPacketUnpacker : PacketUnpacker<CPacketUnpacker>
 {
     private readonly Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> packetDeserializers = new() {
         { PacketIdentifier.SJoinAccept, Deserialize<SJoinAcceptPkt> },
-        { PacketIdentifier.SChunkDeltaSnapshot, Deserialize<SChunkDeltaSnapshotPkt> },
-        { PacketIdentifier.SEntitiesLoadedDelta, Deserialize<SEntitiesLoadedDeltaPkt> },
+        //{ PacketIdentifier.SChunkDeltaSnapshot, Deserialize<SChunkDeltaSnapshotPkt> },
+        //{ PacketIdentifier.SEntitiesLoadedDelta, Deserialize<SEntitiesLoadedDeltaPkt> },
         { PacketIdentifier.SDefaultControllerState, Deserialize<SDefaultControllerStatePkt> },
-        { PacketIdentifier.SChunkReliableUpdates, Deserialize<SChunkReliableUpdatesPkt> },
+        //{ PacketIdentifier.SChunkReliableUpdates, Deserialize<SChunkReliableUpdatesPkt> },
         { PacketIdentifier.SChatMessage, Deserialize<SChatMessagePkt> },
         { PacketIdentifier.SFullEntitiesSnapshot, Deserialize<SFullEntitiesSnapshotPkt> },
         { PacketIdentifier.SEntitySpawn, Deserialize<SEntitySpawnPkt> },
         { PacketIdentifier.SEntityKill, Deserialize<SEntityKillPkt> },
         { PacketIdentifier.SSetPlayerEntity, Deserialize<SSetPlayerEntityPkt> },
         { PacketIdentifier.SEntityTransformUpdate, Deserialize<SEntityTransformUpdatePkt> },
-        { PacketIdentifier.SGenericUpdatesCollection, Deserialize<TickedPacketCollection> }
+        { PacketIdentifier.STickedPacketCollection, Deserialize<TickedPacketCollection> },
+        { PacketIdentifier.STickedEntityUpdates, Deserialize<TickedEntitiesUpdates> },
     };
 
     protected override Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> PacketDeserializers { get => packetDeserializers; }

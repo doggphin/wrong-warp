@@ -1,6 +1,4 @@
 using LiteNetLib.Utils;
-using Networking.Client;
-using UnityEngine;
 
 namespace Networking.Shared {
     public class SFullEntitiesSnapshotPkt : SPacket<SFullEntitiesSnapshotPkt> {
@@ -18,6 +16,7 @@ namespace Networking.Shared {
             }
         }
 
+
         public override void Serialize(NetDataWriter writer) {
             writer.Put(PacketIdentifier.SFullEntitiesSnapshot);
 
@@ -28,6 +27,7 @@ namespace Networking.Shared {
             }
         }
 
-        public override bool ShouldCache =>true;
+
+        public override bool ShouldCache => true;
     }
 }

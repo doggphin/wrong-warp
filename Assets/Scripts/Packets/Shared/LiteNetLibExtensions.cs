@@ -62,6 +62,9 @@ public static class LiteNetLibExtensions {
             writer.Put(chunk);
         }
     }
+    public static void PutVarUInt(this NetDataWriter writer, int val) {
+        writer.PutVarUInt((uint)val);
+    }
 
 
     public static void PutLossyQuaternion(this NetDataWriter writer, Quaternion quat) {

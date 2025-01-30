@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LiteNetLib.Utils;
 using Mono.Cecil;
 using Networking.Server;
 using Networking.Shared;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class NewSChunk {
     public readonly Vector2Int Coords;
 
     private HashSet<SEntity> entities = new();
-    public HashSet<SEntity> GetEntities() => entities;
+    public IEnumerable<SEntity> GetEntities() => entities;
 
     private HashSet<SPlayer> playerObservers = new();
     public static Action<NewSChunk> StartExpiring;
@@ -101,9 +103,12 @@ public class NewSChunk {
     Func<NetDataWriter, bool> tryAppendLocalEUpdatesFunc) {
         bool anyDataWritten = false;
 
+        // If 3x3 has already been written, 
         if(isAlreadyWritten) {
-            anyDataWritten = writer3x3.Length != 0;
-        } else {
+            anyDataWritten = writer3x3.Length > PacketCommunication.PACKET_START_LENGTH;
+        }
+        
+        else {
             // Add updates from all chunks in view
             foreach(NewSChunk surroundingChunk in surroundingChunks) {
                 anyDataWritten |= tryAppendSharedEUpdatesFunc(surroundingChunk, writer3x3);
@@ -149,31 +154,30 @@ public class NewSChunk {
 
 
     public SFullEntitiesSnapshotPkt GetFullEntitiesSnapshot(int tick) {
-        SFullEntitiesSnapshotPkt ret = new() {
-            entities = new WEntitySerializable[entities.Count],
-            isFullReset = true
+        return new() {
+            isFullReset = true,
+            entities = entities.Select(entity => entity.GetSerializedEntity(tick)).ToArray()
         };
-
-        int i=0;
-        foreach(SEntity entity in entities) {
-            ret.entities[i++] = entity.GetSerializedEntity(tick);
-        }
-
-        return ret;
     }
     
 
     public void AddEntity(SEntity entity) {
+        Debug.Log($"Trying to add an entity from {Coords}...");
         if(!entities.Add(entity))
             return;
+        
+        Debug.Log($"Added an entity to {Coords}, which now has {entities.Count} entities.");
 
         entity.PushUnreliableUpdate += AddUnreliableEntityUpdate;
     }
 
 
     public void RemoveEntity(SEntity entity) {
+        Debug.Log($"Trying to remove entity from {Coords}...");
         if(!entities.Remove(entity))
             return;
+
+        Debug.Log($"Removed an entity to {Coords}, which now has {entities.Count} entities.");
 
         entity.PushUnreliableUpdate -= AddUnreliableEntityUpdate;
     }
@@ -203,7 +207,7 @@ public class NewSChunk {
     }
 
     
-    public void AddEntityUpdate(SEntity entity, TickedEntitiesUpdates tickedEntitiesUpdates, BasePacket packet) {
+    private void AddEntityUpdate(SEntity entity, TickedEntitiesUpdates tickedEntitiesUpdates, BasePacket packet) {
         if(playerObservers.Count > 0) {
             tickedEntitiesUpdates.Add(SNetManager.Tick, entity.Id, packet);
             BroadcastHasAnUpdate();
@@ -248,7 +252,8 @@ public class NewSChunk {
 
 
     public void Unload() {
-        foreach(var entity in entities) {
+        foreach(var entity in entities.ToList()) {
+            Debug.Log($"Unloading {entity}!");
             UnloadEntity?.Invoke(entity);
         }
     }

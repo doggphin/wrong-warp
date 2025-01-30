@@ -44,7 +44,6 @@ namespace Networking.Server {
         }
 
         protected override void OnDestroy() {
-            Debug.Log("Destroying new chunk manager!");
             SEntity.SetAsPlayer -= SetEntityAsPlayer;
             SEntity.UnsetAsPlayer -= UnsetEntityAsPlayer;
             NewSChunk.StartExpiring -= StartExpiringChunk;
@@ -58,6 +57,7 @@ namespace Networking.Server {
             if(!loadedChunks.TryGetValue(coords, out NewSChunk chunk)) {
                 chunk = new(coords);
                 loadedChunks[coords] = chunk;
+                Debug.Log($"Generated {chunk.Coords}");
             }
 
             return chunk;
@@ -147,75 +147,74 @@ namespace Networking.Server {
             ChangeEntityPlayerStatus(entity, player, false);
 
 
+        ///<summary> Returns non-player entities moving into unloaded chunks (which must be killed) </summary>
+        public IEnumerable<SEntity> UpdateEntityChunkLocations(List<SEntity> entities, int tick) {
+            return entities.Where(entity => !MoveEntity(entity, ProjectToGrid(entity.GetPosition(tick)), tick));
+        }
+            
+
+
         ///<summary> Moves an entity from its current chunk to a new chunk </summary>
-        public void MoveEntity(SEntity entity, Vector2Int toCoords) {
+        ///<returns> Whether the entity is moving into an unloaded chunk and won't be able to load it </returns>
+        private bool MoveEntity(SEntity entity, Vector2Int toCoords, int tick) {
             if(entity.Chunk.Coords == toCoords) {
-                Debug.LogError("Tried to move entity to the chunk it was already in!");
-                return;
+                return true;
             }
             
-            if(entity.IsPlayer) {
-                // - Register and unregister from new and old chunks respectively
-                // - Tell them what entities to load and unload
-                SPlayer player = entity.Player;
-                GetChunkDeltas(entity.Chunk.Coords, toCoords, out var chunksEntering, out var chunksLeaving, true);
-                
-                // Updates chunks and the player of changes resulting from moving the player
-                void UpdatePlayerPresence(HashSet<NewSChunk> chunkDeltas, Action<NewSChunk, SPlayer> addOrRemovePlayer, 
-                Action<NewSChunk, SEntity> addOrRemoveEntityFromRenderDistance, Func<SEntity, BasePacket> generatePacketToSend) {
-                    // For each chunk which is having its visibility changed,
-                    foreach(NewSChunk chunkDelta in chunkDeltas) {
+            bool isPlayer = entity.IsPlayer;
+            SPlayer player = entity.Player;
+            bool canEnterNewChunk = loadedChunks.TryGetValue(toCoords, out var toChunk) || isPlayer;
+            GetChunkDeltas(entity.Chunk.Coords, toCoords, out var chunksEntering, out var chunksLeaving, isPlayer);
+            
+            void UpdatePresence(HashSet<NewSChunk> chunkDeltas, 
+            Action<NewSChunk, SPlayer> addOrRemovePlayer, 
+            Action<NewSChunk, SEntity> addOrRemoveEntityFromRenderDistance,
+            Func<SEntity, BasePacket> generatePacketToSend) {
+                // For each chunk which is having its visibility changed,
+                foreach(NewSChunk chunkDelta in chunkDeltas) {
+                    if(isPlayer) {
                         // Add or remove this player and its entity as being visible,
                         addOrRemovePlayer(chunkDelta, player);
-                        addOrRemoveEntityFromRenderDistance(chunkDelta, entity);
-                        // And then notify the player of all entities to spawn/despawn
+                    }
+                    
+                    addOrRemoveEntityFromRenderDistance(chunkDelta, entity);
+
+                    // And then notify the player of all entities to spawn/despawn
+                    if(isPlayer) {
                         foreach(SEntity entityToLoadOrUnload in chunkDelta.GetEntities()) {
-                            player.ReliablePackets?.AddPacket(SNetManager.Tick, generatePacketToSend(entityToLoadOrUnload));
+                            player.ReliablePackets?.AddPacket(tick, generatePacketToSend(entityToLoadOrUnload));
                         }
-                    }}
+                    }   
+                }
+            }
 
-                UpdatePlayerPresence(
-                    chunksLeaving, 
-                    (chunkLeaving, player) => chunkLeaving.RemovePlayer(player), 
-                    (chunkLeaving, entity) => chunkLeaving.RemoveEntityFromRenderDistance(entity),
-                    (entityToLoad) => new SEntityKillPkt() {
-                        entityId = entityToLoad.Id,
-                        reason = WEntityKillReason.Unload
-                    });
+            UpdatePresence(
+                chunksLeaving, 
+                (chunkLeaving, player) => chunkLeaving.RemovePlayer(player), 
+                (chunkLeaving, entity) => chunkLeaving.RemoveEntityFromRenderDistance(entity),
+                (entityToLoad) => new SEntityKillPkt(){
+                    entityId = entityToLoad.Id,
+                    reason = WEntityKillReason.Unload}
+            );
+            entity.Chunk.RemoveEntity(entity);
 
-                UpdatePlayerPresence(
+            if(canEnterNewChunk) {
+                UpdatePresence(
                     chunksEntering, 
                     (chunkEntering, player) => chunkEntering.AddPlayer(player), 
                     (chunkEntering, entity) => chunkEntering.AddEntityIntoRenderDistance(entity),
                     (entityToUnload) => new SEntitySpawnPkt() {
-                        entity = entityToUnload.GetSerializedEntity(SNetManager.Tick),
-                        reason = WEntitySpawnReason.Load
-                    });
+                        entity = entityToUnload.GetSerializedEntity(tick),
+                        reason = WEntitySpawnReason.Load}
+                );
 
-                NewSChunk destination = loadedChunks[toCoords];
-                entity.Chunk.RemoveEntity(entity);
-                entity.Chunk = destination;
-                destination.AddEntity(entity);
+                entity.Chunk = toChunk;
+                toChunk.AddEntity(entity);
             } else {
-                bool isMovingIntoLoadedChunk = loadedChunks.TryGetValue(toCoords, out var toChunk);
-                GetChunkDeltas(entity.Chunk.Coords, toCoords, out var chunksEntering, out var chunksLeaving, false);
-
-                foreach(NewSChunk chunkLeaving in chunksLeaving) {
-                    chunkLeaving.RemoveEntityFromRenderDistance(entity);
-                }
-                foreach(NewSChunk chunkEntering in chunksEntering) {
-                    chunkEntering.AddEntityIntoRenderDistance(entity);
-                }
-
-                entity.Chunk.RemoveEntity(entity);
-
-                // If a non-player entity moves into an unloaded chunk, kill it
-                if(isMovingIntoLoadedChunk) {
-                    toChunk.AddEntity(entity);
-                } else {
-                    entity.StartDeath(WEntityKillReason.Unload);
-                }
+                Debug.Log($"Cannot move entity {entity} into {toCoords}!");
             }
+            
+            return canEnterNewChunk;
         }
 
         ///<summary> Outputs the chunks being left and entered when moving between fromCoords and toCoords </summary>
@@ -235,37 +234,45 @@ namespace Networking.Server {
         private void StartExpiringChunk(NewSChunk chunk) {
             expiringChunksCache[chunk.Coords] = DateTime.Now + chunkExpirationTime;
         }
+            
 
         private void StopExpiringChunk(NewSChunk chunk) {
             expiringChunksCache.Remove(chunk.Coords);
         }
-
+            
         public void CleanupAfterSnapshot() {
             foreach(NewSChunk chunk in chunksWithUpdatesCache) {
                 chunk.ResetUpdates();
             }
+
             chunksWithUpdatesCache.Clear();
             
             // Unload chunks that need to be unloaded
-            // Needs to copy list each time this is ran -- this sucks, consider finding a better way to do this
             foreach(var(coords, timeToUnload) in expiringChunksCache.ToList()) {
-                if(timeToUnload > DateTime.Now) {
+                Debug.Log($"{coords} will be unloaded in {timeToUnload - DateTime.Now}!");
+                if(timeToUnload < DateTime.Now) {
                     loadedChunks[coords].Unload();
                     expiringChunksCache.Remove(coords);
+                    loadedChunks.Remove(coords);
                 }
             }
         }
 
-        private void RegisterChunkWithUpdates(NewSChunk chunk) {
+        private void RegisterChunkWithUpdates(NewSChunk chunk) =>
             chunksWithUpdatesCache.Add(chunk);
-        }
 
-        public bool TryGetPlayerUpdates(SPlayer player, bool getReliable, out NetDataWriter chunkUpdates) {
+        private bool TryGetPlayerUpdates(SPlayer player, bool getReliable, out NetDataWriter chunkUpdates) {
             NewSChunk playerChunk = player.Entity.Chunk;
             HashSet<NewSChunk> chunksInView = GetChunksInView(playerChunk.Coords, true, true);
             return getReliable ? 
                 playerChunk.TryGet3x3ReliableUpdates(chunksInView, out chunkUpdates) :
                 playerChunk.TryGet3x3UnreliableUpdates(chunksInView, out chunkUpdates);
         }
+
+        public bool TryGetUnreliablePlayerUpdates(SPlayer player, out NetDataWriter chunkUpdates) =>
+            TryGetPlayerUpdates(player, false, out chunkUpdates);
+
+        public bool TryGetReliablePlayerUpdates(SPlayer player, out NetDataWriter chunkUpdates) =>
+            TryGetPlayerUpdates(player, true, out chunkUpdates);
     }
 }

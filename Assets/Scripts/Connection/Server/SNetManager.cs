@@ -6,7 +6,6 @@ using System.Net.Sockets;
 
 using Networking.Shared;
 using Controllers.Shared;
-using System.Linq;
 using System;
 
 namespace Networking.Server {
@@ -22,7 +21,7 @@ namespace Networking.Server {
         public int GetTick() => tick;
         public static int Tick => Instance.GetTick();
 
-        private static NetDataWriter writer = new();
+        private static NetDataWriter baseWriter = new();
         private ControlsManager controlsManager;
         private static WWatch watch;
         private float percentageThroughTickCurrentFrame;
@@ -103,7 +102,7 @@ namespace Networking.Server {
                 player.Entity.GetComponent<AbstractPlayer>().Control(inputs, tick);
             }
     
-            SEntityManager.PollFinalizeAdvanceEntities();
+            SEntityManager.Instance.AdvanceEntities();
 
             // Only run further code if it's time for a snapshot
             if (tick % NetCommon.TICKS_PER_SNAPSHOT == 0)
@@ -111,6 +110,8 @@ namespace Networking.Server {
         }
 
         private void RunSnapshot() {
+            SEntityManager.Instance.UpdateChunksOfEntities();
+
             foreach (var peer in WWNetManager.ConnectedPeers) {
                 SendUpdatesToPlayer(peer);
             }
@@ -120,41 +121,43 @@ namespace Networking.Server {
         
 
         private void SendUpdatesToPlayer(NetPeer peer) {
+            NetDataWriter testWriter = new();
+
             if(!peer.TryGetWSPlayer(out var player))
                 return;
 
             bool hasReliableUpdates = false;
-            PacketCommunication.StartMultiPacket(writer, Tick);
+            PacketCommunication.StartMultiPacket(testWriter, Tick);
             if(player.Entity != null) {
-                NewSChunk chunk = player.Entity.Chunk;
-                if(NewSChunkManager.Instance.TryGetPlayerUpdates(player, true, out NetDataWriter reliableChunkUpdates)) {
-                    writer.Append(reliableChunkUpdates);
+                if(NewSChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
+                    testWriter.Append(reliableChunkUpdates);
                     hasReliableUpdates = true;
                 }
-                if((player.ReliablePackets?.SerializeAndReset(writer, false)).GetValueOrDefault(false)) {
+                if((player.ReliablePackets?.SerializeAndReset(testWriter, false)).GetValueOrDefault(false)) {
                     hasReliableUpdates = true;
                 }
             }
             if(hasReliableUpdates) {
-                peer.Send(writer, DeliveryMethod.ReliableOrdered);
-                PacketCommunication.StartMultiPacket(writer, Tick);
+                peer.Send(testWriter, DeliveryMethod.ReliableOrdered);
+                PacketCommunication.StartMultiPacket(testWriter, Tick);
             }
 
             bool hasUnreliableUpdates = false;
-            if(NewSChunkManager.Instance.TryGetPlayerUpdates(player, false, out NetDataWriter unreliableChunkUpdates)) {
-                writer.Append(unreliableChunkUpdates);
+            if(NewSChunkManager.Instance.TryGetUnreliablePlayerUpdates(player, out NetDataWriter unreliableChunkUpdates)) {
+                testWriter.Append(unreliableChunkUpdates);
                 hasUnreliableUpdates = true;
             }
             // TODO: abstract this to work with any controller
             if(player.Entity.TryGetComponent(out DefaultController defaultController)) {
                 var defaultControllerState = defaultController.GetSerializableState(tick);
-                defaultControllerState.Serialize(writer);
+                defaultControllerState.Serialize(testWriter);
                 hasUnreliableUpdates = true;
             }
             if(hasUnreliableUpdates) {
-                peer.Send(writer, DeliveryMethod.Unreliable);
+                peer.Send(testWriter, DeliveryMethod.Unreliable);
             }
         }
+
 
         private bool TryAddPlayer(NetPeer peer, string userName) {
             if(peer.TryGetWSPlayer(out _))
@@ -166,20 +169,21 @@ namespace Networking.Server {
             peer.Tag = player;
             PlayerJoined?.Invoke(player);
 
-            PacketCommunication.StartMultiPacket(writer, tick);
+            PacketCommunication.StartMultiPacket(baseWriter, tick);
             
             SJoinAcceptPkt joinAcceptPacket = new() {
                 userName = userName,
                 tick = tick
             };
-            joinAcceptPacket.Serialize(writer);
+            joinAcceptPacket.Serialize(baseWriter);
 
             SFullEntitiesSnapshotPkt fullEntitiesSnapshot = playerEntity.Chunk.GetFullEntitiesSnapshot(tick);
-            fullEntitiesSnapshot.Serialize(writer);
+            fullEntitiesSnapshot.Serialize(baseWriter);
 
-            peer.Send(writer, DeliveryMethod.ReliableOrdered);
+            peer.Send(baseWriter, DeliveryMethod.ReliableOrdered);
             return true;
         }
+
         private bool TryRemovePlayer(NetPeer peer) {
             if(!peer.TryGetWSPlayer(out var player))
                 return false;
@@ -192,6 +196,14 @@ namespace Networking.Server {
             return true;
         }
 
+        private void HandleJoinRequest(CJoinRequestPkt joinRequest, NetPeer peer) {
+            print($"Join packet received for {joinRequest.userName}");
+
+            if(!TryAddPlayer(peer, joinRequest.userName)) {
+                Debug.Log("Invalid join packet!");
+                peer.Disconnect();
+            }
+        }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
             int tick = reader.GetInt();
@@ -201,18 +213,6 @@ namespace Networking.Server {
                 packet.BroadcastApply(tick);
             }
         }
-
-        private void HandleJoinRequest(CJoinRequestPkt joinRequest, NetPeer peer) {
-            print($"Join packet received for {joinRequest.userName}");
-
-            if(!TryAddPlayer(peer, joinRequest.userName)) {
-                Debug.Log("Invalid join packet!");
-                peer.Disconnect();
-            }
-        }
-        //WSPacketUnpacker.ConsumeAllPackets(tick, reader);
-        //WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);
-        
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) { }
 

@@ -18,8 +18,7 @@ namespace Networking.Client {
             base.Awake();
         }
 
-        protected override void OnDestroy()
-        {
+        protected override void OnDestroy() {
             SPacket<SEntitySpawnPkt>.ApplyUnticked -= HandleSpawnEntity;
             SPacket<SEntityKillPkt>.ApplyUnticked -= KillEntity;
             SPacket<SFullEntitiesSnapshotPkt>.ApplyUnticked -= HandleFullEntitiesSnapshot;
@@ -72,6 +71,7 @@ namespace Networking.Client {
 
 
         private void HandleFullEntitiesSnapshot(SFullEntitiesSnapshotPkt pkt) {
+            Debug.Log("Handling a full entities snapshot!");
             Dictionary<int, WEntitySerializable> receivedEntities = new();
             foreach(var serializedEntity in pkt.entities) {
                 receivedEntities.Add(serializedEntity.entityId, serializedEntity);

@@ -16,13 +16,9 @@ public class TickedPacketCollection : BasePacket, ITickedContainer {
         list.Add(packet);
     }
 
-    public void SerializeWithoutHeader(NetDataWriter writer) {
-        writer.Put(tickedPacketCollections);
-    }
-
     public override void Serialize(NetDataWriter writer)
     {
-        writer.Put(PacketIdentifier.SGenericUpdatesCollection);
+        writer.Put(PacketIdentifier.STickedPacketCollection);
 
         writer.Put(tickedPacketCollections);
     }
@@ -31,7 +27,7 @@ public class TickedPacketCollection : BasePacket, ITickedContainer {
         tickedPacketCollections.Clear();
     }
 
-    ///<summary> Does nothing if no packets exist </summary>
+    ///<returns> Whether any data was serialized </returns>
     public bool SerializeAndReset(NetDataWriter writer, bool serializeIfNoData) {
         if(!serializeIfNoData && !HasData) {
             return false;

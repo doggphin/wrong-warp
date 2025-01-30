@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LiteNetLib.Utils;
+using Networking.Shared;
 
 
 public class TickedEntitiesUpdates : BasePacket, ITickedContainer {
@@ -20,31 +21,13 @@ public class TickedEntitiesUpdates : BasePacket, ITickedContainer {
         updates.Add(update);
     }
 
+
     public void Reset() {  
         ticks.Clear();
     }
 
 
-    public override void Serialize(NetDataWriter writer)
-    {
-        writer.PutVarUInt((uint)ticks.Count);
-
-        foreach(var(tick, entityUpdates) in ticks) {
-            writer.Put(tick);
-            writer.PutCollectionLength(entityUpdates);
-            foreach(var(entityId, updates) in entityUpdates) {
-                writer.Put(entityId);
-                writer.PutCollectionLength(updates);
-                foreach(var update in updates) {
-                    update.Serialize(writer);
-                }
-            }
-        }
-    }
-
-
-    public override void Deserialize(NetDataReader reader)
-    {
+    public override void Deserialize(NetDataReader reader) {
         int ticksCount = (int)reader.GetVarUInt();
         ticks = new(ticksCount);
 
@@ -61,10 +44,22 @@ public class TickedEntitiesUpdates : BasePacket, ITickedContainer {
                 for(int k=0; k<updatesCount; k++) {
                     BasePacket update = CPacketUnpacker.DeserializeNextPacket(reader);
                     updates.Add(update);
-                }
-            }
-        }
-    }
+                }}}}
+
+
+    public override void Serialize(NetDataWriter writer) {
+        writer.Put(PacketIdentifier.STickedEntityUpdates);
+
+        writer.PutVarUInt((uint)ticks.Count);
+        foreach(var(tick, entityUpdates) in ticks) {
+            writer.Put(tick);
+            writer.PutCollectionLength(entityUpdates);
+            foreach(var(entityId, updates) in entityUpdates) {
+                writer.Put(entityId);
+                writer.PutCollectionLength(updates);
+                foreach(var update in updates) {
+                    update.Serialize(writer);
+                }}}}
 
 
     public override bool ShouldCache => false;

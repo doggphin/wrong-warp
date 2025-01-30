@@ -17,13 +17,17 @@ namespace Networking.Shared {
         CChatMessage = 13,
         SChatMessage = 14,
         SChunkReliableUpdates = 15,
-        SInventoryDeltaCollection = 16,
         SSetPlayerEntity = 17,
+
+
+        SInventoryDeltaCollection = 16,
         SAddInventory = 18,
         SRemoveInventory = 19,
         SSetPersonalInventoryId = 20,
         CMoveSlotRequest = 21,
         CDropSlotRequest = 22,
-        SGenericUpdatesCollection = 23,
+
+        STickedPacketCollection = 23,
+        STickedEntityUpdates = 24,
     }
 }
