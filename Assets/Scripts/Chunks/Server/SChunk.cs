@@ -105,9 +105,10 @@ public class SChunk {
     
         // If 3x3 has already been written, 
         if(isAlreadyWritten) {
-            Debug.Log("Was already written!");
+            Debug.Log($"Was already written on tick {SNetManager.Tick}!");
             anyDataWritten = writer3x3.Length > 0;
         } else {
+            Debug.Log($"Was not already written on tick {SNetManager.Tick}!");
             // Add updates from all chunks in view
             foreach(SChunk surroundingChunk in surroundingChunks) {
                 anyDataWritten |= tryAppendSharedEUpdatesFunc(surroundingChunk, writer3x3);
@@ -121,12 +122,14 @@ public class SChunk {
                 anyDataWritten |= tryAppendLocalEUpdatesFunc(writer3x3);
             }
 
-            if(anyDataWritten) {
-                BroadcastHasAnUpdate();
-            }
-
             isAlreadyWritten = true;
+
+            // This one line of code was written after a solid two days of hair pulling
+            // Call this to reset isAlreadyWritten at the end of the tick
+            BroadcastHasAnUpdate();
         }
+
+        Debug.Log($"Any data written: {anyDataWritten}");
 
         outWriter = anyDataWritten ? writer3x3 : null;
         return anyDataWritten;
