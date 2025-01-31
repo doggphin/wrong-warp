@@ -14,7 +14,7 @@ namespace Networking.Server {
     [RequireComponent(typeof(SInventoryManager))]
     [RequireComponent(typeof(SPacketUnpacker))]
     [RequireComponent(typeof(SChatHandler))]
-    [RequireComponent(typeof(NewSChunkManager))]
+    [RequireComponent(typeof(SChunkManager))]
     [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
         private static int tick;
@@ -115,7 +115,7 @@ namespace Networking.Server {
                 SendUpdatesToPlayer(peer);
             }
 
-            NewSChunkManager.Instance.CleanupAfterSnapshot();
+            SChunkManager.Instance.CleanupAfterSnapshot();
         }
         
 
@@ -128,7 +128,7 @@ namespace Networking.Server {
             bool hasReliableUpdates = false;
             PacketCommunication.StartMultiPacket(testWriter, Tick);
             if(player.Entity != null) {
-                if(NewSChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
+                if(SChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
                     testWriter.Append(reliableChunkUpdates);
                     hasReliableUpdates = true;
                 }
@@ -142,7 +142,7 @@ namespace Networking.Server {
             }
 
             bool hasUnreliableUpdates = false;
-            if(NewSChunkManager.Instance.TryGetUnreliablePlayerUpdates(player, out NetDataWriter unreliableChunkUpdates)) {
+            if(SChunkManager.Instance.TryGetUnreliablePlayerUpdates(player, out NetDataWriter unreliableChunkUpdates)) {
                 testWriter.Append(unreliableChunkUpdates);
                 hasUnreliableUpdates = true;
             }

@@ -16,13 +16,13 @@ namespace Networking.Server {
 
         protected override void Awake()
         {
-            NewSChunk.UnloadEntity += DeleteEntity;
+            SChunk.UnloadEntity += DeleteEntity;
             base.Awake();
         }
 
         protected override void OnDestroy()
         {
-            NewSChunk.UnloadEntity -= DeleteEntity;
+            SChunk.UnloadEntity -= DeleteEntity;
             base.OnDestroy();
         }
 
@@ -41,8 +41,8 @@ namespace Networking.Server {
             );
 
             // Don't allow spawning a non-player entity into an unloaded chunk
-            Vector2Int entityChunkCoordinates = NewSChunkManager.ProjectToGrid(position.GetValueOrDefault(Vector3.zero));
-            if(!NewSChunkManager.Instance.AddEntityAndOrPlayerToSystem(entity, entityChunkCoordinates, player)) {
+            Vector2Int entityChunkCoordinates = SChunkManager.ProjectToGrid(position.GetValueOrDefault(Vector3.zero));
+            if(!SChunkManager.Instance.AddEntityAndOrPlayerToSystem(entity, entityChunkCoordinates, player)) {
                 Debug.Log("Couldn't add entity to the system!");
                 Destroy(entity.gameObject);
                 return null;
@@ -77,7 +77,7 @@ namespace Networking.Server {
 
 
         public void UpdateChunksOfEntities() {
-            foreach(SEntity entity in NewSChunkManager.Instance.UpdateEntityChunkLocations(entities.Values.ToList(), SNetManager.Tick)) {
+            foreach(SEntity entity in SChunkManager.Instance.UpdateEntityChunkLocations(entities.Values.ToList(), SNetManager.Tick)) {
                 DeleteEntity(entity);
             }
         }

@@ -7,7 +7,7 @@ using Networking.Shared;
 using UnityEngine;
 
 namespace Networking.Server {
-    public class NewSChunkManager : BaseSingleton<NewSChunkManager> {
+    public class SChunkManager : BaseSingleton<SChunkManager> {
         private static readonly Vector2Int[] offsetsWithCenter = new Vector2Int[] {
             new(-1,  1), new( 0,  1), new( 1,  1),
             new(-1,  0), new( 0,  0), new( 1,  0),
@@ -20,10 +20,10 @@ namespace Networking.Server {
         };
 
         private const float chunkSize = 32;
-        private Dictionary<Vector2Int, NewSChunk> loadedChunks = new();
+        private Dictionary<Vector2Int, SChunk> loadedChunks = new();
         
         ///<summary> Chunks with updates need to be reset every snapshot </summary>
-        private List<NewSChunk> chunksWithUpdatesCache = new();
+        private List<SChunk> chunksWithUpdatesCache = new();
         private readonly TimeSpan chunkExpirationTime = new(0, 0, 0);
         ///<summary> Chunk coordinates and their expiration dates </summary>
         private Dictionary<Vector2Int, DateTime> expiringChunksCache = new();
@@ -36,9 +36,9 @@ namespace Networking.Server {
         protected override void Awake() {
             SEntity.SetAsPlayer += SetEntityAsPlayer;
             SEntity.UnsetAsPlayer += UnsetEntityAsPlayer;
-            NewSChunk.StartExpiring += StartExpiringChunk;
-            NewSChunk.StopExpiring += StopExpiringChunk;
-            NewSChunk.HasAnUpdate += RegisterChunkWithUpdates;
+            SChunk.StartExpiring += StartExpiringChunk;
+            SChunk.StopExpiring += StopExpiringChunk;
+            SChunk.HasAnUpdate += RegisterChunkWithUpdates;
             SEntityManager.EntityDeleted += RemoveEntityFromSystem;
             base.Awake();
         }
@@ -46,15 +46,15 @@ namespace Networking.Server {
         protected override void OnDestroy() {
             SEntity.SetAsPlayer -= SetEntityAsPlayer;
             SEntity.UnsetAsPlayer -= UnsetEntityAsPlayer;
-            NewSChunk.StartExpiring -= StartExpiringChunk;
-            NewSChunk.StopExpiring -= StopExpiringChunk;
-            NewSChunk.HasAnUpdate -= RegisterChunkWithUpdates;
+            SChunk.StartExpiring -= StartExpiringChunk;
+            SChunk.StopExpiring -= StopExpiringChunk;
+            SChunk.HasAnUpdate -= RegisterChunkWithUpdates;
             SEntityManager.EntityDeleted -= RemoveEntityFromSystem;
             base.OnDestroy();
         }
 
-        private NewSChunk GetOrGenerateChunk(Vector2Int coords) {
-            if(!loadedChunks.TryGetValue(coords, out NewSChunk chunk)) {
+        private SChunk GetOrGenerateChunk(Vector2Int coords) {
+            if(!loadedChunks.TryGetValue(coords, out SChunk chunk)) {
                 chunk = new(coords);
                 loadedChunks[coords] = chunk;
             }
@@ -64,14 +64,14 @@ namespace Networking.Server {
 
         /// <summary> Gets all chunks surrounding a given chunk coordinat. </summary>
         /// <param name="generateIfNotExists"> Should neighboring chunks that don't exist be generated? </param>
-        private HashSet<NewSChunk> GetChunksInView(Vector2Int centerCoords, bool getCenter = true, bool generateIfNotExists = false) {
+        private HashSet<SChunk> GetChunksInView(Vector2Int centerCoords, bool getCenter = true, bool generateIfNotExists = false) {
             Vector2Int[] offsets = getCenter ? offsetsWithCenter : offsetsWithoutCenter;
-            HashSet<NewSChunk> ret = new();
+            HashSet<SChunk> ret = new();
             
             foreach(Vector2Int offset in offsets) {
                 Vector2Int offsetCoords = centerCoords + offset;
                 
-                NewSChunk chunkInView;
+                SChunk chunkInView;
                 
                 if(generateIfNotExists)
                     chunkInView = GetOrGenerateChunk(offsetCoords);
@@ -88,7 +88,7 @@ namespace Networking.Server {
         ///<summary> Adds an entity to the chunk system </summary>
         public bool AddEntityAndOrPlayerToSystem(SEntity entity, Vector2Int toCoords, SPlayer optionalPlayer = null) {
             bool canAdd;
-            NewSChunk chunk;
+            SChunk chunk;
 
             // If adding a player, since everything will need to be loaded around it, entity can always be added
             if(optionalPlayer != null) {
@@ -107,7 +107,7 @@ namespace Networking.Server {
             
             if(canAdd) {
                 chunk.AddEntity(entity);
-                foreach(NewSChunk chunkInView in GetChunksInView(entity.Chunk.Coords, true, false)) {
+                foreach(SChunk chunkInView in GetChunksInView(entity.Chunk.Coords, true, false)) {
                     chunkInView.AddEntityIntoRenderDistance(entity);
                 }
             }
@@ -121,16 +121,16 @@ namespace Networking.Server {
                 UnsetEntityAsPlayer(entity, entity.Player);
 
             entity.Chunk.RemoveEntity(entity);
-            foreach(NewSChunk chunkInView in GetChunksInView(entity.Chunk.Coords, true, false)) {
+            foreach(SChunk chunkInView in GetChunksInView(entity.Chunk.Coords, true, false)) {
                 chunkInView.RemoveEntityFromRenderDistance(entity);
             }
         }
 
 
         private void ChangeEntityPlayerStatus(SEntity entity, SPlayer player, bool setAsPlayer) {
-            HashSet<NewSChunk> chunksInView = GetChunksInView(entity.Chunk.Coords, true, setAsPlayer);
+            HashSet<SChunk> chunksInView = GetChunksInView(entity.Chunk.Coords, true, setAsPlayer);
 
-            foreach(NewSChunk chunkInView in chunksInView) {
+            foreach(SChunk chunkInView in chunksInView) {
                 if(setAsPlayer) {
                     chunkInView.AddPlayer(player);
                 } else {
@@ -162,15 +162,15 @@ namespace Networking.Server {
             
             bool isPlayer = entity.IsPlayer;
             SPlayer player = entity.Player;
-            bool canEnterNewChunk = loadedChunks.TryGetValue(toCoords, out var toChunk) || isPlayer;
             GetChunkDeltas(entity.Chunk.Coords, toCoords, out var chunksEntering, out var chunksLeaving, isPlayer);
+            bool canEnterNewChunk = loadedChunks.TryGetValue(toCoords, out var toChunk) || isPlayer;
             
-            void UpdatePresence(HashSet<NewSChunk> chunkDeltas, 
-            Action<NewSChunk, SPlayer> addOrRemovePlayer, 
-            Action<NewSChunk, SEntity> addOrRemoveEntityFromRenderDistance,
+            void UpdatePresence(HashSet<SChunk> chunkDeltas, 
+            Action<SChunk, SPlayer> addOrRemovePlayer, 
+            Action<SChunk, SEntity> addOrRemoveEntityFromRenderDistance,
             Func<SEntity, BasePacket> generatePacketToSend) {
                 // For each chunk which is having its visibility changed,
-                foreach(NewSChunk chunkDelta in chunkDeltas) {
+                foreach(SChunk chunkDelta in chunkDeltas) {
                     if(isPlayer) {
                         // Add or remove this player and its entity as being visible,
                         addOrRemovePlayer(chunkDelta, player);
@@ -216,11 +216,11 @@ namespace Networking.Server {
 
         ///<summary> Outputs the chunks being left and entered when moving between fromCoords and toCoords </summary>
         private void GetChunkDeltas
-        (Vector2Int fromCoords, Vector2Int toCoords, out HashSet<NewSChunk> enteringChunks, out HashSet<NewSChunk> leavingChunks,
+        (Vector2Int fromCoords, Vector2Int toCoords, out HashSet<SChunk> enteringChunks, out HashSet<SChunk> leavingChunks,
         bool generateUnloadedChunks = false)
         {
-            HashSet<NewSChunk> fromChunksInView = GetChunksInView(fromCoords);
-            HashSet<NewSChunk> toChunksInView = GetChunksInView(toCoords, true, generateUnloadedChunks);
+            HashSet<SChunk> fromChunksInView = GetChunksInView(fromCoords);
+            HashSet<SChunk> toChunksInView = GetChunksInView(toCoords, true, generateUnloadedChunks);
 
             leavingChunks = new(fromChunksInView);
             leavingChunks.ExceptWith(toChunksInView);
@@ -228,17 +228,17 @@ namespace Networking.Server {
             enteringChunks.ExceptWith(fromChunksInView);
         }
 
-        private void StartExpiringChunk(NewSChunk chunk) {
+        private void StartExpiringChunk(SChunk chunk) {
             expiringChunksCache[chunk.Coords] = DateTime.Now + chunkExpirationTime;
         }
             
 
-        private void StopExpiringChunk(NewSChunk chunk) {
+        private void StopExpiringChunk(SChunk chunk) {
             expiringChunksCache.Remove(chunk.Coords);
         }
             
         public void CleanupAfterSnapshot() {
-            foreach(NewSChunk chunk in chunksWithUpdatesCache) {
+            foreach(SChunk chunk in chunksWithUpdatesCache) {
                 chunk.ResetUpdates();
             }
 
@@ -254,12 +254,12 @@ namespace Networking.Server {
             }
         }
 
-        private void RegisterChunkWithUpdates(NewSChunk chunk) =>
+        private void RegisterChunkWithUpdates(SChunk chunk) =>
             chunksWithUpdatesCache.Add(chunk);
 
         private bool TryGetPlayerUpdates(SPlayer player, bool getReliable, out NetDataWriter chunkUpdates) {
-            NewSChunk playerChunk = player.Entity.Chunk;
-            HashSet<NewSChunk> chunksInView = GetChunksInView(playerChunk.Coords, true, true);
+            SChunk playerChunk = player.Entity.Chunk;
+            HashSet<SChunk> chunksInView = GetChunksInView(playerChunk.Coords, true, true);
             return getReliable ? 
                 playerChunk.TryGet3x3ReliableUpdates(chunksInView, out chunkUpdates) :
                 playerChunk.TryGet3x3UnreliableUpdates(chunksInView, out chunkUpdates);

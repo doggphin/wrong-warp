@@ -62,7 +62,6 @@ namespace Networking.Client {
 
         
         private void SetEntityTransformForTick(int tick, SEntityTransformUpdatePkt transformPacket) {
-            Debug.Log($"Received an entity transform for {transformPacket.CEntityId}");
             if(!Instance.entities.TryGetValue(transformPacket.CEntityId, out CEntity entity))
                 return;
 
@@ -71,7 +70,6 @@ namespace Networking.Client {
 
 
         private void HandleFullEntitiesSnapshot(SFullEntitiesSnapshotPkt pkt) {
-            Debug.Log("Handling a full entities snapshot!");
             Dictionary<int, WEntitySerializable> receivedEntities = new();
             foreach(var serializedEntity in pkt.entities) {
                 receivedEntities.Add(serializedEntity.entityId, serializedEntity);

@@ -22,7 +22,7 @@ namespace Networking.Server {
             return peer.Tag == null ? null : (SPlayer)peer.Tag;
         }
 
-        public NewSChunk previousChunk = null;
+        public SChunk previousChunk = null;
         public SEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
         private SInventory personalInventory;

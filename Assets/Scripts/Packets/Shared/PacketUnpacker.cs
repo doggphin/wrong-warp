@@ -27,7 +27,10 @@ public abstract class PacketUnpacker<T> : BaseSingleton<T> where T : PacketUnpac
 
     ///<summary> Either caches or immediatedly applies a packet based on its logic </summary>
     public static void ConsumePacket(int tick, BasePacket packet) {
-        Debug.Log($"Deserializing a {packet.GetType()}");
+        if(packet.GetType().ToString() != "SDefaultControllerStatePkt") {
+            Debug.Log($"Deserializing a {packet.GetType()}");
+        }
+        
         if(packet.ShouldCache) {
             PacketCacheManager.CachePacket(tick, packet);
         } else {

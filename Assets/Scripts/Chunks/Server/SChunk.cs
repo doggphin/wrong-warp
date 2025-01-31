@@ -8,15 +8,15 @@ using Networking.Shared;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class NewSChunk {
+public class SChunk {
     public readonly Vector2Int Coords;
 
     private HashSet<SEntity> entities = new();
     public IEnumerable<SEntity> GetEntities() => entities;
 
     private HashSet<SPlayer> playerObservers = new();
-    public static Action<NewSChunk> StartExpiring;
-    public static Action<NewSChunk> StopExpiring;
+    public static Action<SChunk> StartExpiring;
+    public static Action<SChunk> StopExpiring;
     
     // For all updates, naming convention is as follows --
     // U = Unreliable
@@ -47,11 +47,11 @@ public class NewSChunk {
     private readonly NetDataWriter[] writers;
 
     private bool hasAlreadyBroadcastHasAnUpdate;
-    public static Action<NewSChunk> HasAnUpdate;
+    public static Action<SChunk> HasAnUpdate;
 
     public static Action<SEntity> UnloadEntity;
     
-    public NewSChunk(Vector2Int coords) {
+    public SChunk(Vector2Int coords) {
         Coords = coords;
         tickedContainers = new ITickedContainer[]{ rLocalEUpdates, uSharedEUpdates, rSharedEUpdates, rSharedGUpdates };
         writers = new NetDataWriter[]{ rLocalEUpdatesWriter, uSharedEUpdatesWriter, rSharedEUpdatesWriter, r3x3UpdatesWriter, u3x3UpdatesWriter };
@@ -78,13 +78,13 @@ public class NewSChunk {
 
     private bool TryAppendRSharedEUpdates(NetDataWriter appendTo) =>
         TryAppendEUpdates(appendTo, rSharedEUpdates, rSharedEUpdatesWriter, ref isRSharedEUpdatesWritten);
+    private bool TryAppendRSharedGUpdates(NetDataWriter appendTo) =>
+        TryAppendEUpdates(appendTo, rSharedGUpdates, rSharedGUpdatesWriter, ref isRSharedGUpdatesWritten);
     private bool TryAppendUSharedEUpdates(NetDataWriter appendTo) =>
         TryAppendEUpdates(appendTo, uSharedEUpdates, uSharedEUpdatesWriter, ref isUSharedEUpdatesWritten);
+
     private bool TryAppendRLocalEUpdates(NetDataWriter appendTo) =>
         TryAppendEUpdates(appendTo, rLocalEUpdates, rLocalEUpdatesWriter, ref isRLocalEUpdatesWritten);
-    private bool TryAppendRSharedGUpdates(NetDataWriter appendTo) =>
-        TryAppendEUpdates(appendTo, rSharedGUpdates, rSharedGUpdatesWriter, ref isRLocalEUpdatesWritten);
-
 
     /// <summary>
     /// Collects updates from nearby chunks, and along with local updates, merges them all into a writer for sending to players inhabiting this chunk
@@ -97,20 +97,19 @@ public class NewSChunk {
     /// <param name="tryAppendSharedEUpdatesFunc"> The function used to get shared general updates from other chunks. Can be null (FOR NOW) </param>
     /// <param name="tryAppendLocalEUpdatesFunc"> The function used to get local updates from this chunk. Can be null (FOR NOW) </param>
     /// <returns> Whether any data was actually retrieved </returns>
-    private bool TryWrite3x3Updates(HashSet<NewSChunk> surroundingChunks, out NetDataWriter outWriter, NetDataWriter writer3x3, ref bool isAlreadyWritten,
-    Func<NewSChunk, NetDataWriter, bool> tryAppendSharedEUpdatesFunc,
-    Func<NewSChunk, NetDataWriter, bool> tryAppendSharedGUpdatesFunc,
+    private bool TryWrite3x3Updates(HashSet<SChunk> surroundingChunks, out NetDataWriter outWriter, NetDataWriter writer3x3, ref bool isAlreadyWritten,
+    Func<SChunk, NetDataWriter, bool> tryAppendSharedEUpdatesFunc,
+    Func<SChunk, NetDataWriter, bool> tryAppendSharedGUpdatesFunc,
     Func<NetDataWriter, bool> tryAppendLocalEUpdatesFunc) {
         bool anyDataWritten = false;
-
+    
         // If 3x3 has already been written, 
         if(isAlreadyWritten) {
-            anyDataWritten = writer3x3.Length > PacketCommunication.PACKET_START_LENGTH;
-        }
-        
-        else {
+            Debug.Log("Was already written!");
+            anyDataWritten = writer3x3.Length > 0;
+        } else {
             // Add updates from all chunks in view
-            foreach(NewSChunk surroundingChunk in surroundingChunks) {
+            foreach(SChunk surroundingChunk in surroundingChunks) {
                 anyDataWritten |= tryAppendSharedEUpdatesFunc(surroundingChunk, writer3x3);
                 if(tryAppendSharedGUpdatesFunc != null) {
                     anyDataWritten |= tryAppendSharedGUpdatesFunc(surroundingChunk, writer3x3);
@@ -120,23 +119,25 @@ public class NewSChunk {
             // Add local updates
             if(tryAppendLocalEUpdatesFunc != null) {
                 anyDataWritten |= tryAppendLocalEUpdatesFunc(writer3x3);
-            }  
+            }
+
+            if(anyDataWritten) {
+                BroadcastHasAnUpdate();
+            }
+
+            isAlreadyWritten = true;
         }
 
         outWriter = anyDataWritten ? writer3x3 : null;
-        if(!isAlreadyWritten && anyDataWritten)
-            BroadcastHasAnUpdate();
-
-        isAlreadyWritten = true;
         return anyDataWritten;
     }
 
-    public bool TryGet3x3ReliableUpdates(HashSet<NewSChunk> surroundingChunks, out NetDataWriter writer) =>
+    public bool TryGet3x3ReliableUpdates(HashSet<SChunk> surroundingChunks, out NetDataWriter writer) =>
         TryWrite3x3Updates(surroundingChunks, out writer, r3x3UpdatesWriter, ref isR3x3UpdatesWritten,
             (chunk, writer) => chunk.TryAppendRSharedEUpdates(writer),
             (chunk, writer) => chunk.TryAppendRSharedGUpdates(writer),
             TryAppendRLocalEUpdates);
-    public bool TryGet3x3UnreliableUpdates(HashSet<NewSChunk> surroundingChunks, out NetDataWriter writer) =>
+    public bool TryGet3x3UnreliableUpdates(HashSet<SChunk> surroundingChunks, out NetDataWriter writer) =>
         TryWrite3x3Updates(surroundingChunks, out writer, u3x3UpdatesWriter, ref isU3x3UpdatesWritten,
             (chunk, writer) => chunk.TryAppendUSharedEUpdates(writer),
             null,
@@ -144,6 +145,7 @@ public class NewSChunk {
 
 
     public void ResetUpdates() {
+        Debug.Log("Resetting!");
         foreach(var writer in writers)
             writer.Reset();
 
@@ -151,7 +153,8 @@ public class NewSChunk {
             container.Reset();
 
         isRSharedEUpdatesWritten = isUSharedEUpdatesWritten = isRLocalEUpdatesWritten = 
-        isRSharedGUpdatesWritten = isU3x3UpdatesWritten = isR3x3UpdatesWritten =
+        isRSharedGUpdatesWritten =
+        isU3x3UpdatesWritten = isR3x3UpdatesWritten =
         hasAlreadyBroadcastHasAnUpdate = false;
     }
 
@@ -213,7 +216,10 @@ public class NewSChunk {
 
     ///<summary> Notifies all players in this chunk that an entity has entered their render distance </summary>
     public void AddEntityIntoRenderDistance(SEntity entity) {
-        AddEntityUpdate(entity, rLocalEUpdates, 
+        Debug.Log($"Notifying players in {Coords} to load {entity}!");
+        AddEntityUpdate(
+            entity,
+            rLocalEUpdates, 
             new SEntitySpawnPkt() {
                 entity = entity.GetSerializedEntity(SNetManager.Tick),
                 reason = WEntitySpawnReason.Load 
@@ -222,7 +228,10 @@ public class NewSChunk {
 
     ///<summary> Notifies all players in this chunk that an entity has left their render distance </summary>
     public void RemoveEntityFromRenderDistance(SEntity entity) {
-        AddEntityUpdate(entity, rLocalEUpdates, 
+        Debug.Log($"Notifying players in {Coords} to unload {entity}!");
+        AddEntityUpdate(
+            entity,
+            rLocalEUpdates, 
             new SEntityKillPkt() {
                 entityId = entity.Id,
                 reason = WEntityKillReason.Unload 
@@ -232,17 +241,19 @@ public class NewSChunk {
 
     private void AddUnreliableEntityUpdate(SEntity entity, BasePacket packet) {
         AddEntityUpdate(entity, uSharedEUpdates, packet);
+        Debug.Log($"Adding a {packet} for {entity}!");
     }
 
 
     public void AddReliableGeneralUpdate(BasePacket packet) {
         rSharedGUpdates.AddPacket(SNetManager.Tick, packet);
+        BroadcastHasAnUpdate();
     }
 
 
     private void BroadcastHasAnUpdate() {
         if(!hasAlreadyBroadcastHasAnUpdate) {
-            hasAlreadyBroadcastHasAnUpdate = false;
+            hasAlreadyBroadcastHasAnUpdate = true;
             HasAnUpdate?.Invoke(this);
         }
     }

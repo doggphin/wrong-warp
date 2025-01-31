@@ -20,10 +20,15 @@ namespace Networking.Shared {
             int cachedTimestamp = Instance.caches.GetTimestamp(tick);
             var cache = Instance.caches[tick];
 
-            // Old packet; toss it out
+            // Toss out old packets unless the packet should run reliably
             if(cachedTimestamp > tick) {
-                return false;
-            }     
+                if(packet.ShouldRunEvenIfLate) {
+                    packet.BroadcastApply(tick);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
             
             // First packet of new tick; clean out this tick
             if(tick > cachedTimestamp) {

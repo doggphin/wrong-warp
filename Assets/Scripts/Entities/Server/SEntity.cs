@@ -10,7 +10,7 @@ namespace Networking.Server {
         public bool updatePositionOverNetwork, updateRotationOverNetwork, updateScaleOverNetwork;
         public bool isRigidbody;
 
-        public NewSChunk Chunk { get; set; }
+        public SChunk Chunk { get; set; }
 
         public Action<SEntity> FinishedDying;
         public static Action<SEntity, SPlayer> SetAsPlayer;

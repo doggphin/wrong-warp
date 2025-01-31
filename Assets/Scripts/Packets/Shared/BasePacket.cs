@@ -10,6 +10,10 @@ public abstract class BasePacket : INetSerializable {
     ///<para> If false, client will run this packet immediatedly. </para>
     ///</summary>
     public virtual bool ShouldCache { get => false; }
+    /// <summary>
+    /// If this packet is received late, should it be ran anyways?
+    /// </summary>
+    public virtual bool ShouldRunEvenIfLate { get => false; }
 
     ///<summary> This field is only used in reading packets received on the server </summary>
     public NetPeer Sender { get; set; }

@@ -157,7 +157,7 @@ namespace Networking.Client {
             }
         }
 
-        // Checks most recently received packets. Tries to 
+        // Checks most recently received packets. Tries to... do something... i should have documented this better
         private void CheckForTickCompensation() {
             if(necessaryTickCompensation == 0) {
                 if(tickDifferenceTracker.ReadingsCount > 10) {
