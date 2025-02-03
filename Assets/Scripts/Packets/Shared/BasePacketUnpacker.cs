@@ -4,7 +4,7 @@ using UnityEngine;
 using LiteNetLib.Utils;
 using Networking.Shared;
 
-public abstract class PacketUnpacker<T> : BaseSingleton<T> where T : PacketUnpacker<T>, new() {
+public abstract class BasePacketUnpacker<T> : BaseSingleton<T> where T : BasePacketUnpacker<T>, new() {
     ///<summary> Given a class T that implements INetPacketForClient, generically deserialize it from the NetDataReader </summary>
     ///<returns> The deserialized packet </returns>
     protected static BasePacket Deserialize<TPacket>(NetDataReader reader) where TPacket : BasePacket, new() {

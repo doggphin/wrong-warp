@@ -79,7 +79,7 @@ namespace Networking.Shared
             return false;
         }
 
-        public bool CheckTickIsMoreRecent(int tick, bool returnTrueIfEquals = false) {
+        public bool IsInputTickNewer(int tick, bool returnTrueIfEquals = false) {
             return returnTrueIfEquals ? 
                 tick >= timestampedItems[NetCommon.GetModuloTPS(tick)].timestamp :
                 tick > timestampedItems[NetCommon.GetModuloTPS(tick)].timestamp;

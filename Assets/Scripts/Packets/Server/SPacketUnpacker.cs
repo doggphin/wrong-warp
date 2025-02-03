@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 using Networking.Shared;
 
-public class SPacketUnpacker : PacketUnpacker<SPacketUnpacker>
+public class SPacketUnpacker : BasePacketUnpacker<SPacketUnpacker>
 {
     private readonly Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> packetDeserializers = new() {
         { PacketIdentifier.CJoinRequest, Deserialize<CJoinRequestPkt> },

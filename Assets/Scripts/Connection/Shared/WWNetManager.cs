@@ -121,7 +121,8 @@ namespace Networking.Shared {
                 IPv6Enabled = false,
                 DisconnectTimeout = NetCommon.TIMEOUT_MS,
                 ReconnectDelay = 500,
-                MaxConnectAttempts = 5
+                MaxConnectAttempts = 5,
+                MtuOverride = 65535,
             };
         }
     }

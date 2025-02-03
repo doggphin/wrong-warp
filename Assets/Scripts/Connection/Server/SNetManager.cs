@@ -13,16 +13,19 @@ namespace Networking.Server {
     [RequireComponent(typeof(SPlayerInputsSlotterManager))]
     [RequireComponent(typeof(SInventoryManager))]
     [RequireComponent(typeof(SPacketUnpacker))]
+    [RequireComponent(typeof(PacketPacker))]
     [RequireComponent(typeof(SChatHandler))]
     [RequireComponent(typeof(SChunkManager))]
     [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
+        private ControlsManager controlsManager;
+        private PacketPacker packetPacker;
+
         private static int tick;
         public int GetTick() => tick;
         public static int Tick => Instance.GetTick();
 
         private static NetDataWriter baseWriter = new();
-        private ControlsManager controlsManager;
         private static WWatch watch;
         private float percentageThroughTickCurrentFrame;
         public float GetPercentageThroughTickCurrentFrame() => percentageThroughTickCurrentFrame;
@@ -42,6 +45,7 @@ namespace Networking.Server {
             tick = NetCommon.TICKS_PER_SECOND;
             
             controlsManager = GetComponent<ControlsManager>();
+            packetPacker = GetComponent<PacketPacker>();
             ControlsManager.ActivateControls();
             ChatUiManager.SendChatMessage += SendHostChatMessage;
             CPacket<CJoinRequestPkt>.ApplyUnticked += HandleJoinRequest;
@@ -126,7 +130,7 @@ namespace Networking.Server {
                 return;
 
             bool hasReliableUpdates = false;
-            PacketCommunication.StartMultiPacket(testWriter, Tick);
+            packetPacker.StartPacketCollection(testWriter, Tick);
             if(player.Entity != null) {
                 if(SChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
                     testWriter.Append(reliableChunkUpdates);
@@ -138,7 +142,7 @@ namespace Networking.Server {
             }
             if(hasReliableUpdates) {
                 peer.Send(testWriter, DeliveryMethod.ReliableOrdered);
-                PacketCommunication.StartMultiPacket(testWriter, Tick);
+                packetPacker.StartPacketCollection(testWriter, Tick);
             }
 
             bool hasUnreliableUpdates = false;

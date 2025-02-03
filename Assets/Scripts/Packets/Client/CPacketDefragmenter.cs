@@ -1,0 +1,74 @@
+using System;
+using System.Collections.Generic;
+using LiteNetLib.Utils;
+using Networking.Shared;
+using UnityEngine;
+
+public static class CPacketDefragmenter {
+    private static TimestampedCircularTickBuffer<PacketDefragmentationBuffer> tickedReceivedFragments = new(-1);
+
+    public static void ProcessUnreliablePacket(NetDataReader reader) {
+        int tick = reader.GetInt();
+
+        // If reader is older than a packet being defragmented, toss it out
+        if(!tickedReceivedFragments.IsInputTickNewer(tick, true)) {
+            return;
+        }
+
+        FragmentedPacketInfo fragmentInfo = new() { };
+        fragmentInfo.Deserialize(reader);
+
+        if(!tickedReceivedFragments.TryGetByTimestamp(tick, out var fragmentedPacket)) {
+            fragmentedPacket = new(tick, fragmentInfo.finalPacketPayloadLen);
+            tickedReceivedFragments.SetValueAndTimestamp(fragmentedPacket, tick);
+        }
+
+        fragmentedPacket.AssimilateFragment(fragmentInfo.curFragmentIdx, reader);
+    }
+
+
+    private class PacketDefragmentationBuffer {
+        private int tick;
+        private byte[] bytesBuffer;
+        private HashSet<int> expectedFragmentIndices;
+
+        public PacketDefragmentationBuffer(int tick, int payloadLength) {
+            this.tick = tick;
+
+            int indicesRequired = SPacketFragmenter.FragmentsRequiredForPayload(payloadLength);
+
+            expectedFragmentIndices = new(indicesRequired);
+            for(int i=0; i<indicesRequired; i++) {
+                expectedFragmentIndices.Add(i);
+            }
+            bytesBuffer = new byte[payloadLength];
+        }
+
+        public void AssimilateFragment(int fragmentIdx, NetDataReader reader) {
+            // If this fragment index has already been assimilated, skip it
+            if(!expectedFragmentIndices.Remove(fragmentIdx)) {
+                return;
+            }
+
+            // Copy the data into the bytes buffer
+            int copyIntoBytesBufferStart = fragmentIdx * SPacketFragmenter.PKT_MAX_PAYLOAD_LEN;
+            Array.Copy(
+                reader.RawData,
+                SPacketFragmenter.PKT_HEADER_LEN,
+                
+                bytesBuffer,
+                copyIntoBytesBufferStart,
+                
+                // Copy either max packet payload length OR remainder to the end of the buffer
+                Mathf.Min(SPacketFragmenter.PKT_MAX_PAYLOAD_LEN, bytesBuffer.Length - copyIntoBytesBufferStart)
+            );
+
+            // If the bytes buffer has been filled, consume it
+            if(expectedFragmentIndices.Count == 0) {
+                NetDataReader fullReader = new();
+                fullReader.SetSource(bytesBuffer);
+                CPacketUnpacker.ConsumeAllPackets(tick, fullReader);
+            }
+        }
+    }
+}

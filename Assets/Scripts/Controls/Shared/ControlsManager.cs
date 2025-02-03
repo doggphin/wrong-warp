@@ -157,7 +157,7 @@ namespace Controllers.Shared {
             
             InputsSerializable serializedInputs = inputs[onTick];
 
-            if(inputs.CheckTickIsMoreRecent(onTick)) {
+            if(inputs.IsInputTickNewer(onTick)) {
                 Vector2? rotation = player?.PollLook();
                 finalInputs.SetFlag(InputType.Look, rotation.HasValue);
                 finalInputs.flags |= heldInputs.flags;
