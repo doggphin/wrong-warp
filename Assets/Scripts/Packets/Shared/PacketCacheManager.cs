@@ -14,7 +14,7 @@ namespace Networking.Shared {
             }
         }
 
-        private TimestampedCircularTickBuffer<PacketCache> caches = TimestampedCircularTickBufferClassInitializer<PacketCache>.GetInitialized(0);
+        private TimestampedCircularTickBuffer<PacketCache> caches = TimestampedCircularTickBufferClassInitializer<PacketCache>.Initialize();
 
         public static bool CachePacket(int tick, BasePacket packet) {
             int cachedTimestamp = Instance.caches.GetTimestamp(tick);

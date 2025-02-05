@@ -3,7 +3,7 @@ using LiteNetLib.Utils;
 
 public class FragmentedPacketInfo : INetSerializable
 {
-    public const int LENGTH = 3;
+    public const int LENGTH = sizeof(ushort) + sizeof(byte);
     
     public ushort finalPacketPayloadLen;
     public byte curFragmentIdx;

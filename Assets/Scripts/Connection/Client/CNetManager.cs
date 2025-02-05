@@ -15,8 +15,13 @@ namespace Networking.Client {
     [RequireComponent(typeof(CRollbackManager))]
     [RequireComponent(typeof(CPacketUnpacker))]
     [RequireComponent(typeof(ControlsManager))]
+    [RequireComponent(typeof(CPacketPacker))]
+    [RequireComponent(typeof(CPacketDefragmenter))]
     public class CNetManager : BaseSingleton<CNetManager>, ITicker, INetEventListener {
         private ControlsManager controlsManager;
+        private CPacketPacker packetPacker;
+        private CPacketDefragmenter packetDefragmenter;
+
         private NetPeer serverPeer;
         private NetDataWriter writer = new();
         private string userName = "";
@@ -50,7 +55,7 @@ namespace Networking.Client {
             Activate();
 
             CJoinRequestPkt joinRequest = new() { userName = userName };
-            PacketCommunication.SendSingle(writer, serverPeer, CentralTimingTick, joinRequest, DeliveryMethod.ReliableOrdered);
+            packetPacker.SendSingleReliable(writer, serverPeer, CentralTimingTick, joinRequest);
         }
         private bool isActivated;
         private void Activate() {
@@ -62,6 +67,8 @@ namespace Networking.Client {
 
             controlsManager = GetComponent<ControlsManager>();
             ControlsManager.ActivateControls();
+            packetPacker = GetComponent<CPacketPacker>();
+            packetDefragmenter = GetComponent<CPacketDefragmenter>();
 
             isActivated = true;
 
@@ -139,12 +146,12 @@ namespace Networking.Client {
             // Send inputs to the server
             if(CentralTimingTick > mostRecentlySentTick) {
                 //Debug.Log($"Sending inputs for {SendingTick}!");
-                PacketCommunication.SendSingle(
+                packetPacker.SendSingleUnreliable(
                     writer, 
                     serverPeer, 
                     SendingTick,
-                    new CGroupedInputsPkt() { inputsSerialized = new InputsSerializable[]{ controlsManager.inputs[SendingTick] } },
-                    DeliveryMethod.Unreliable);
+                    new CGroupedInputsPkt() { inputsSerialized = new InputsSerializable[]{ controlsManager.inputs[SendingTick] } }
+                );
                 mostRecentlySentTick = CentralTimingTick;
             }
             
@@ -177,11 +184,17 @@ namespace Networking.Client {
         
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-            int tick = reader.GetInt();
-            tickDifferenceTracker.AddTickDifferenceReading(tick - ObservingTick, windowSize);
-            CPacketUnpacker.ConsumeAllPackets(tick, reader);
-            //WPacketCommunication.ReadMultiPacket(peer, reader, ProcessPacketFromReader);  <-- old way
+            if(deliveryMethod == DeliveryMethod.Unreliable) {
+                packetDefragmenter.ProcessUnreliablePacket(reader);
+            } else if (deliveryMethod == DeliveryMethod.ReliableOrdered) {
+                int tick = reader.GetInt();
+                tickDifferenceTracker.AddTickDifferenceReading(tick - ObservingTick, windowSize);
+                CPacketUnpacker.ConsumeAllPackets(tick, reader);
+            } else {
+                Debug.LogError($"Received a packet with unhandled delivery method {deliveryMethod}!");
+            }
         }
+
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) => throw new NotImplementedException();
         public void OnConnectionRequest(ConnectionRequest request) => request.Reject();
@@ -240,6 +253,7 @@ namespace Networking.Client {
             Player.SetRotation(originalRotation);
         }
 
+
         private void ResimulateTicks(int fromTick) {
             int tickDifference = SendingTick - fromTick - 1;
 
@@ -257,8 +271,8 @@ namespace Networking.Client {
                 message = message
             };
 
-            // Tick is not relevant here but needs to be written regardless
-            PacketCommunication.SendSingle(writer, serverPeer, 0, pkt, DeliveryMethod.ReliableOrdered);
+            // Tick is not relevant here but something needs to be written there regardless
+            packetPacker.SendSingleReliable(writer, serverPeer, SendingTick, pkt);
             Debug.Log("Sent message to the server!");
         }
     }

@@ -114,18 +114,17 @@ namespace Networking.Shared
             }
         }
         
-        public TimestampedCircularTickBuffer(int initialTimestamp) {
+        public TimestampedCircularTickBuffer() {
             for(int i=0; i<NetCommon.TICKS_PER_SECOND; i++) {
-                timestampedItems[i].timestamp = initialTimestamp;
+                timestampedItems[i].timestamp = -1;
             }
         }
-        public TimestampedCircularTickBuffer() {}
     }
 
     ///<summary> Used to generate initialized TimestampedCircularTickBuffers, where T is a class </summary>
     public static class TimestampedCircularTickBufferClassInitializer<T> where T : class, new() {
-        public static TimestampedCircularTickBuffer<T> GetInitialized(int initialTick = -1) {
-            TimestampedCircularTickBuffer<T> ret = new(initialTick);
+        public static TimestampedCircularTickBuffer<T> Initialize() {
+            TimestampedCircularTickBuffer<T> ret = new();
             for(int i=0; i<NetCommon.TICKS_PER_SECOND; i++) {
                 ret[i] = new();
             }

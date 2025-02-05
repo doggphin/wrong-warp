@@ -33,12 +33,12 @@ public class TickedEntitiesUpdates : BasePacket, ITickedContainer {
 
         for(int i=0; i<ticksCount; i++) {
             int tick = reader.GetInt();
-            int entitiesCount = reader.GetCollectionLength();
+            int entitiesCount = (int)reader.GetVarUInt();
             Dictionary<int, List<BasePacket>> entities = new(entitiesCount);
             ticks[tick] = entities;
             for(int j=0; j<entitiesCount; j++) {
                 int entityId = reader.GetInt();
-                int updatesCount = reader.GetCollectionLength();
+                int updatesCount = (int)reader.GetVarUInt();
                 List<BasePacket> updates = new(updatesCount);
                 entities[entityId] = updates;
                 for(int k=0; k<updatesCount; k++) {
@@ -50,13 +50,13 @@ public class TickedEntitiesUpdates : BasePacket, ITickedContainer {
     public override void Serialize(NetDataWriter writer) {
         writer.Put(PacketIdentifier.STickedEntityUpdates);
 
-        writer.PutVarUInt((uint)ticks.Count);
+        writer.PutVarUInt(ticks.Count);
         foreach(var(tick, entityUpdates) in ticks) {
             writer.Put(tick);
-            writer.PutCollectionLength(entityUpdates);
+            writer.PutVarUInt(entityUpdates.Count);
             foreach(var(entityId, updates) in entityUpdates) {
                 writer.Put(entityId);
-                writer.PutCollectionLength(updates);
+                writer.PutVarUInt(updates.Count);
                 foreach(var update in updates) {
                     update.Serialize(writer);
                 }}}}

@@ -144,7 +144,6 @@ public class SChunk {
 
 
     public void ResetUpdates() {
-        Debug.Log("Resetting!");
         foreach(var writer in writers)
             writer.Reset();
 

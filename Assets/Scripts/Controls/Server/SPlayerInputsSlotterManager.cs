@@ -25,7 +25,7 @@ namespace Networking.Server {
         private Dictionary<int, TimestampedCircularTickBuffer<InputsSerializable>> playerCycledInputs = new();
 
         private void AddPlayer(SPlayer player) {
-            playerCycledInputs[player.Peer.Id] = new(-1);
+            playerCycledInputs[player.Peer.Id] = new();
         }
 
         public static void RemovePlayer(SPlayer player) {

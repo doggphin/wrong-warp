@@ -8,7 +8,7 @@ public class CRollbackManager : BaseSingleton<CRollbackManager> {
     protected override void Awake()
     {
         base.Awake();
-        defaultControllerStates = TimestampedCircularTickBufferClassInitializer<SDefaultControllerStatePkt>.GetInitialized(-1);
+        defaultControllerStates = TimestampedCircularTickBufferClassInitializer<SDefaultControllerStatePkt>.Initialize();
     }
 
     // Rolls the player back from currentTick to rollbackTo.

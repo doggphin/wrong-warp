@@ -40,7 +40,7 @@ namespace Controllers.Shared {
         protected override void Awake() {    
             base.Awake();
               
-            inputs = TimestampedCircularTickBufferClassInitializer<InputsSerializable>.GetInitialized(-1);
+            inputs = TimestampedCircularTickBufferClassInitializer<InputsSerializable>.Initialize();
 
             void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
                 inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);

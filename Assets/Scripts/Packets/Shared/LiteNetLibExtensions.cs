@@ -177,11 +177,4 @@ public static class LiteNetLibExtensions {
 
         return ret;
     }
-
-    public static void PutCollectionLength<T>(this NetDataWriter writer, ICollection<T> collection) {
-        writer.PutVarUInt((uint)collection.Count);
-    }
-    public static int GetCollectionLength(this NetDataReader reader) {
-        return (int)reader.GetVarUInt();
-    }
 }

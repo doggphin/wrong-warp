@@ -130,7 +130,7 @@ namespace Networking.Server {
                 return;
 
             bool hasReliableUpdates = false;
-            packetPacker.StartPacketCollection(testWriter, Tick);
+            packetPacker.StartPacketCollection(testWriter, tick);
             if(player.Entity != null) {
                 if(SChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
                     testWriter.Append(reliableChunkUpdates);
@@ -142,9 +142,10 @@ namespace Networking.Server {
             }
             if(hasReliableUpdates) {
                 peer.Send(testWriter, DeliveryMethod.ReliableOrdered);
-                packetPacker.StartPacketCollection(testWriter, Tick);
             }
-
+            
+            testWriter.Reset();
+            SPacketFragmenter.PutFragmentedPacketHeader(testWriter, tick);
             bool hasUnreliableUpdates = false;
             if(SChunkManager.Instance.TryGetUnreliablePlayerUpdates(player, out NetDataWriter unreliableChunkUpdates)) {
                 testWriter.Append(unreliableChunkUpdates);
@@ -157,7 +158,10 @@ namespace Networking.Server {
                 hasUnreliableUpdates = true;
             }
             if(hasUnreliableUpdates) {
-                peer.Send(testWriter, DeliveryMethod.Unreliable);
+                var fragmentedWriters = SPacketFragmenter.FragmentPacketCollection(testWriter);
+                foreach(var fragmentedWriter in fragmentedWriters) {
+                    peer.Send(fragmentedWriter, DeliveryMethod.Unreliable);
+                }
             }
         }
 

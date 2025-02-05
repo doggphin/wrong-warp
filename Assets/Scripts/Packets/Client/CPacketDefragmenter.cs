@@ -4,29 +4,7 @@ using LiteNetLib.Utils;
 using Networking.Shared;
 using UnityEngine;
 
-public static class CPacketDefragmenter {
-    private static TimestampedCircularTickBuffer<PacketDefragmentationBuffer> tickedReceivedFragments = new(-1);
-
-    public static void ProcessUnreliablePacket(NetDataReader reader) {
-        int tick = reader.GetInt();
-
-        // If reader is older than a packet being defragmented, toss it out
-        if(!tickedReceivedFragments.IsInputTickNewer(tick, true)) {
-            return;
-        }
-
-        FragmentedPacketInfo fragmentInfo = new() { };
-        fragmentInfo.Deserialize(reader);
-
-        if(!tickedReceivedFragments.TryGetByTimestamp(tick, out var fragmentedPacket)) {
-            fragmentedPacket = new(tick, fragmentInfo.finalPacketPayloadLen);
-            tickedReceivedFragments.SetValueAndTimestamp(fragmentedPacket, tick);
-        }
-
-        fragmentedPacket.AssimilateFragment(fragmentInfo.curFragmentIdx, reader);
-    }
-
-
+public class CPacketDefragmenter : BaseSingleton<CPacketDefragmenter> {
     private class PacketDefragmentationBuffer {
         private int tick;
         private byte[] bytesBuffer;
@@ -52,6 +30,8 @@ public static class CPacketDefragmenter {
 
             // Copy the data into the bytes buffer
             int copyIntoBytesBufferStart = fragmentIdx * SPacketFragmenter.PKT_MAX_PAYLOAD_LEN;
+            // Copy either max packet payload length OR remainder to the end of the buffer
+            int bytesToCopyCount = Mathf.Min(SPacketFragmenter.PKT_MAX_PAYLOAD_LEN, bytesBuffer.Length - copyIntoBytesBufferStart);
             Array.Copy(
                 reader.RawData,
                 SPacketFragmenter.PKT_HEADER_LEN,
@@ -59,8 +39,7 @@ public static class CPacketDefragmenter {
                 bytesBuffer,
                 copyIntoBytesBufferStart,
                 
-                // Copy either max packet payload length OR remainder to the end of the buffer
-                Mathf.Min(SPacketFragmenter.PKT_MAX_PAYLOAD_LEN, bytesBuffer.Length - copyIntoBytesBufferStart)
+                bytesToCopyCount
             );
 
             // If the bytes buffer has been filled, consume it
@@ -70,5 +49,28 @@ public static class CPacketDefragmenter {
                 CPacketUnpacker.ConsumeAllPackets(tick, fullReader);
             }
         }
+    }
+
+
+    private TimestampedCircularTickBuffer<PacketDefragmentationBuffer> tickedReceivedFragments = new();
+
+
+    public void ProcessUnreliablePacket(NetDataReader reader) {
+        int tick = reader.GetInt();
+
+        // If reader is older than a packet being defragmented, toss it out
+        if(!tickedReceivedFragments.IsInputTickNewer(tick, true)) {
+            return;
+        }
+
+        FragmentedPacketInfo fragmentInfo = new() { };
+        fragmentInfo.Deserialize(reader);
+
+        if(!tickedReceivedFragments.TryGetByTimestamp(tick, out var fragmentedPacket)) {
+            fragmentedPacket = new(tick, fragmentInfo.finalPacketPayloadLen);
+            tickedReceivedFragments.SetValueAndTimestamp(fragmentedPacket, tick);
+        }
+
+        fragmentedPacket.AssimilateFragment(fragmentInfo.curFragmentIdx, reader);
     }
 }
