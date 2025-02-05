@@ -13,13 +13,13 @@ namespace Networking.Server {
     [RequireComponent(typeof(SPlayerInputsSlotterManager))]
     [RequireComponent(typeof(SInventoryManager))]
     [RequireComponent(typeof(SPacketUnpacker))]
-    [RequireComponent(typeof(PacketPacker))]
+    [RequireComponent(typeof(SPacketPacker))]
     [RequireComponent(typeof(SChatHandler))]
     [RequireComponent(typeof(SChunkManager))]
     [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
         private ControlsManager controlsManager;
-        private PacketPacker packetPacker;
+        private SPacketPacker packetPacker;
 
         private static int tick;
         public int GetTick() => tick;
@@ -45,7 +45,7 @@ namespace Networking.Server {
             tick = NetCommon.TICKS_PER_SECOND;
             
             controlsManager = GetComponent<ControlsManager>();
-            packetPacker = GetComponent<PacketPacker>();
+            packetPacker = GetComponent<SPacketPacker>();
             ControlsManager.ActivateControls();
             ChatUiManager.SendChatMessage += SendHostChatMessage;
             CPacket<CJoinRequestPkt>.ApplyUnticked += HandleJoinRequest;
@@ -172,7 +172,7 @@ namespace Networking.Server {
             peer.Tag = player;
             PlayerJoined?.Invoke(player);
 
-            PacketCommunication.StartMultiPacket(baseWriter, tick);
+            packetPacker.StartPacketCollection(baseWriter, tick);
             
             SJoinAcceptPkt joinAcceptPacket = new() {
                 userName = userName,
