@@ -158,7 +158,7 @@ namespace Networking.Server {
                 hasUnreliableUpdates = true;
             }
             if(hasUnreliableUpdates) {
-                var fragmentedWriters = SPacketFragmenter.FragmentPacketCollection(testWriter);
+                var fragmentedWriters = SPacketFragmenter.FragmentPacketCollection(testWriter, tick);
                 foreach(var fragmentedWriter in fragmentedWriters) {
                     peer.Send(fragmentedWriter, DeliveryMethod.Unreliable);
                 }

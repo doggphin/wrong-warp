@@ -33,19 +33,16 @@ public class CPacketDefragmenter : BaseSingleton<CPacketDefragmenter> {
             // Copy either max packet payload length OR remainder to the end of the buffer
             int bytesToCopyCount = Mathf.Min(SPacketFragmenter.PKT_MAX_PAYLOAD_LEN, bytesBuffer.Length - copyIntoBytesBufferStart);
             Array.Copy(
-                reader.RawData,
-                SPacketFragmenter.PKT_HEADER_LEN,
-                
+                // the + 1 here is to deal with litenetlib prepending reader data with an empty byte for some reason??
+                reader.RawData, SPacketFragmenter.PKT_HEADER_LEN + 1,
                 bytesBuffer,
                 copyIntoBytesBufferStart,
-                
                 bytesToCopyCount
             );
 
             // If the bytes buffer has been filled, consume it
             if(expectedFragmentIndices.Count == 0) {
-                NetDataReader fullReader = new();
-                fullReader.SetSource(bytesBuffer);
+                NetDataReader fullReader = new(bytesBuffer);
                 CPacketUnpacker.ConsumeAllPackets(tick, fullReader);
             }
         }

@@ -214,7 +214,6 @@ public class SChunk {
 
     ///<summary> Notifies all players in this chunk that an entity has entered their render distance </summary>
     public void AddEntityIntoRenderDistance(SEntity entity) {
-        Debug.Log($"Notifying players in {Coords} to load {entity}!");
         AddEntityUpdate(
             entity,
             rLocalEUpdates, 
@@ -226,7 +225,6 @@ public class SChunk {
 
     ///<summary> Notifies all players in this chunk that an entity has left their render distance </summary>
     public void RemoveEntityFromRenderDistance(SEntity entity) {
-        Debug.Log($"Notifying players in {Coords} to unload {entity}!");
         AddEntityUpdate(
             entity,
             rLocalEUpdates, 
@@ -239,7 +237,6 @@ public class SChunk {
 
     private void AddUnreliableEntityUpdate(SEntity entity, BasePacket packet) {
         AddEntityUpdate(entity, uSharedEUpdates, packet);
-        Debug.Log($"Adding a {packet} for {entity}!");
     }
 
 

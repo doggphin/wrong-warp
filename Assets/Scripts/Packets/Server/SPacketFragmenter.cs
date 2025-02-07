@@ -4,41 +4,43 @@ using Unity.Profiling;
 using UnityEngine;
 
 public static class SPacketFragmenter {
-    public const int PKT_MAX_TOT_LEN = 100; //1431;
+    public const int PKT_MAX_TOT_LEN = 1431;
     public const int PKT_HEADER_LEN = FragmentedPacketInfo.LENGTH + sizeof(int);
     public const int PKT_MAX_PAYLOAD_LEN = PKT_MAX_TOT_LEN - PKT_HEADER_LEN;
-    public static int FragmentsRequiredForPayload(int payloadLength) => Mathf.CeilToInt(payloadLength / PKT_MAX_PAYLOAD_LEN);
+    public static int FragmentsRequiredForPayload(int payloadLength) => Mathf.CeilToInt((float)payloadLength / PKT_MAX_PAYLOAD_LEN);
 
-    public static NetDataWriter[] FragmentPacketCollection(NetDataWriter writer) {
-        if(writer.Length <= PKT_MAX_TOT_LEN) {
-            SetFragmentedPacketPayloadLen(writer, (ushort)(writer.Length - PKT_HEADER_LEN));
-            return new NetDataWriter[1] { writer };
+    /// <summary>
+    /// Fragments unreliable packet collections into pieces that can be safely sent.
+    /// </summary>
+    /// <param name="oWriter"> A writer with a fragmented packet header already attached to it. </param>
+    /// <param name="tick"> The tick for this packet. </param>
+    /// <returns> An array of fragmented NetDataWriters, each with their own header. This might just consist of the original NetDataWriter. </returns>
+    /// <exception cref="Exception"> The writer length cannot be over 65535. This was arbitrarily chosen. </exception>
+    public static NetDataWriter[] FragmentPacketCollection(NetDataWriter oWriter, int tick) {
+        if(oWriter.Length <= PKT_MAX_TOT_LEN) {
+            SetFragmentedPacketPayloadLen(oWriter, (ushort)(oWriter.Length - PKT_HEADER_LEN));
+            return new NetDataWriter[1] { oWriter };
         }
 
-        if(writer.Length > ushort.MaxValue) {
+        if(oWriter.Length > ushort.MaxValue) {
             throw new Exception("Unreliable packet is too long (65535+)! Cannot send!");
         }
 
-        // Otherwise, fragment packet into pieces
-        int tick = BitConverter.ToInt32(writer.Data, 0);
-        int writerPayloadLen = writer.Length - PKT_HEADER_LEN;
-        int fragmentsCount = Mathf.CeilToInt((float)writerPayloadLen / PKT_MAX_PAYLOAD_LEN);
+        // Otherwise, fragment packet into two or more pieces
+        int totalPayloadLen = oWriter.Length - PKT_HEADER_LEN;
+        int fragmentsCount = FragmentsRequiredForPayload(totalPayloadLen);
         NetDataWriter[] fragmentedWriters = new NetDataWriter[fragmentsCount];
-        for(int i=0, writerIdx = PKT_HEADER_LEN, bytesRemaining = writerPayloadLen; i<fragmentsCount; i++) {
-            NetDataWriter fragmentedWriter = new(false, PKT_MAX_TOT_LEN);
-            FragmentedPacketInfo fragmentInfo = new() { curFragmentIdx = (byte)i, finalPacketPayloadLen = (ushort)writerPayloadLen };
+        for(int fragmentIdx=0, writerIdx = PKT_HEADER_LEN; fragmentIdx<fragmentsCount; fragmentIdx++) {
+            int bytesToCopy = Mathf.Min(PKT_MAX_PAYLOAD_LEN, oWriter.Length - writerIdx);
+            NetDataWriter fragmentedWriter = fragmentedWriters[fragmentIdx] = new(false, PKT_HEADER_LEN + bytesToCopy);
 
             fragmentedWriter.Put(tick);
+
+            FragmentedPacketInfo fragmentInfo = new() { curFragmentIdx = (byte)fragmentIdx, finalPacketPayloadLen = (ushort)totalPayloadLen };
             fragmentInfo.Serialize(fragmentedWriter);
 
-            int bytesToCopy = Mathf.Min(PKT_MAX_PAYLOAD_LEN, bytesRemaining);
-            Debug.Log(writerIdx);
-            Debug.Log(bytesToCopy);
-            fragmentedWriter.Put(writer.Data, writerIdx, bytesToCopy);
-
-            fragmentedWriters[i] = fragmentedWriter;
+            fragmentedWriter.Put(oWriter.Data, writerIdx, bytesToCopy);
             writerIdx += bytesToCopy;
-            bytesRemaining -= bytesToCopy;
         }
 
         return fragmentedWriters;
@@ -57,8 +59,10 @@ public static class SPacketFragmenter {
 
     public static void SetFragmentedPacketPayloadLen(NetDataWriter writer, ushort finalPacketPayloadLen) {
         byte[] bytes = BitConverter.GetBytes(finalPacketPayloadLen);
-        int payloadStartWriteIdx = sizeof(int);
-        writer.Data[payloadStartWriteIdx] = bytes[0];
-        writer.Data[payloadStartWriteIdx + 1] = bytes[1];
+        Array.Copy(
+            bytes, 0, 
+            writer.Data, sizeof(int), 
+            2
+        );
     }
 }
