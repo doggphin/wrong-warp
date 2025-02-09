@@ -53,25 +53,15 @@ namespace Controllers.Shared {
         }
 
         protected virtual float InteractRange => 5.0f;
-        public override bool PollForInteractable(out BaseInteractable outInteractable) {
-            outInteractable = null;
-            return false;
-            /*Debug.Log("Polling!");
-            Debug.DrawLine(cam.transform.position, cam.transform.position + cam.transform.rotation * Vector3.forward * InteractRange, Color.red);
-            Debug.Log(InteractRange);
-            if(!Physics.Raycast(cam.transform.position, cam.transform.rotation * Vector3.forward, out var hit, InteractRange)) {
-                Debug.Log("Didn't find shit!");
-                outInteractable = null;
-                return false;
+        public override bool PollForInteractable(out BaseInteractable outInteractable) =>
+            PollForInteractable(cam.transform, InteractRange, out outInteractable);
+        public override void TryInteract() {
+            if(PollForInteractable(out var interactable) && TryGetComponent(out BaseEntity baseEntity)) {
+                interactable.InteractStart(baseEntity);
             }
-
-            outInteractable*/
-
-            //return hit.collider.TryGetComponent(out outInteractable);
         }
 
         public override Vector2? PollLook() => boundedRotator.PollLook();
-
 
         public override Vector2 GetLook() => boundedRotator.GetLook();
 

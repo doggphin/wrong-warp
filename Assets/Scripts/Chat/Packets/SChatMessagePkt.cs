@@ -26,6 +26,6 @@ namespace Networking.Shared {
                 writer.Put(speakerId);
         }
 
-        public override bool ShouldCache => true;
+        public override bool ShouldCache => false;
     }
 }

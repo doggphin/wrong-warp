@@ -74,7 +74,6 @@ namespace Networking.Client {
 
             ChatUiManager.SendChatMessage += SendChatMessage;
             SPacket<SDefaultControllerStatePkt>.Apply += HandleDefaultControllerState;
-            SPacket<SEntitiesLoadedDeltaPkt>.Apply += HandleEntitiesLoadedDelta;
             SPacket<SSetPlayerEntityPkt>.ApplyUnticked += HandleSetPlayerEntity;
             SPacket<SJoinAcceptPkt>.ApplyUnticked += HandleJoinAccept;
         }
@@ -85,7 +84,6 @@ namespace Networking.Client {
         protected override void OnDestroy() {
             ChatUiManager.SendChatMessage -= SendChatMessage;
             SPacket<SDefaultControllerStatePkt>.Apply -= HandleDefaultControllerState;
-            SPacket<SEntitiesLoadedDeltaPkt>.Apply -= HandleEntitiesLoadedDelta;
             SPacket<SSetPlayerEntityPkt>.ApplyUnticked -= HandleSetPlayerEntity;
             SPacket<SJoinAcceptPkt>.ApplyUnticked -= HandleJoinAccept;
             base.OnDestroy();
@@ -211,29 +209,6 @@ namespace Networking.Client {
             Debug.Log($"Being told to start at tick {pkt.tick}!");
 
             Instance.isJoined = true;
-        }
-
-        
-        private void HandleEntitiesLoadedDelta(int tick, SEntitiesLoadedDeltaPkt entitiesLoadedDelta) {
-            foreach(var entityId in entitiesLoadedDelta.entityIdsToRemove) {
-                PacketCacheManager.CachePacket(
-                    tick,
-                    new SEntityKillPkt() {
-                        entityId = entityId,
-                        reason = WEntityKillReason.Unload,
-                    }
-                );
-            }
-
-            foreach(var entity in entitiesLoadedDelta.entitiesToAdd) {
-                PacketCacheManager.CachePacket(
-                    tick,
-                    new SEntitySpawnPkt() {
-                        entity = entity,
-                        reason = WEntitySpawnReason.Load
-                    }
-                );
-            }
         }
 
 

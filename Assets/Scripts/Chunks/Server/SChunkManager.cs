@@ -162,8 +162,10 @@ namespace Networking.Server {
             
             bool isPlayer = entity.IsPlayer;
             SPlayer player = entity.Player;
+
+            // GetChunkDeltas will generate the new chunks if it doesn't exist
             GetChunkDeltas(entity.Chunk.Coords, toCoords, out var chunksEntering, out var chunksLeaving, isPlayer);
-            bool canEnterNewChunk = loadedChunks.TryGetValue(toCoords, out var toChunk) || isPlayer;
+            bool canEnterNewChunk = loadedChunks.TryGetValue(toCoords, out var toChunk);
             
             void UpdatePresence(HashSet<SChunk> chunkDeltas, 
             Action<SChunk, SPlayer> addOrRemovePlayer, 

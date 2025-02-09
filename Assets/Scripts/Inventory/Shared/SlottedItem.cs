@@ -1,6 +1,4 @@
-using System.Runtime.InteropServices.WindowsRuntime;
 using LiteNetLib.Utils;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace Inventories {
@@ -11,8 +9,8 @@ namespace Inventories {
         public int stackSize;
 
         public SlottedItem() { }
-        public SlottedItem(ItemType itemType) {
-            Initialize(itemType, 0);
+        public SlottedItem(ItemType itemType, int stackSize) {
+            Initialize(itemType, stackSize);
         }
         private void Initialize(ItemType itemType, int stackSize) {
             SlottedItemType = itemType;

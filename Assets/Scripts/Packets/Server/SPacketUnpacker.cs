@@ -10,6 +10,7 @@ public class SPacketUnpacker : BasePacketUnpacker<SPacketUnpacker>
         { PacketIdentifier.CGroupedInputs, Deserialize<CGroupedInputsPkt> },
         { PacketIdentifier.CMoveSlotRequest, Deserialize<CMoveSlotRequest> },
         { PacketIdentifier.CDropSlotRequest, Deserialize<CDropSlotRequest> },
+        { PacketIdentifier.CChatMessage, Deserialize<CChatMessagePkt> },
     };
 
     protected override Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> PacketDeserializers { get => packetDeserializers; }

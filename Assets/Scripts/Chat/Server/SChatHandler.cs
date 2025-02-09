@@ -81,7 +81,7 @@ namespace Networking.Server {
             if(msg.Length > MAX_CHAT_COMMAND_LENGTH || msg.Length < 2)
                 return false;
             
-            msg.Remove(0, 1);
+            msg = msg[1..];
             string[] args = msg.Split(' ', 2);
 
             switch(args[0]) {
@@ -120,6 +120,7 @@ namespace Networking.Server {
 
             // Non-server messages get sent locally
             if(!isServerMessage) {
+                Debug.Log("Adding a non-server chat message to a chunk!");
                 player.Entity.Chunk.AddReliableGeneralUpdate(chatMessagePkt);
             // Server messages get sent globally
             } else {

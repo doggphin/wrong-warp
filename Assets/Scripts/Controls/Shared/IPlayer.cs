@@ -19,5 +19,14 @@ namespace Controllers.Shared {
 
         public abstract void RollbackToTick(int tick);
         public abstract bool PollForInteractable(out BaseInteractable outInteractable);
+        public abstract void TryInteract();
+
+        protected bool PollForInteractable(Transform camTransform, float range, out BaseInteractable baseInteractable) {
+            if(Physics.Raycast(camTransform.position, camTransform.rotation * Vector3.forward, out var hit, range)) {
+                return hit.collider.gameObject.TryGetComponent(out baseInteractable);
+            }
+            baseInteractable = null;
+            return false;
+        }
     }
 }

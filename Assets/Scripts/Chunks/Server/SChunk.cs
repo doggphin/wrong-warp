@@ -54,7 +54,7 @@ public class SChunk {
     public SChunk(Vector2Int coords) {
         Coords = coords;
         tickedContainers = new ITickedContainer[]{ rLocalEUpdates, uSharedEUpdates, rSharedEUpdates, rSharedGUpdates };
-        writers = new NetDataWriter[]{ rLocalEUpdatesWriter, uSharedEUpdatesWriter, rSharedEUpdatesWriter, r3x3UpdatesWriter, u3x3UpdatesWriter };
+        writers = new NetDataWriter[]{ rLocalEUpdatesWriter, uSharedEUpdatesWriter, rSharedEUpdatesWriter, r3x3UpdatesWriter, u3x3UpdatesWriter, rSharedGUpdatesWriter };
     }
     
 

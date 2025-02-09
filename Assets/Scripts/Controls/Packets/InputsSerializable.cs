@@ -93,7 +93,7 @@ namespace Networking.Shared {
             if(inputFlags.GetFlag(InputType.AltFireDownEvent)) {
                 writer.PutCompressedUnsignedFloat(Mathf.Clamp(altFireDownSubtick.Value, 0, 1), 1);
                 writer.Put(altFireDownLookVector.Value);
-            } 
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using Audio.Shared;
 using Networking.Server;
+using Inventories;
 
 namespace Controllers.Shared {
     public class ControlsManager : BaseSingleton<ControlsManager> {
@@ -36,6 +37,8 @@ namespace Controllers.Shared {
         public static Action EscapeClicked;
         public static Action ConfirmClicked;
         public static Action InventoryClicked;
+        public static Action InteractStarted;
+        public static Action InteractCanceled;
 
         protected override void Awake() {    
             base.Awake();
@@ -43,8 +46,8 @@ namespace Controllers.Shared {
             inputs = TimestampedCircularTickBufferClassInitializer<InputsSerializable>.Initialize();
 
             void BindInputActionToInputType(InputAction inputAction, InputType inputType) {
-                inputAction.started += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
-                inputAction.canceled += (InputAction.CallbackContext ctx) => HandleBufferedAction(ctx, inputType);
+                inputAction.started += ctx => HandleBufferedAction(ctx, inputType);
+                inputAction.canceled += ctx => HandleBufferedAction(ctx, inputType);
             }
 
             inputActions = new();
@@ -54,6 +57,7 @@ namespace Controllers.Shared {
             BindInputActionToInputType(inputActions.Gameplay.Back, InputType.Back);
             BindInputActionToInputType(inputActions.Gameplay.Right, InputType.Right);
             BindInputActionToInputType(inputActions.Gameplay.Jump, InputType.Jump);
+            BindInputActionToInputType(inputActions.Gameplay.Interact, InputType.Interact);
 
             inputActions.Gameplay.Fire.started += (InputAction.CallbackContext ctx) => HandleOneOffAction(ctx, InputType.FireDownEvent);
             BindInputActionToInputType(inputActions.Gameplay.Fire, InputType.FireDown);
@@ -141,7 +145,8 @@ namespace Controllers.Shared {
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
                     AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
-                    SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
+                    SEntity entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
+                    entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingPotion, 5);
                     break;
                 case InputType.AltFireDownEvent:
                     altFireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();
