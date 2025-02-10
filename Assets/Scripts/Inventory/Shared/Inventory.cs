@@ -4,15 +4,15 @@ using Unity.VisualScripting;
 
 namespace Inventories { 
     public class Inventory : INetSerializable {
-        public InventoryTemplate Template { get; private set; }
+        public InventoryTemplateSO Template { get; private set; }
         public SlottedItem[] SlottedItems { get; private set; }
 
         ///<summary> Generates an empty inventory from a template. </summary>
-        public Inventory(InventoryTemplate template) {
+        public Inventory(InventoryTemplateSO template) {
             Init(template);
         }
 
-        private void Init(InventoryTemplate template) {
+        private void Init(InventoryTemplateSO template) {
             Template = template;
             SlottedItems = new SlottedItem[template.slotsCount];
         }
@@ -86,7 +86,7 @@ namespace Inventories {
         {
             InventoryTemplateType templateType = (InventoryTemplateType)reader.GetUShort();
 
-            Init(InventoryTemplateLookup.GetTemplate(templateType));
+            Init(InventoryTemplateLookup.Lookup(templateType));
 
             for(int i=0; i<SlottedItems.Length; i++) {
                 uint amountOfBlanks = reader.GetVarUInt();

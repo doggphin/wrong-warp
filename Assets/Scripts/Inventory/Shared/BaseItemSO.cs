@@ -22,7 +22,7 @@ namespace Inventories {
         public int MaxStackSize => maxStackSize;
 
         void OnEnable() {
-            ItemClassificationBitflags = InventoryTemplate.GenerateItemRestrictionFlags(ItemClassificationsArray);
+            ItemClassificationBitflags = InventoryTemplateSO.GenerateItemRestrictionFlags(ItemClassificationsArray);
         }
     }
 }

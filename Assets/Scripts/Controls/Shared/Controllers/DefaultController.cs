@@ -59,7 +59,7 @@ namespace Controllers.Shared {
             if(inputs.inputFlags.GetFlag(InputType.Look))
                 boundedRotator.rotation = inputs.look.Value;
 
-            if(inputs.inputFlags.GetFlag(InputType.Interact))
+            if(inputs.inputFlags.GetFlag(InputType.Interact) && !previousInputs.inputFlags.GetFlag(InputType.Interact))
                 TryInteract();
 
             Quaternion rotation = boundedRotator.BodyQuatRotation;

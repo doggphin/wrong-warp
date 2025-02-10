@@ -9,9 +9,9 @@ namespace Networking.Server {
         private Dictionary<int, SInventory> inventories = new();
         private BaseIdGenerator idGenerator = new();
 
-        private HashSet<SInventory> wsInventoriesWithUpdatesCache = new();
+        private HashSet<SInventory> inventoriesWithUpdatesBuffer = new();
         
-        public static SInventory CreateNewInventoryForEntity(SEntity entity, InventoryTemplate inventoryTemplate) {
+        public static SInventory CreateNewInventoryForEntity(SEntity entity, InventoryTemplateSO inventoryTemplate) {
             if(entity.GetComponent<SInventory>() != null) {
                 Debug.Log($"{entity.name} already had an attached inventory!");
                 return null;
@@ -27,7 +27,6 @@ namespace Networking.Server {
 
         public static void DeleteInventory(SInventory inventory) {
             Instance.inventories.Remove(inventory.Id);
-            
         }
 
 
