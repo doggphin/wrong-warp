@@ -18,27 +18,40 @@ namespace Networking.Server {
             }
 
             int inventoryId = Instance.idGenerator.GetNextEntityId(Instance.inventories);
-            Inventory inventory = new(inventoryTemplate);
-            SInventory wsInventory = AttachInventoryToEntity(entity, inventoryId, inventory);
+            SInventory sInventory = Instance.AttachInventoryToEntity(entity, inventoryId, inventoryTemplate);
 
-            return wsInventory;
+            return sInventory;
         }
 
 
-        public static void DeleteInventory(SInventory inventory) {
-            Instance.inventories.Remove(inventory.Id);
+        public static void DeleteInventory(SInventory sInventory) {
+            sInventory.Modified -= Instance.AddModifiedSInventory;
+            Instance.inventories.Remove(sInventory.Id);
+            Destroy(sInventory);
         }
 
 
-        private static SInventory AttachInventoryToEntity(SEntity entity, int inventoryId, Inventory inventory) {
-            SInventory entityWsInventory = entity.AddComponent<SInventory>();
-            entityWsInventory.Init(inventory, inventoryId);
+        private SInventory AttachInventoryToEntity(SEntity entity, int inventoryId, InventoryTemplateSO inventoryTemplate) {
+            SInventory sInventory = entity.AddComponent<SInventory>();
+            sInventory.Init(inventoryId, inventoryTemplate);
 
-            Instance.inventories[inventoryId] = entityWsInventory;
+            Instance.inventories[inventoryId] = sInventory;
 
-            entity.Player?.SetPersonalInventory(entityWsInventory);
+            entity.Player?.SetPersonalInventory(sInventory);
 
-            return entityWsInventory;
+            sInventory.Modified += AddModifiedSInventory;
+
+            return sInventory;
+        }
+
+
+        private void AddModifiedSInventory(SInventory sInventory) {
+            inventoriesWithUpdatesBuffer.Add(sInventory);
+        }
+
+
+        private void SendOutUpdates(SInventory sInventory) {
+            
         }
     }
 }

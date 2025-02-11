@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d185638c1a6db2a4dba384d3e365e243, type: 3}
   m_Name: Spectator
   m_EditorClassIdentifier: 
-  entityPrefab: {fileID: 3460086428232934023, guid: be974b2144d6e4f4e829b77aa17f7028, type: 3}
-  updatePosition: 1
-  updateRotation: 1
-  updateScale: 1
-  hasVelocity: 0
+  <EntityPrefab>k__BackingField: {fileID: 3460086428232934023, guid: be974b2144d6e4f4e829b77aa17f7028, type: 3}
+  <UpdatePositionOverNetwork>k__BackingField: 1
+  <UpdateRotationOverNetwork>k__BackingField: 1
+  <UpdateScaleOverNetwork>k__BackingField: 0
+  <InventoryTemplate>k__BackingField: {fileID: 0}

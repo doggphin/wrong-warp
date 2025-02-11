@@ -1,21 +1,14 @@
+using Inventories;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "EntitySO", menuName = "Scriptable Objects/EntitySO")]
 public class EntitySO : ScriptableObject
 {
-    public GameObject entityPrefab;
+    [field: SerializeField] public GameObject EntityPrefab { get; private set; }
 
-    [Space(10)]
-    public bool updatePositionOverNetwork = false;
-    public bool updateRotationOverNetwork = false;
-    public bool updateScaleOverNetwork = false;
+    [field: SerializeField] public bool UpdatePositionOverNetwork { get; private set; }
+    [field: SerializeField] public bool UpdateRotationOverNetwork { get; private set; }
+    [field: SerializeField] public bool UpdateScaleOverNetwork { get; private set; }
 
-    [Space(10)]
-    public AutomaticMovementType autoMovementType = AutomaticMovementType.None;
-}
-
-public enum AutomaticMovementType {
-    None,
-    Velocity,
-    Rigidbody,
+    [field: SerializeField] public InventoryTemplateSO InventoryTemplate { get; private set; }
 }

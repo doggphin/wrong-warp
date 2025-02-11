@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 912bf57dcec92964cb5c8a99f213ea0d, type: 3}
   m_Name: TestingWand
   m_EditorClassIdentifier: 
-  serializedItemClassifications: 03000000
-  itemName: Testing Wand
-  description: A terrifying wand filled with destructive power!
-  slotSprite: {fileID: 21300000, guid: cf89932d6ff659c4e89a96cc7f883b1b, type: 3}
-  maxStackSize: 1
+  <ItemName>k__BackingField: Wand
+  <Description>k__BackingField: A powerful wand!
+  <SlotSprite>k__BackingField: {fileID: 21300000, guid: cf89932d6ff659c4e89a96cc7f883b1b, type: 3}
+  <MaxStackSize>k__BackingField: 1
+  __alchemySerializationData_Inventories_BaseItemSO:
+    categories:
+      isCreated: 1
+      data: '[]'
+    unityObjectReferences: []

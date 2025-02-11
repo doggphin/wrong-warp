@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 912bf57dcec92964cb5c8a99f213ea0d, type: 3}
   m_Name: TestingPotion
   m_EditorClassIdentifier: 
-  serializedItemClassifications: 05000000
-  itemName: Testing Potion
-  description: A delicious potion!
-  slotSprite: {fileID: 21300000, guid: acd1d63c9830a1a4faad28305a88830a, type: 3}
-  maxStackSize: 1
+  <ItemName>k__BackingField: Potion
+  <Description>k__BackingField: A delicious potion!
+  <SlotSprite>k__BackingField: {fileID: 21300000, guid: acd1d63c9830a1a4faad28305a88830a, type: 3}
+  <MaxStackSize>k__BackingField: 1
+  __alchemySerializationData_Inventories_BaseItemSO:
+    categories:
+      isCreated: 1
+      data: '[]'
+    unityObjectReferences: []

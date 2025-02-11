@@ -1,23 +1,34 @@
 using System;
 using System.Collections.Generic;
-using Alchemy.Serialization;
 using UnityEngine;
+using Alchemy;
+using Alchemy.Serialization;
 
 namespace Inventories {
     [CreateAssetMenu(fileName = "EntitySO", menuName = "Scriptable Objects/InventoryTemplateSO")]
     [AlchemySerialize]
     public partial class InventoryTemplateSO : ScriptableObject {
-        public InventoryTemplateType templateType;
+        [field: SerializeField] public InventoryTemplateType TemplateType { get; private set; }
+        [field: SerializeField] public int SlotsCount { get; private set; }
 
-        public int slotsCount;
-        public bool acceptsNewItems;
+        [SerializeField] private bool acceptsNewItems;
         
-        [AlchemySerializeField, NonSerialized]
-        private Dictionary<int, HashSet<InventoryTemplateType>> slotRestrictions = new();
-        public HashSet<InventoryTemplateType> inventoryRestrictions;
+        [AlchemySerializeField, NonSerialized] private Dictionary<int, HashSet<ItemCategory>> slotsAllowed = new();
+        private Dictionary<int, int> slotsAllowedFlags = new();
 
-        private Dictionary<int, int> slotRestrictionFlags = new();
-        private int inventoryRestrictionFlags = 0;  // TODO: test
+        [AlchemySerializeField, NonSerialized] private HashSet<ItemCategory> inventoryAllowed = new();
+        private int inventoryAllowedFlags;
+
+
+        ///<summary> Converts all item classifications into flags. </summary>
+        private void OnEnable() {
+            foreach(var kvp in slotsAllowed)
+                slotsAllowedFlags[kvp.Key] = GenerateItemCategoryFlags(kvp.Value);
+            
+            // Generate inventoryAllowedFlags if inventoryAllowed was defined in inspector; otherwise, allow all items
+            inventoryAllowedFlags = inventoryAllowed.Count > 0 ? GenerateItemCategoryFlags(inventoryAllowed) : int.MaxValue;
+        }
+
 
         ///<summary> Returns whether an item classifications can be accepted into an inventory index. </summary>
         public bool AllowsItemAtIndex(int inventoryIndex, int itemClassificationBitflags) {
@@ -25,19 +36,20 @@ namespace Inventories {
                 return false;
 
             // If restrictions exist on this slot, return whether slots are compatible
-            if(slotRestrictionFlags.TryGetValue(inventoryIndex, out var restrictionFlags)) {
-                // If item classification and restriction bitflags ANDed with one another aren't 0, there's some overlap, so return true
-                return (restrictionFlags & itemClassificationBitflags & inventoryRestrictionFlags) != 0;
+            if(!slotsAllowedFlags.TryGetValue(inventoryIndex, out var restrictionFlags)) {
+                return true;
             }
+
             // Return true if there are not restrictions on this slot
-            return true;
+            return (restrictionFlags & itemClassificationBitflags & inventoryAllowedFlags) != 0;
         }
 
-        ///<summary> Converts an ItemClassification[] to bitflags </summary>
-        public static int GenerateItemRestrictionFlags(params ItemClassification[] classifications) {
+
+        ///<summary> Converts an ItemCategory to bitflags </summary>
+        public static int GenerateItemCategoryFlags(IEnumerable<ItemCategory> categories) {
             int ret = 0;
-            foreach(var classification in classifications) {
-                ret |= (int)classification;
+            foreach(var category in categories) {
+                ret |= (int)category;
             }
             return ret;
         }

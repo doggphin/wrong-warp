@@ -9,7 +9,7 @@ namespace Networking.Shared {
         //protected T GenerateBaseEntity
         protected T GenerateBaseEntity(EntityPrefabId id, out EntitySO entitySO) {
             entitySO = EntityPrefabLookup.Lookup(id);
-            return Instantiate(entitySO.entityPrefab).AddComponent<T>();
+            return Instantiate(entitySO.EntityPrefab).AddComponent<T>();
         }
 
         protected virtual T OverrideableGenerateEntity(EntityPrefabId identifier) {

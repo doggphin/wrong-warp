@@ -10,29 +10,19 @@ namespace Networking.Server {
         {
             SEntity entity = GenerateBaseEntity(identifier, out EntitySO entitySO);
 
-            entity.updatePositionOverNetwork = entitySO.updatePositionOverNetwork;
-            entity.updateRotationOverNetwork = entitySO.updateRotationOverNetwork;
-            entity.updateScaleOverNetwork = entitySO.updateScaleOverNetwork;
+            entity.updatePositionOverNetwork = entitySO.UpdatePositionOverNetwork;
+            entity.updateRotationOverNetwork = entitySO.UpdateRotationOverNetwork;
+            entity.updateScaleOverNetwork = entitySO.UpdateScaleOverNetwork;
 
             if(entity.GetComponent<Rigidbody>()) {
                 entity.setVisualPositionAutomatically = false;
                 entity.setVisualRotationAutomatically = false;
                 entity.isRigidbody = true;
             }
-            
-            /*switch(entitySO.autoMovementType) {
-                case AutomaticMovementType.Velocity:
-                    entity.AddComponent<EntityVelocity>();
-                    break;
-                case AutomaticMovementType.Rigidbody:
-                    entity.AddComponent<Rigidbody>();
-                    entity.setVisualPositionAutomatically = false;
-                    entity.setVisualRotationAutomatically = false;
-                    entity.isRigidbody = true;
-                    break;
-                default:
-                    break;
-            }*/
+
+            if(entitySO.InventoryTemplate != null) {
+                AddModifiedSInventory.CreateNewInventoryForEntity(entity, entitySO.InventoryTemplate);
+            }
 
             return entity;
         }

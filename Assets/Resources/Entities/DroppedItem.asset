@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d185638c1a6db2a4dba384d3e365e243, type: 3}
   m_Name: DroppedItem
   m_EditorClassIdentifier: 
-  entityPrefab: {fileID: 8834579135381088521, guid: 4f07cab42bcf25d42b0b9cb24f9ba5cc, type: 3}
-  updatePosition: 1
-  updateRotation: 1
-  updateScale: 0
-  autoMovementType: 2
+  <EntityPrefab>k__BackingField: {fileID: 8834579135381088521, guid: 4f07cab42bcf25d42b0b9cb24f9ba5cc, type: 3}
+  <UpdatePositionOverNetwork>k__BackingField: 0
+  <UpdateRotationOverNetwork>k__BackingField: 0
+  <UpdateScaleOverNetwork>k__BackingField: 0
+  <InventoryTemplate>k__BackingField: {fileID: 0}

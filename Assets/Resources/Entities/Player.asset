@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d185638c1a6db2a4dba384d3e365e243, type: 3}
   m_Name: Player
   m_EditorClassIdentifier: 
-  entityPrefab: {fileID: 6414707779472385658, guid: 07c7a6503ccd1f642be011e5d88e8a26, type: 3}
-  updatePosition: 1
-  updateRotation: 1
-  updateScale: 0
-  autoMovementType: 1
+  <EntityPrefab>k__BackingField: {fileID: 6414707779472385658, guid: 07c7a6503ccd1f642be011e5d88e8a26, type: 3}
+  <UpdatePositionOverNetwork>k__BackingField: 1
+  <UpdateRotationOverNetwork>k__BackingField: 1
+  <UpdateScaleOverNetwork>k__BackingField: 0
+  <InventoryTemplate>k__BackingField: {fileID: 11400000, guid: 6ccd9c7f51575c4439ce3fd438f3501e, type: 2}
