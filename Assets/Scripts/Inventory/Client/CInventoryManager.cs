@@ -1,13 +1,46 @@
 using System.Collections.Generic;
 using Inventories;
+using Networking.Server;
 using Networking.Shared;
 
 namespace Networking.Client {
     class CInventoryManager : BaseSingleton<CInventoryManager> {
-        public const int MAX_CACHED_INVENTORIES = 20;
         public int PersonalInventoryId { get; private set; }
         private Dictionary<int, Inventory> inventories = new();
-        private Queue<int> cachedInventoryQueue = new();
+
+
+        protected override void Awake()
+        {
+            SAddInventoryPkt.ApplyUnticked += HandleAddInventory;
+            SRemoveInventoryPkt.ApplyUnticked += HandleRemoveInventory;
+            SInventoryDeltasPkt.ApplyUnticked += HandleInventoryDeltas;
+            base.Awake();
+        }
+
+
+        protected override void OnDestroy()
+        {
+            SAddInventoryPkt.ApplyUnticked -= HandleAddInventory;
+            SRemoveInventoryPkt.ApplyUnticked -= HandleRemoveInventory;
+            SInventoryDeltasPkt.ApplyUnticked -= HandleInventoryDeltas;
+            base.OnDestroy();
+        }
+
+
+        private void HandleInventoryDeltas(SInventoryDeltasPkt pkt) {
+            Inventory inventory = inventories[pkt.inventoryId];
+            foreach(var delta in pkt.deltas) {
+                inventory[delta.idx] = delta.slottedItem;
+            }
+        }
+
+        private void HandleRemoveInventory(SRemoveInventoryPkt pkt) {
+            inventories.Remove(pkt.inventoryId);
+        }
+
+        private void HandleAddInventory(SAddInventoryPkt pkt) {
+            inventories[pkt.id] = pkt.inventory;
+        }
 
         public void SetPersonalInventoryId(int newId) {
             inventories.Remove(PersonalInventoryId);
@@ -15,23 +48,11 @@ namespace Networking.Client {
         }
 
         public void ReceiveInventoryFromServer(int id, Inventory inventory) {
-            // Don't mess with queue if the inventory already exists in cache or it's our personal inventory
-            if(!inventories.ContainsKey(id) && id != PersonalInventoryId) {
-                // Put this inventory in the queue to be deleted after 20 more cached inventories
-                cachedInventoryQueue.Enqueue(id);
-                // If max queue size has been hit, delete the most recent one
-                if(cachedInventoryQueue.Count > MAX_CACHED_INVENTORIES) {
-                    int dequeuedInventory = cachedInventoryQueue.Dequeue();
-                    inventories.Remove(dequeuedInventory);
-                }
-            }
-
             inventories[id] = inventory;
         }
 
-        // TODO: save updates somewhere??
         public void ReceiveInventoryDeltaFromServer(int inventoryId, InventoryDeltaSerializable inventoryDelta) {
-            inventories[inventoryId].SlottedItems[inventoryDelta.index] = inventoryDelta.inventorySlot.item;
+            inventories[inventoryId].SlottedItems[inventoryDelta.idx] = inventoryDelta.slottedItem;
         }
     }
 }

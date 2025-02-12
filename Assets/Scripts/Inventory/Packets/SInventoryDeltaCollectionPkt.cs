@@ -2,38 +2,29 @@ using System.Collections.Generic;
 using LiteNetLib.Utils;
 
 namespace Networking.Shared {
-    public class SInventoryDeltaCollectionPkt : SPacket<SInventoryDeltaCollectionPkt> {
-        public Dictionary<int, List<InventoryDeltaSerializable>> inventoryIdsToDeltas;
+    public class SInventoryDeltasPkt : SPacket<SInventoryDeltasPkt> {
+        public int inventoryId;
+        public List<InventoryDeltaSerializable> deltas;
 
         public override void Deserialize(NetDataReader reader) {
-            inventoryIdsToDeltas = new();
+            inventoryId = reader.GetInt();
+            int deltasCount = (int)reader.GetVarUInt();
+            deltas = new(deltasCount);
 
-            int amountOfInventoryIdsToDeltas = reader.GetByte();
-
-            for(int i=0; i<amountOfInventoryIdsToDeltas; i++) {
-                int inventoryId = reader.GetInt();
-                int amountOfDeltas = (int)reader.GetVarUInt();
-                List<InventoryDeltaSerializable> inventoryDeltas = new(amountOfDeltas);
-                for(int j=0; j<amountOfDeltas; j++) {
-                    InventoryDeltaSerializable inventoryDelta = new();
-                    inventoryDelta.Deserialize(reader);
-                    inventoryDeltas.Add(inventoryDelta);
-                }
-                inventoryIdsToDeltas[inventoryId] = inventoryDeltas;
+            for(int i=0; i<deltasCount; i++) {
+                InventoryDeltaSerializable inventoryDelta = new();
+                inventoryDelta.Deserialize(reader);
+                deltas.Add(inventoryDelta);
             }
         }
 
         public override void Serialize(NetDataWriter writer) {
-            writer.Put(PacketIdentifier.SInventoryDeltaCollection);
+            writer.Put(PacketIdentifier.SInventoryDeltas);
 
-            writer.Put((byte)inventoryIdsToDeltas.Count);
-            
-            foreach(var inventoryIdToDeltas in inventoryIdsToDeltas) {
-                writer.Put(inventoryIdToDeltas.Key);
-                writer.PutVarUInt((uint)inventoryIdToDeltas.Value.Count);
-                foreach(var delta in inventoryIdToDeltas.Value) {
-                    delta.Serialize(writer);
-                }
+            writer.Put(inventoryId);
+            writer.PutVarUInt(deltas.Count);
+            foreach(var delta in deltas) {
+                delta.Serialize(writer);
             }
         }
     }

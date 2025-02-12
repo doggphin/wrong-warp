@@ -4,7 +4,7 @@ using LiteNetLib.Utils;
 
 namespace Networking.Shared {
     public class SAddInventoryPkt : SPacket<SAddInventoryPkt> {
-        int id;
+        public int id;
         public Inventory inventory;
 
         public override void Deserialize(NetDataReader reader) {

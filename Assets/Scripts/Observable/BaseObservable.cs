@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Networking.Server;
-using Networking.Shared;
-using UnityEngine.DedicatedServer;
 
 public class BaseObservers {
     private HashSet<SPlayer> observers;

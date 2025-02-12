@@ -46,7 +46,7 @@ namespace Inventories {
             return true;
         }
 
-        
+
         public void Deserialize(NetDataReader reader)
         {
             ItemType itemType = (ItemType)reader.GetUShort();

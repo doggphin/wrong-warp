@@ -61,5 +61,14 @@ namespace Inventories {
         public bool AllowsItemClassificationAtIndex(int inventoryIndex, int itemClassificationBitFlags) {
             return Template.AllowsItemAtIndex(inventoryIndex, itemClassificationBitFlags);
         }
+
+
+        public SlottedItem this[int index] {
+            get {
+                return SlottedItems[index];
+            } set {
+                SlottedItems[index] = value;
+            }
+        }
     }
 }

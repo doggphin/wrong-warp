@@ -54,10 +54,8 @@ namespace Networking.Server {
                 if(!updatesWriterIsWritten) {
                     foreach(int index in indicesThatHaveChanged)
                     new InventoryDeltaSerializable { 
-                        index = index, 
-                        inventorySlot = new InventorySlotSerializable { 
-                            item = SlottedItems[index] 
-                        }
+                        idx = index, 
+                        slottedItem = SlottedItems[index]
                     }.Serialize(updatesWriter);
                     updatesWriterIsWritten = true;
                 }

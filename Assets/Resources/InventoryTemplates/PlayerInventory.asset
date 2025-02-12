@@ -13,15 +13,17 @@ MonoBehaviour:
   m_Name: PlayerInventory
   m_EditorClassIdentifier: 
   <TemplateType>k__BackingField: 0
+  <InventoryDisplayPrefab>k__BackingField: {fileID: 6352252763916925877, guid: 44ab992c1865cf641a9be2569ceeefad, type: 3}
   <SlotsCount>k__BackingField: 0
   acceptsNewItems: 1
-  slotsAllowed:
-  - slotIndex: 5
-    itemCategories: 02000000
-  - slotIndex: 6
-    itemCategories: 04000000
-  - slotIndex: 7
-    itemCategories: 08000000
-  - slotIndex: 7
-    itemCategories: 
-  inventoryAllowed: 
+  __alchemySerializationData_Inventories_InventoryTemplateSO:
+    slotsAllowed:
+      isCreated: 1
+      data: "[\n    {\n        \"Key\": 4,\n        \"Value\": [\n            2\n       
+        ]\n    },\n    {\n        \"Key\": 5,\n        \"Value\": [\n           
+        4\n        ]\n    },\n    {\n        \"Key\": 6,\n        \"Value\": [\n           
+        8\n        ]\n    }\n]"
+    inventoryAllowed:
+      isCreated: 1
+      data: '[]'
+    unityObjectReferences: []

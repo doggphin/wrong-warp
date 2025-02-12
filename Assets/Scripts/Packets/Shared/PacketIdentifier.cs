@@ -20,7 +20,7 @@ namespace Networking.Shared {
         SSetPlayerEntity = 17,
 
 
-        SInventoryDeltaCollection = 16,
+        SInventoryDeltas = 16,
         SAddInventory = 18,
         SRemoveInventory = 19,
         SSetPersonalInventoryId = 20,
