@@ -71,6 +71,7 @@ namespace Networking.Server {
 
 
         public void RecognizeModified(int index) {
+            SlotUpdated?.Invoke(index); // Used to make sure host gets updates too
             if(hasBroadcastModified)
                 return;
             
@@ -113,7 +114,7 @@ namespace Networking.Server {
             }
 
             // Invoke actions to alert both inventories as having been modified
-            RecognizeModified(fromIndex);
+            RecognizeModified(fromIndex);        
             toSInventory.RecognizeModified(toIndex);
         }
 

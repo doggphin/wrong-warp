@@ -21,7 +21,7 @@ namespace Networking.Server {
             }
 
             if(entitySO.InventoryTemplate != null) {
-                AddModifiedSInventory.CreateNewInventoryForEntity(entity, entitySO.InventoryTemplate);
+                SInventoryManager.CreateNewInventoryForEntity(entity, entitySO.InventoryTemplate);
             }
 
             return entity;

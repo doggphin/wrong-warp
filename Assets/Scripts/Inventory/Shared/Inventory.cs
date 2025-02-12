@@ -1,11 +1,14 @@
 using UnityEngine;
 using LiteNetLib.Utils;
+using System;
 
 namespace Inventories { 
     public abstract class Inventory : MonoBehaviour, INetSerializable {
         public int Id { get; private set; }
         public InventoryTemplateSO Template { get; protected set; }
         public SlottedItem[] SlottedItems { get; protected set; }
+
+        public Action<int> SlotUpdated;
 
         public void Init(int id, InventoryTemplateSO template) {
             Id = id;

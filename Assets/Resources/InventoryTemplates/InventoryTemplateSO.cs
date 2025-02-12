@@ -9,6 +9,7 @@ namespace Inventories {
     [AlchemySerialize]
     public partial class InventoryTemplateSO : ScriptableObject {
         [field: SerializeField] public InventoryTemplateType TemplateType { get; private set; }
+        [field: SerializeField] public GameObject InventoryDisplayPrefab { get; private set; }
         [field: SerializeField] public int SlotsCount { get; private set; }
 
         [SerializeField] private bool acceptsNewItems;
