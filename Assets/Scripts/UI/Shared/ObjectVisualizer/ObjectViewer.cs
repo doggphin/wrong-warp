@@ -15,6 +15,7 @@ public class ObjectViewer : MonoBehaviour
         cam.cullingMask = LayerMask.GetMask("ObjectViewer");
     }
 
+
     public void TakeRotatedImage(ViewableObject viewableObject, float rotX, float rotY) {
         viewableObject.CacheAndSetLayers(LayerMask.NameToLayer("ObjectViewer"));
 
@@ -26,5 +27,10 @@ public class ObjectViewer : MonoBehaviour
         cam.Render();
 
         viewableObject.ResetLayers();
+    }
+
+
+    public Vector2 GetScreenSpacePosition(Vector3 worldSpacePosition) {
+        return cam.WorldToScreenPoint(worldSpacePosition);
     }
 }

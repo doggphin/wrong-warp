@@ -1,3 +1,4 @@
+using TriInspector;
 using UnityEngine;
 
 [System.Serializable]
@@ -9,7 +10,5 @@ public class ViewablePlayerParts {
 }
 
 public class ViewablePlayer : ViewableObject {
-    [SerializeField] private ViewablePlayerParts playerParts;
-
-    public ViewablePlayerParts PlayerParts => playerParts;
+    [field : SerializeField] public ViewablePlayerParts PlayerParts { get; private set; } = new();
 }

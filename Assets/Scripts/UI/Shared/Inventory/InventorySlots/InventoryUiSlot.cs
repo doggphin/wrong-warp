@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryUiDisplaySlot : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler {
+public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler {
     [SerializeField] Image itemSprite;
     [SerializeField] TMP_Text stackSizeText;
 

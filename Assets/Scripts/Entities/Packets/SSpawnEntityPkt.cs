@@ -3,19 +3,19 @@ using LiteNetLib.Utils;
 using Networking.Client;
 
 namespace Networking.Shared {
-    public enum WEntitySpawnReason : byte {
+    public enum EntitySpawnReason : byte {
         Spawn,
         Load,
     }
 
     public class SEntitySpawnPkt : SPacket<SEntitySpawnPkt> {
-        public WEntitySerializable entity;
-        public WEntitySpawnReason reason;
+        public EntitySerializable entity;
+        public EntitySpawnReason reason;
 
         public override void Deserialize(NetDataReader reader) {
             entity = new();
             entity.Deserialize(reader);
-            reason = (WEntitySpawnReason)reader.GetByte();
+            reason = (EntitySpawnReason)reader.GetByte();
         }
 
 

@@ -2,7 +2,7 @@ using LiteNetLib.Utils;
 using Networking.Server;
 
 namespace Networking.Shared {
-    public class WEntitySerializable : INetSerializable {
+    public class EntitySerializable : INetSerializable {
         public int entityId;
         public EntityPrefabId entityPrefabId;
         public TransformSerializable transform;

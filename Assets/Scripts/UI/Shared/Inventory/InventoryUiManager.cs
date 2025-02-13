@@ -1,44 +1,56 @@
 using System.Collections.Generic;
 using Controllers.Shared;
-using Inventories;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Pool;
 using TriInspector;
+using Networking.Shared;
 
 namespace Inventories {
     public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
-        Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays;
+        private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
 
         [AssetsOnly][SerializeField] private GameObject inventorySlotPrefab;
 
-        private ObjectPool<InventoryUiDisplaySlot> inventoryUiSlotPool;
-
-        void Start() {
+        protected override void Awake() {
             IsOpen = true;
             Close();
+            
+            WWNetManager.Disconnected += CleanupDisplays;
+
+            base.Awake();
         }
 
-        public InventoryUiDisplaySlot[] GetSlots(int amount) {
-            InventoryUiDisplaySlot[] ret = new InventoryUiDisplaySlot[amount];
-            for(int i=0; i<amount; i++) {
-                ret[i] = inventoryUiSlotPool.Get();
-            }
-            return ret;
+
+        protected override void OnDestroy()
+        {
+            WWNetManager.Disconnected -= CleanupDisplays;
+            base.OnDestroy();
         }
 
-        public void ReturnSlots(InventoryUiDisplaySlot[] displaySlots) {
-            foreach(var slot in displaySlots) {
-                inventoryUiSlotPool.Release(slot);
+
+        private void CleanupDisplays(WDisconnectInfo _) {
+            foreach(Transform child in transform) {
+                Destroy(child.gameObject);
             }
         }
 
 
         public void AddInventory(Inventory inventory) {
+            var inventoryDisplay = Instantiate(inventory.Template.InventoryDisplayPrefab, transform).GetComponent<BaseInventoryDisplay>();
+            inventoryDisplay.Init(inventory);
             inventoryDisplays.Add(
                 inventory,
-                Instantiate(inventory.Template.InventoryDisplayPrefab, transform).GetComponent<BaseInventoryDisplay>()
+                inventoryDisplay
             );
+        }
+
+
+        public void RemoveInventory(Inventory inventory) {
+            Destroy(inventoryDisplays[inventory]);
+        }
+
+
+        public void UpdateSlotOfInventory(Inventory inventory, int slotIdx) {
+            inventoryDisplays[inventory].UpdateSlotVisual(slotIdx);
         }
 
 

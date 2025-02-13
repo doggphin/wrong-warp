@@ -195,7 +195,7 @@ namespace Networking.Server {
                 (chunkLeaving, entity) => chunkLeaving.RemoveEntityFromRenderDistance(entity),
                 (entityToLoad) => new SEntityKillPkt(){
                     entityId = entityToLoad.Id,
-                    reason = WEntityKillReason.Unload}
+                    reason = EntityKillReason.Unload}
             );
             entity.Chunk.RemoveEntity(entity);
 
@@ -206,7 +206,7 @@ namespace Networking.Server {
                     (chunkEntering, entity) => chunkEntering.AddEntityIntoRenderDistance(entity),
                     (entityToUnload) => new SEntitySpawnPkt() {
                         entity = entityToUnload.GetSerializedEntity(tick),
-                        reason = WEntitySpawnReason.Load}
+                        reason = EntitySpawnReason.Load}
                 );
 
                 entity.Chunk = toChunk;

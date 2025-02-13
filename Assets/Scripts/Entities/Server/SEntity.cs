@@ -17,14 +17,15 @@ namespace Networking.Server {
         public static Action<SEntity, SPlayer> UnsetAsPlayer;
 
         public Action<SEntity, BasePacket> PushUnreliableUpdate;
+        public Action<SEntity, BasePacket> PushReliableUpdate;
 
         private SPlayer player;
         public bool IsPlayer => player != null;
         public SPlayer Player => player;
 
 
-        public WEntitySerializable GetSerializedEntity(int tick) {
-            return new WEntitySerializable() {
+        public EntitySerializable GetSerializedEntity(int tick) {
+            return new EntitySerializable() {
                 entityId = Id,
                 entityPrefabId = PrefabId,
                 transform = new TransformSerializable {
@@ -118,7 +119,7 @@ namespace Networking.Server {
         }
 
 
-        public override void StartDeath(WEntityKillReason reason) {
+        public override void StartDeath(EntityKillReason reason) {
             if(isDead)
                 return;
             

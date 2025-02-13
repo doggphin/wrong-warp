@@ -8,14 +8,14 @@ namespace Networking.Shared {
 
         public void Deserialize(NetDataReader reader)
         {
-            idx = reader.GetInt();
+            idx = (int)reader.GetVarUInt();
             slottedItem = new();
             slottedItem.Deserialize(reader);
         }
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(idx);
+            writer.PutVarUInt(idx);
             slottedItem.Serialize(writer);
         }
     }

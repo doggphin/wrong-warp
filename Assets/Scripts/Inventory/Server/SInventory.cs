@@ -4,19 +4,17 @@ using Inventories;
 using Networking.Shared;
 using LiteNetLib.Utils;
 using System;
+using System.Linq;
 
 namespace Networking.Server {
     public class SInventory : Inventory {
         private SEntity entityRef;
 
-        private HashSet<int> indicesThatHaveChanged;
-        private HashSet<SPlayer> observers;
+        private HashSet<int> indicesThatHaveChanged = new();
+        private HashSet<SPlayer> observers = new();
 
         private bool hasBroadcastModified;
         public Action<SInventory> Modified;
-
-        private NetDataWriter updatesWriter = new();
-        private bool updatesWriterIsWritten = false;
 
         void Awake() {
             entityRef = GetComponent<SEntity>();
@@ -34,56 +32,76 @@ namespace Networking.Server {
                 return;
             }
 
-            SAddInventoryPkt addInventoryPacket = new(){ inventory = this };
-            player.ReliablePackets?.AddPacket(SNetManager.Tick, addInventoryPacket);
+            Debug.Log($"Adding as an observer!");
+
+            if(player.IsHost) {
+                InventoryUiManager.Instance.AddInventory(this);   
+            } else {
+                SAddInventoryPkt addInventoryPacket = new(){ inventory = this };
+                player.ReliablePackets?.AddPacket(SNetManager.Tick, addInventoryPacket);
+            }
+            
         }
 
 
         public void RemoveObserver(SPlayer player) {
-            if(!observers.Remove(player)) {
-                Debug.LogError("Tried to remove an observer from an inventory that they were not observing!");
-                return;
-            }
-        }
-
-
-        public bool TryGetUpdates(out NetDataWriter outWriter) {
-            if(indicesThatHaveChanged.Count > 0) {
-                outWriter = updatesWriter;
-
-                if(!updatesWriterIsWritten) {
-                    foreach(int index in indicesThatHaveChanged)
-                    new InventoryDeltaSerializable { 
-                        idx = index, 
-                        slottedItem = SlottedItems[index]
-                    }.Serialize(updatesWriter);
-                    updatesWriterIsWritten = true;
-                }
-
-                return true;
+            if(player.IsHost) {
+                InventoryUiManager.Instance.RemoveInventory(this);
             } else {
-                outWriter = null;
-                return false;
+                if(!observers.Remove(player)) {
+                    Debug.LogError("Tried to remove an observer from an inventory that they were not observing!");
+                    return;
+                }
             }
         }
 
 
-        public void RecognizeModified(int index) {
-            SlotUpdated?.Invoke(index); // Used to make sure host gets updates too
+        public void OnDestroy()
+        {
+            foreach(var observer in observers) {
+                RemoveObserver(observer);
+            }
+        }
+
+
+        public void SendAndClearUpdates() {
+            List<InventoryDeltaSerializable> deltas = new(indicesThatHaveChanged.Count);
+            foreach (int indexThatChanged in indicesThatHaveChanged) {
+                deltas.Add(new() {
+                    idx = indexThatChanged,
+                    slottedItem = SlottedItems[indexThatChanged]
+                });
+            }
+            SInventoryDeltasPkt packet = new() {
+                deltas = new(indicesThatHaveChanged.Count)
+            };
+
+            Debug.Log("Sending and clearing.");
+            foreach(SPlayer player in observers) {
+                if(player.IsHost) {
+                    Debug.Log("On the host");
+                    foreach(int index in indicesThatHaveChanged) {
+                        Debug.Log($"Updating {index}");
+                        InventoryUiManager.Instance.UpdateSlotOfInventory(this, index);
+                    } 
+                } else {
+                    player.ReliablePackets.AddPacket(SNetManager.Tick, packet);
+                }
+            }
+
+            indicesThatHaveChanged.Clear();
+            hasBroadcastModified = false;
+        }
+
+
+        public void RecognizeModified(int index) {           
+            indicesThatHaveChanged.Add(index);
+            
             if(hasBroadcastModified)
                 return;
-            
-            indicesThatHaveChanged.Add(index);
+
             Modified?.Invoke(this);
             hasBroadcastModified = true;
-        }
-
-
-        public void ResetUpdates() {
-            indicesThatHaveChanged.Clear();
-            updatesWriter.Reset();
-            hasBroadcastModified = false;
-            updatesWriterIsWritten = false;
         }
 
         
@@ -117,32 +135,42 @@ namespace Networking.Server {
         }
 
 
+        ///<summary> Tries to add an item to somewhere in this inventory. </summary>
+        ///<param name="itemToAdd"> The item to try to add. This gets modified within the function! </param>
         ///<returns> Whether the item was modified/consumed. </returns>
         public bool TryAddItem(SlottedItem itemToAdd) {
-            int initialStackSize = itemToAdd.stackSize;
-
-            // During first run, try to stack the item into each item in the inventory;
-            // Also, keep track of the most recent null slot in case it can't be stacked into anything
+            // During first run, try to stack the item into each item in the inventory
+            // Also, keep track of the first empty slot in case it can't be stacked into anything
             int? firstEmptyIndex = null;
             for(int i=0; i<SlottedItems.Length; i++) {
                 SlottedItem slot = SlottedItems[i];
                 // Save first empty slot for use later if necessary
-                if(slot == null && AllowsItemClassificationAtIndex(i, itemToAdd.BaseItemRef.ItemClassificationBitflags)) {
-                    firstEmptyIndex ??= i;
+                if(slot == null) {
+                    if(AllowsItemClassificationAtIndex(i, itemToAdd.BaseItemRef.ItemClassificationBitflags)) {
+                        firstEmptyIndex ??= i;
+                    }
                     continue;
                 }
+
                 // Try to merge item into slots it can
                 if(!slot.TryAbsorbSlottedItem(itemToAdd))
                     continue;
-                // If fully, successfully merged, 
-                if(itemToAdd.stackSize == 0)
+                
+                RecognizeModified(i);
+                // Quit early if stack size went down to 0
+                if(itemToAdd.stackSize == 0) {
                     return true;
+                }
             }
-            // If there's still items left and an empty space was found, store rest of item into an empty space
+
+            // If item wasn't fully merged and there aren't any empty slots, return false
             if(firstEmptyIndex == null)
-                return itemToAdd.stackSize == initialStackSize;
-            // Put item in empty slot
-            SlottedItems[firstEmptyIndex.Value] = itemToAdd;
+                return false;
+
+            // Otherwise move the item into the empty slot
+            SlottedItems[firstEmptyIndex.Value] = itemToAdd.ShallowCopy();
+            itemToAdd.stackSize = 0;
+            RecognizeModified(firstEmptyIndex.Value);
             return true;
         }
     }

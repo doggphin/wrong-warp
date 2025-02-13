@@ -91,7 +91,7 @@ namespace Networking.Client {
             lastReceivedScale =    scalesBuffer[CNetManager.ObservingTick]    = spawnPkt.entity.transform.scale ?? Vector3.one;
         }
 
-        public override void StartDeath(WEntityKillReason reason) {
+        public override void StartDeath(EntityKillReason reason) {
             Debug.Log("RIP!!!!!");
             Destroy(gameObject);
         }

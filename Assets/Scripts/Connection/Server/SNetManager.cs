@@ -79,7 +79,8 @@ namespace Networking.Server {
         private void CreateHostPlayer() {
             HostPlayer = new(null);
             SEntity playerEntity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.Player, null, null, null, HostPlayer);
-            
+            playerEntity.GetComponent<SInventory>().AddObserver(HostPlayer);
+
             playerEntity.positionsBuffer[tick] = new Vector3(0, 10, 0);
             AbstractPlayer player = playerEntity.GetComponent<AbstractPlayer>();
             ControlsManager.SetPlayer(player);
@@ -106,6 +107,7 @@ namespace Networking.Server {
             }
     
             SEntityManager.Instance.AdvanceEntities();
+            SInventoryManager.Instance.SendInventoryUpdates();
 
             // Only run further code if it's time for a snapshot
             if (tick % NetCommon.TICKS_PER_SNAPSHOT == 0)
@@ -187,6 +189,8 @@ namespace Networking.Server {
             SFullEntitiesSnapshotPkt fullEntitiesSnapshot = playerEntity.Chunk.GetFullEntitiesSnapshot(tick);
             fullEntitiesSnapshot.Serialize(baseWriter);
 
+            playerEntity.GetComponent<SInventory>().AddObserver(player);
+
             peer.Send(baseWriter, DeliveryMethod.ReliableOrdered);
             return true;
         }
@@ -195,7 +199,7 @@ namespace Networking.Server {
             if(!peer.TryGetWSPlayer(out var player))
                 return false;
 
-            player.Entity.StartDeath(WEntityKillReason.Unload);
+            player.Entity.StartDeath(EntityKillReason.Unload);
             //WSEntityManager.KillEntity(player.Entity.Id);
             
             SPlayerInputsSlotterManager.RemovePlayer(player);

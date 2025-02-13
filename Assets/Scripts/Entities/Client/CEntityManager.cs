@@ -70,7 +70,7 @@ namespace Networking.Client {
 
 
         private void HandleFullEntitiesSnapshot(SFullEntitiesSnapshotPkt pkt) {
-            Dictionary<int, WEntitySerializable> receivedEntities = new();
+            Dictionary<int, EntitySerializable> receivedEntities = new();
             foreach(var serializedEntity in pkt.entities) {
                 receivedEntities.Add(serializedEntity.entityId, serializedEntity);
             }
@@ -80,7 +80,7 @@ namespace Networking.Client {
             foreach(var clientEntityId in Instance.entities.Keys) {
                 if(!receivedEntities.ContainsKey(clientEntityId)) {
                     Debug.Log("Killing an entity that exists on the client but not the server!");
-                    KillEntity(new SEntityKillPkt() { entityId = clientEntityId, reason = WEntityKillReason.Unload });
+                    KillEntity(new SEntityKillPkt() { entityId = clientEntityId, reason = EntityKillReason.Unload });
                 }
             }
 
@@ -88,7 +88,7 @@ namespace Networking.Client {
                 if(!Instance.entities.ContainsKey(receivedEntity.Key)) {
                     // Does not exist on client; must create new entity for it
                     Debug.Log("Spawning an entity that exists on the server but not the client!");
-                    SpawnEntity(new SEntitySpawnPkt() { entity = receivedEntity.Value, reason = WEntitySpawnReason.Load });
+                    SpawnEntity(new SEntitySpawnPkt() { entity = receivedEntity.Value, reason = EntitySpawnReason.Load });
                 }
             }
         }

@@ -2,7 +2,7 @@ using LiteNetLib.Utils;
 using Networking.Client;
 
 namespace Networking.Shared {
-    public enum WEntityKillReason : byte {
+    public enum EntityKillReason : byte {
         Death,
         Despawn,
         Unload
@@ -10,11 +10,11 @@ namespace Networking.Shared {
 
     public class SEntityKillPkt : SPacket<SEntityKillPkt> {
         public int entityId;
-        public WEntityKillReason reason;
+        public EntityKillReason reason;
 
         public override void Deserialize(NetDataReader reader) {
             entityId = reader.GetInt();
-            reason = (WEntityKillReason)reader.GetByte();
+            reason = (EntityKillReason)reader.GetByte();
         }
 
 

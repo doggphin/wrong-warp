@@ -170,6 +170,7 @@ public class SChunk {
             return;
 
         entity.PushUnreliableUpdate += AddUnreliableEntityUpdate;
+        entity.PushReliableUpdate += AddReliableEntityUpdate;
     }
 
 
@@ -178,6 +179,7 @@ public class SChunk {
             return;
 
         entity.PushUnreliableUpdate -= AddUnreliableEntityUpdate;
+        entity.PushReliableUpdate -= AddReliableEntityUpdate;
     }
 
 
@@ -219,7 +221,7 @@ public class SChunk {
             rLocalEUpdates, 
             new SEntitySpawnPkt() {
                 entity = entity.GetSerializedEntity(SNetManager.Tick),
-                reason = WEntitySpawnReason.Load 
+                reason = EntitySpawnReason.Load 
             });
     }
 
@@ -230,14 +232,15 @@ public class SChunk {
             rLocalEUpdates, 
             new SEntityKillPkt() {
                 entityId = entity.Id,
-                reason = WEntityKillReason.Unload 
+                reason = EntityKillReason.Unload 
             });
     }
 
 
-    private void AddUnreliableEntityUpdate(SEntity entity, BasePacket packet) {
+    private void AddUnreliableEntityUpdate(SEntity entity, BasePacket packet) =>
         AddEntityUpdate(entity, uSharedEUpdates, packet);
-    }
+    private void AddReliableEntityUpdate(SEntity entity, BasePacket packet) =>
+        AddEntityUpdate(entity, rSharedEUpdates, packet);
 
 
     public void AddReliableGeneralUpdate(BasePacket packet) {

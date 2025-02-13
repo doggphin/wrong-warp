@@ -25,15 +25,10 @@ namespace Networking.Server {
         public SChunk previousChunk = null;
         public SEntity Entity { get; private set; }
         public NetPeer Peer { get; private set; }
-        private SInventory personalInventory;
+        public bool IsHost => Peer == null;
 
         ///<summary> ! Is null on host players ! </summary>
         public TickedPacketCollection ReliablePackets { get; private set; }
-
-        public void SetPersonalInventory(SInventory inventory) {
-            SSetPersonalInventoryIdPkt setPersonalInventoryPkt = new() { personalInventoryId = inventory.Id };
-            personalInventory = inventory;
-        }
 
         public SPlayer(NetPeer peer) {
             Peer = peer;

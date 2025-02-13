@@ -2,14 +2,14 @@ using LiteNetLib.Utils;
 
 namespace Networking.Shared {
     public class SFullEntitiesSnapshotPkt : SPacket<SFullEntitiesSnapshotPkt> {
-        public WEntitySerializable[] entities;
+        public EntitySerializable[] entities;
         public bool isFullReset;
 
         public override void Deserialize(NetDataReader reader) {
             isFullReset = reader.GetBool();
 
             uint entitiesCount = reader.GetVarUInt();
-            entities = new WEntitySerializable[entitiesCount];
+            entities = new EntitySerializable[entitiesCount];
             for(int i=0; i<entitiesCount; i++) {
                 entities[i] = new();
                 entities[i].Deserialize(reader);
@@ -22,7 +22,7 @@ namespace Networking.Shared {
 
             writer.Put(isFullReset);
             writer.PutVarUInt((uint)entities.Length);
-            foreach(WEntitySerializable entity in entities) {
+            foreach(EntitySerializable entity in entities) {
                 entity.Serialize(writer);
             }
         }

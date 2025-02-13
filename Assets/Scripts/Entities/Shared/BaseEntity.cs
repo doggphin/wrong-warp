@@ -63,6 +63,6 @@ namespace Networking.Shared {
         public Quaternion LerpBufferedRotations(int endTick, float percentage) => LerpTransformValues(Quaternion.Lerp, rotationsBuffer, endTick, percentage);
         public Vector3 LerpBufferedScales(int endTick, float percentage) => LerpTransformValues(Vector3.Lerp, scalesBuffer, endTick, percentage);
 
-        public abstract void StartDeath(WEntityKillReason reason);
+        public abstract void StartDeath(EntityKillReason reason);
     }
 }

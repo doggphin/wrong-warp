@@ -3,6 +3,7 @@ using UnityEngine;
 using Inventories;
 using Unity.VisualScripting;
 using UnityEngine.Video;
+using Networking.Shared;
 
 namespace Networking.Server {
     public class SInventoryManager : BaseSingleton<SInventoryManager> {
@@ -10,7 +11,39 @@ namespace Networking.Server {
         private BaseIdGenerator idGenerator = new();
 
         private HashSet<SInventory> inventoriesWithUpdatesBuffer = new();
-        
+
+        protected override void Awake()
+        {
+            InteractableTakeable.InteractedStart += HandlePickUpItem;
+            base.Awake();
+        }
+
+        protected override void OnDestroy()
+        {
+            InteractableTakeable.InteractedStart -= HandlePickUpItem;
+            base.OnDestroy();
+        }
+
+
+        private void HandlePickUpItem(InteractableTakeable takeable, BaseEntity entity) {
+            // If the entity doesn't have an inventory or can't pick any of the item up, skip
+            if(!entity.TryGetComponent(out SInventory inventory) || !inventory.TryAddItem(takeable.item))
+                return;
+
+            Debug.Log("Taking!");
+
+            SEntity takeableEntity = takeable.GetComponent<SEntity>();
+            int newStackSize = takeable.item.stackSize;
+            if(newStackSize == 0) {
+                takeableEntity.StartDeath(EntityKillReason.Despawn);
+            } else {
+                takeableEntity.PushReliableUpdate(takeableEntity, new TakeableStackSizeUpdatePkt() {
+                    stackSize = newStackSize
+                });
+            }
+        }
+
+
         public static SInventory CreateNewInventoryForEntity(SEntity entity, InventoryTemplateSO inventoryTemplate) {
             if(entity.GetComponent<SInventory>() != null) {
                 Debug.Log($"{entity.name} already had an attached inventory!");
@@ -18,40 +51,35 @@ namespace Networking.Server {
             }
 
             int inventoryId = Instance.idGenerator.GetNextEntityId(Instance.inventories);
-            SInventory sInventory = Instance.AttachInventoryToEntity(entity, inventoryId, inventoryTemplate);
+            SInventory sInventory = entity.AddComponent<SInventory>();
+            sInventory.Init(inventoryId, inventoryTemplate);
+            Instance.inventories[inventoryId] = sInventory;
+
+            sInventory.Modified += Instance.AddModifiedSInventoryToBuffer;
 
             return sInventory;
         }
 
 
         public static void DeleteInventory(SInventory sInventory) {
-            sInventory.Modified -= Instance.AddModifiedSInventory;
+            sInventory.Modified -= Instance.AddModifiedSInventoryToBuffer;
             Instance.inventories.Remove(sInventory.Id);
             Destroy(sInventory);
         }
 
 
-        private SInventory AttachInventoryToEntity(SEntity entity, int inventoryId, InventoryTemplateSO inventoryTemplate) {
-            SInventory sInventory = entity.AddComponent<SInventory>();
-            sInventory.Init(inventoryId, inventoryTemplate);
-
-            Instance.inventories[inventoryId] = sInventory;
-
-            entity.Player?.SetPersonalInventory(sInventory);
-
-            sInventory.Modified += AddModifiedSInventory;
-
-            return sInventory;
-        }
-
-
-        private void AddModifiedSInventory(SInventory sInventory) {
+        private void AddModifiedSInventoryToBuffer(SInventory sInventory) {
+            Debug.Log("Adding an update");
             inventoriesWithUpdatesBuffer.Add(sInventory);
         }
 
 
-        private void SendOutUpdates(SInventory sInventory) {
-            
+        public void SendInventoryUpdates() {
+            Debug.Log("a");
+            foreach(var inventory in inventoriesWithUpdatesBuffer) {
+                Debug.Log("An inventory exists that was updated!");
+                inventory.SendAndClearUpdates();
+            }
         }
     }
 }

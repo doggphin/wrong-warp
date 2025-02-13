@@ -5,7 +5,6 @@ namespace Inventories {
     public class SlottedItem : INetSerializable {
         public ItemType SlottedItemType { get; private set; }
         public BaseItemSO BaseItemRef { get; private set; }
-
         public int stackSize;
 
         public SlottedItem() { }
@@ -16,6 +15,9 @@ namespace Inventories {
             SlottedItemType = itemType;
             this.stackSize = stackSize;
             BaseItemRef = BaseItemRef = ItemLookup.Lookup(itemType);
+        }
+        public SlottedItem ShallowCopy() {
+            return (SlottedItem)MemberwiseClone();
         }
 
         

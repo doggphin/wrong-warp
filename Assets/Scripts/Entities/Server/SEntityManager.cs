@@ -10,7 +10,7 @@ namespace Networking.Server {
     [RequireComponent(typeof(SEntityFactory))]
     public class SEntityManager : BaseSingleton<SEntityManager> {
         private Dictionary<int, SEntity> entities = new();
-        private static BaseIdGenerator idGenerator = new();
+        private BaseIdGenerator idGenerator = new();
 
         public static Action<SEntity> EntityDeleted;
 

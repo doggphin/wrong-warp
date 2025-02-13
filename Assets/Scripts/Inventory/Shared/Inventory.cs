@@ -7,9 +7,7 @@ namespace Inventories {
         public int Id { get; private set; }
         public InventoryTemplateSO Template { get; protected set; }
         public SlottedItem[] SlottedItems { get; protected set; }
-
-        public Action<int> SlotUpdated;
-
+        
         public void Init(int id, InventoryTemplateSO template) {
             Id = id;
             Template = template;
