@@ -11,24 +11,32 @@ public class UiManager : BaseSingleton<UiManager>
 
     private EscapeUiManager escapeUi;
 
-    public static IUiElement ActiveUiElement { get; private set; }
+    public IUiElement ActiveUiElement { get; private set; }
 
-    void Start() {
+    protected override void Awake() {
         ControlsManager.EscapeClicked += OpenEscape;
         
         Instantiate(interactableUiPrefab, transform);
         Instantiate(chatUiPrefab, transform);
         Instantiate(inventoryUiPrefab, transform);
         escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeUiManager>();
+
+        base.Awake();
+    }
+
+    protected override void OnDestroy()
+    {
+        CloseActiveUiElement();
+        base.OnDestroy();
     }
 
     /// <returns> Whether a UI element was closed. </returns>
     public static void CloseActiveUiElement() {
-        if(ActiveUiElement == null)
+        if(Instance.ActiveUiElement == null)
             return;
 
-        ActiveUiElement.Close();
-        ActiveUiElement = null;
+        Instance.ActiveUiElement.Close();
+        Instance.ActiveUiElement = null;
 
         Cursor.lockState = CursorLockMode.Locked;
         ControlsManager.SetGameplayControlsEnabled(true);
@@ -37,11 +45,11 @@ public class UiManager : BaseSingleton<UiManager>
 
     /// <returns> Whether the UI element was set. </returns>
     public static void SetActiveUiElement(IUiElement uiElement, bool disableControls) {
-        if(ActiveUiElement != null)
+        if(Instance.ActiveUiElement != null)
             return;
 
-        ActiveUiElement = uiElement;
-        ActiveUiElement.Open();
+        Instance.ActiveUiElement = uiElement;
+        Instance.ActiveUiElement.Open();
 
         Cursor.lockState = CursorLockMode.None;
         ControlsManager.SetGameplayControlsEnabled(false);
@@ -50,7 +58,7 @@ public class UiManager : BaseSingleton<UiManager>
     
     // When escape is pressed, either close the current ui or open the escape UI
     private static void OpenEscape() {
-        if(ActiveUiElement != null) {
+        if(Instance.ActiveUiElement != null) {
             CloseActiveUiElement();   
         } else {
             Instance.escapeUi.Open();

@@ -23,27 +23,28 @@ namespace Inventories {
         
 
         ///<summary> Tries to merge otherSlottedItem into this slottedItem. </summary>
-        ///<param name="amountToTryToAbsorb"> If left null, will fill out with otherSlottedItem stack size </param>
+        ///<param name="amountToTryAbsorb"> Defaults to itemToAbsorb's stack size </param>
         ///<returns> Whether otherSlottedItem was modified. </returns>
-        public bool TryAbsorbSlottedItem(SlottedItem otherSlottedItem, int? amountToTryToAbsorb = null) {
-            if(otherSlottedItem == null)
+        public bool TryAbsorbSlottedItem(SlottedItem itemToAbsorb, int? amountToTryAbsorb = null) {
+            if(itemToAbsorb == null)
                 return false;
             
-            amountToTryToAbsorb ??= otherSlottedItem.stackSize;
+            amountToTryAbsorb ??= itemToAbsorb.stackSize;
             
-            bool isSameItem = SlottedItemType == otherSlottedItem.SlottedItemType;
-            bool otherItemIsFullStack = otherSlottedItem.stackSize == otherSlottedItem.BaseItemRef.MaxStackSize;
-            if(!isSameItem || otherItemIsFullStack)
+            int roomLeft = BaseItemRef.MaxStackSize - stackSize;
+
+            bool isDifferentItem = SlottedItemType != itemToAbsorb.SlottedItemType;
+            bool isAlreadyFull = roomLeft <= 0;
+            if(isDifferentItem || isAlreadyFull)
                 return false;
 
-            int maxAmountCouldTake = BaseItemRef.MaxStackSize - stackSize;
-            int finalAmountToTake = Mathf.Min(amountToTryToAbsorb.Value, maxAmountCouldTake, otherSlottedItem.stackSize);
+            int amountToAbsorb = Mathf.Min(amountToTryAbsorb.Value, roomLeft, itemToAbsorb.stackSize);
 
-            if(finalAmountToTake == 0)
+            if(amountToAbsorb <= 0)
                 return false;
 
-            otherSlottedItem.stackSize -= finalAmountToTake;
-            stackSize += finalAmountToTake;
+            itemToAbsorb.stackSize -= amountToAbsorb;
+            stackSize += amountToAbsorb;
             
             return true;
         }

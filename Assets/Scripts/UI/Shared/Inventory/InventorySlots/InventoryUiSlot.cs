@@ -5,25 +5,35 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler {
+public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IDropHandler /* IPointerUpHandler */ {
     [SerializeField] Image itemSprite;
     [SerializeField] TMP_Text stackSizeText;
 
     public Action<int, int> Inspect;
-    public Action<int, int, PointerEventData.InputButton> StartDrag;
-    public Action<int, int, PointerEventData.InputButton> PointerUp;
+    public static Action<int, int, PointerEventData.InputButton> StartDrag;
+    public static Action<int, int, PointerEventData.InputButton> Drop;
     
     public void SetVisibleSlottedItem(SlottedItem slottedItem) {
-        stackSizeText.text = slottedItem.stackSize.ToString();
-        var baseItem = slottedItem.BaseItemRef;
-        itemSprite.sprite = baseItem.SlotSprite;
+        var color = itemSprite.color;
+
+        if(slottedItem != null) {
+            stackSizeText.text = slottedItem.stackSize.ToString();
+            var baseItem = slottedItem.BaseItemRef;
+            itemSprite.sprite = baseItem.SlotSprite;
+            color.a = 1;
+        } else {
+            color.a = 0;
+        }
+
+        itemSprite.color = color;
     }
 
     private int inventoryId;
     private int inventoryIndex;
-    public void Init(int inventoryId, int inventoryIndex) {
+    public void Init(int inventoryId, int inventoryIndex, SlottedItem item) {
         this.inventoryId = inventoryId;
         this.inventoryIndex = inventoryIndex;
+        SetVisibleSlottedItem(item);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -41,8 +51,13 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IPoint
     // This needs to be here to use OnBeginDrag and OnEndDrag
     public void OnDrag(PointerEventData eventData) { }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public void OnDrop(PointerEventData eventData) {
+        Debug.Log($"Let go of pointer with {eventData.button} on {inventoryIndex}!");
+        Drop?.Invoke(inventoryId, inventoryIndex, eventData.button);
+    }
+
+    /*public void OnPointerUp(PointerEventData eventData)
     {
         Debug.Log($"Let go of pointer with {eventData.button} on {inventoryIndex}!");
-    }
+    }*/
 }

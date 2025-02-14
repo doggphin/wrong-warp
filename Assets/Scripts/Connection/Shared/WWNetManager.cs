@@ -19,6 +19,7 @@ namespace Networking.Shared {
         [SerializeField] private GameObject mainMenuPrefab;
         [SerializeField] private GameObject serverPrefab;
         [SerializeField] private GameObject clientPrefab;
+        [SerializeField] private GameObject uiManagerPrefab;
 
         public static NetManager BaseNetManager { get; private set; }
         public static List<NetPeer> ConnectedPeers => BaseNetManager.ConnectedPeerList;
@@ -35,13 +36,20 @@ namespace Networking.Shared {
         public static Action<WDisconnectInfo> Disconnected;
 
         private MainMenu mainMenu;
+        private UiManager uiManager;
 
-        private void StartMainMenu() {
-            mainMenu = Instantiate(mainMenuPrefab).GetComponent<MainMenu>();
+        private void EnterMainMenu() {
+            if(mainMenu == null)
+                mainMenu = Instantiate(mainMenuPrefab).GetComponent<MainMenu>();
+            if(uiManager != null)
+                Destroy(uiManager.gameObject);
         }
 
         private void StopMainMenu() {
-            Destroy(mainMenu.gameObject);
+            if(mainMenu != null)
+                Destroy(mainMenu.gameObject);
+            if(uiManager == null)
+                uiManager = Instantiate(uiManagerPrefab).GetComponent<UiManager>();
         }
 
         protected override void Awake() {
@@ -49,7 +57,7 @@ namespace Networking.Shared {
 
             Physics.simulationMode = SimulationMode.Script;
             
-            StartMainMenu();
+            EnterMainMenu();
         }
 
         void Update() => BaseNetManager?.PollEvents();
@@ -111,7 +119,7 @@ namespace Networking.Shared {
             Cursor.lockState = CursorLockMode.None;
             Disconnected?.Invoke(info);
 
-            Instance.StartMainMenu();
+            Instance.EnterMainMenu();
         }
 
 

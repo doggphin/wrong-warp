@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Inventories;
 using TriInspector;
 using UnityEngine;
 
@@ -15,9 +16,10 @@ public class PlayerInventoryDisplay : BaseInventoryDisplay {
     [SerializeField] private PlayerViewer playerViewer;
 
 
-    protected override void GenerateSlots(int count)
+    protected override void GenerateSlots(Inventory inventory)
     {
-        for(int i=0; i<count; i++) {
+        int inventoryId = inventory.Id;
+        for(int i=0; i<inventory.SlottedItems.Length; i++) {
             Transform origin = 
                 i <= 3 ? hotbarOrigin :
                 i == 4 ? headOrigin :
@@ -27,6 +29,7 @@ public class PlayerInventoryDisplay : BaseInventoryDisplay {
                 mainOrigin;
 
             idxToSlots[i] = Instantiate(VisualSlotPrefab, origin).GetComponent<InventoryUiVisualSlot>();
+            idxToSlots[i].Init(inventoryId, i, inventory.SlottedItems[i]);
         }
     }
 

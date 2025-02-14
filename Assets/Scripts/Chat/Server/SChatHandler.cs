@@ -86,7 +86,9 @@ namespace Networking.Server {
 
             switch(args[0]) {
                 case "tp":
-                    HandleTeleportCommand(args[1], fromPeer, isServerMessage);
+                    if(args.Length > 1) {
+                        HandleTeleportCommand(args[1], fromPeer, isServerMessage);
+                    }
                     break;
                 case "broadcast":
                     Debug.Log("Not yet implemented!");
@@ -145,11 +147,15 @@ namespace Networking.Server {
                     if(!float.TryParse(args[0], out float posX) || !float.TryParse(args[1], out float posY) || !float.TryParse(args[2], out float posZ))
                         return false;
 
-                    SEntity playerEntity = ((SPlayer)sender.Tag).Entity;
+                    SEntity entityToTeleport = null;
+                    if(sender == null) {
+                        entityToTeleport = SNetManager.HostPlayer.Entity;
+                    } else if(sender.TryGetSPlayer(out var player)) {
+                        entityToTeleport = player.Entity;
+                    }
 
-                    if(playerEntity != null)
-                        playerEntity.positionsBuffer[SNetManager.Instance.GetTick()] = new Vector3(posX, posY, posZ);
-                    
+                    entityToTeleport.SetPosition(new Vector3(posX, posY, posZ), true);
+
                     return true;
                 default:
                     return false;

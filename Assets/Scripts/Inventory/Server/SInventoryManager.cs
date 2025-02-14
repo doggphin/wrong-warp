@@ -30,11 +30,9 @@ namespace Networking.Server {
             if(!entity.TryGetComponent(out SInventory inventory) || !inventory.TryAddItem(takeable.item))
                 return;
 
-            Debug.Log("Taking!");
-
             SEntity takeableEntity = takeable.GetComponent<SEntity>();
             int newStackSize = takeable.item.stackSize;
-            if(newStackSize == 0) {
+            if(newStackSize <= 0) {
                 takeableEntity.StartDeath(EntityKillReason.Despawn);
             } else {
                 takeableEntity.PushReliableUpdate(takeableEntity, new TakeableStackSizeUpdatePkt() {
@@ -69,15 +67,12 @@ namespace Networking.Server {
 
 
         private void AddModifiedSInventoryToBuffer(SInventory sInventory) {
-            Debug.Log("Adding an update");
             inventoriesWithUpdatesBuffer.Add(sInventory);
         }
 
 
         public void SendInventoryUpdates() {
-            Debug.Log("a");
             foreach(var inventory in inventoriesWithUpdatesBuffer) {
-                Debug.Log("An inventory exists that was updated!");
                 inventory.SendAndClearUpdates();
             }
         }

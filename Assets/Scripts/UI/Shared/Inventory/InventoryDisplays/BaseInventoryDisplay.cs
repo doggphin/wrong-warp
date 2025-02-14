@@ -10,11 +10,11 @@ public abstract class BaseInventoryDisplay : MonoBehaviour {
     public void Init(Inventory inventory)
     {
         this.inventory = inventory;
-        GenerateSlots(inventory.SlottedItems.Length);
+        GenerateSlots(inventory);
     }
 
 
-    protected abstract void GenerateSlots(int count);
+    protected abstract void GenerateSlots(Inventory inventory);
 
 
     public void UpdateSlotVisual(int idx) {

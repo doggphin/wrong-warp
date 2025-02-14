@@ -40,7 +40,6 @@ namespace Networking.Server {
             if(isActivated)
                 return;
 
-            CreateHostPlayer();
             // Start one second ahead to keep circular buffers from ever trying to index negative numbers
             tick = NetCommon.TICKS_PER_SECOND;
             
@@ -52,6 +51,10 @@ namespace Networking.Server {
 
             watch = new();
             isActivated = true;
+        }
+
+        void Start() {
+            CreateHostPlayer();
         }
 
         void Update() {
@@ -97,7 +100,7 @@ namespace Networking.Server {
 
             // Run inputs of each client
             foreach(NetPeer peer in WWNetManager.ConnectedPeers) {
-                if(!peer.TryGetWSPlayer(out SPlayer player))
+                if(!peer.TryGetSPlayer(out SPlayer player))
                     continue;
 
                 if(!SPlayerInputsSlotterManager.TryGetInputsOfAPlayer(tick, player, out InputsSerializable inputs))
@@ -128,7 +131,7 @@ namespace Networking.Server {
         private void SendUpdatesToPlayer(NetPeer peer) {
             NetDataWriter testWriter = new();
 
-            if(!peer.TryGetWSPlayer(out var player))
+            if(!peer.TryGetSPlayer(out var player))
                 return;
 
             bool hasReliableUpdates = false;
@@ -169,7 +172,7 @@ namespace Networking.Server {
 
 
         private bool TryAddPlayer(NetPeer peer, string userName) {
-            if(peer.TryGetWSPlayer(out _))
+            if(peer.TryGetSPlayer(out _))
                 return false;
 
             SPlayer player = new(peer);
@@ -196,7 +199,7 @@ namespace Networking.Server {
         }
 
         private bool TryRemovePlayer(NetPeer peer) {
-            if(!peer.TryGetWSPlayer(out var player))
+            if(!peer.TryGetSPlayer(out var player))
                 return false;
 
             player.Entity.StartDeath(EntityKillReason.Unload);

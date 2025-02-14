@@ -10,18 +10,18 @@ namespace Controllers.Shared {
     public class ControlsManager : BaseSingleton<ControlsManager> {
         private PlayerInputActions inputActions;
 
-        private static AbstractPlayer player = null;
+        private AbstractPlayer player = null;
 
         public static bool TryGetPlayer(out AbstractPlayer player) {
-            player = ControlsManager.player;
+            player = Instance.player;
             return player != null;
         }
 
         public static void SetPlayer(AbstractPlayer player) {
-            ControlsManager.player = player;
+            Instance.player = player;
         }
 
-        public static bool HasPlayer => player != null;
+        public static bool HasPlayer => Instance.player != null;
 
         public TimestampedCircularTickBuffer<InputsSerializable> inputs = new();
 
@@ -73,6 +73,7 @@ namespace Controllers.Shared {
             inputActions.Ui.Confirm.started += (_) => ConfirmClicked?.Invoke();
             inputActions.Ui.Inventory.started += (_) => InventoryClicked?.Invoke();
         }
+
 
         public static void ActivateControls() {
             SetGameplayControlsEnabled(true);

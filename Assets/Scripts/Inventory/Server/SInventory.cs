@@ -40,7 +40,6 @@ namespace Networking.Server {
                 SAddInventoryPkt addInventoryPacket = new(){ inventory = this };
                 player.ReliablePackets?.AddPacket(SNetManager.Tick, addInventoryPacket);
             }
-            
         }
 
 
@@ -76,12 +75,9 @@ namespace Networking.Server {
                 deltas = new(indicesThatHaveChanged.Count)
             };
 
-            Debug.Log("Sending and clearing.");
             foreach(SPlayer player in observers) {
                 if(player.IsHost) {
-                    Debug.Log("On the host");
                     foreach(int index in indicesThatHaveChanged) {
-                        Debug.Log($"Updating {index}");
                         InventoryUiManager.Instance.UpdateSlotOfInventory(this, index);
                     } 
                 } else {
@@ -153,8 +149,11 @@ namespace Networking.Server {
                 }
 
                 // Try to merge item into slots it can
-                if(!slot.TryAbsorbSlottedItem(itemToAdd))
+                if(!slot.TryAbsorbSlottedItem(itemToAdd)) {
+                    Debug.Log($"Trying to absorb into {i}!");
                     continue;
+                }
+                    
                 
                 RecognizeModified(i);
                 // Quit early if stack size went down to 0
@@ -168,8 +167,13 @@ namespace Networking.Server {
                 return false;
 
             // Otherwise move the item into the empty slot
-            SlottedItems[firstEmptyIndex.Value] = itemToAdd.ShallowCopy();
-            itemToAdd.stackSize = 0;
+            // Do an additional check to see if stack size is above what should be allowed to stop any further glitches
+            int amountToRemove = Math.Min(itemToAdd.BaseItemRef.MaxStackSize, itemToAdd.stackSize);
+            SlottedItem copy = itemToAdd.ShallowCopy();
+            copy.stackSize = amountToRemove;
+            SlottedItems[firstEmptyIndex.Value] = copy;
+            itemToAdd.stackSize -= amountToRemove;
+
             RecognizeModified(firstEmptyIndex.Value);
             return true;
         }

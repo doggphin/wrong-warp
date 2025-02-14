@@ -3,18 +3,31 @@ using Controllers.Shared;
 using UnityEngine;
 using TriInspector;
 using Networking.Shared;
+using System;
+using UnityEngine.EventSystems;
 
 namespace Inventories {
+    public struct MoveItemRequest {
+        int fromInventoryId;
+        int fromIndex;
+        int toInventoryId;
+        int toIndex;
+    }
+
     public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
         private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
 
         [AssetsOnly][SerializeField] private GameObject inventorySlotPrefab;
 
-        protected override void Awake() {
+        public static Action<MoveItemRequest> MoveItem;
+
+        protected override void Awake() {    
             IsOpen = true;
             Close();
-            
+                    
             WWNetManager.Disconnected += CleanupDisplays;
+            InventoryUiVisualSlot.StartDrag += StartDrag;
+            InventoryUiVisualSlot.Drop += Drop;
 
             base.Awake();
         }
@@ -23,10 +36,16 @@ namespace Inventories {
         protected override void OnDestroy()
         {
             WWNetManager.Disconnected -= CleanupDisplays;
+            InventoryUiVisualSlot.StartDrag -= StartDrag;
+            InventoryUiVisualSlot.Drop -= Drop;
+
+            Close();
+
             base.OnDestroy();
         }
 
-
+        
+        ///<summary> Since UIManager isn't destroyed on disconnect, clean up displays on disconnect </summary>
         private void CleanupDisplays(WDisconnectInfo _) {
             foreach(Transform child in transform) {
                 Destroy(child.gameObject);
@@ -80,6 +99,16 @@ namespace Inventories {
 
         private void SetAsActive() {
             UiManager.SetActiveUiElement(this, true);
+        }
+
+
+        private void StartDrag(int fromInventory, int fromIndex, PointerEventData.InputButton button) {
+            
+        }
+
+
+        private void Drop(int fromInventory, int fromIndex, PointerEventData.InputButton button) {
+            
         }
     }
 }

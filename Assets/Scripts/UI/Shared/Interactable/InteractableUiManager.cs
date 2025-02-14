@@ -31,10 +31,11 @@ public class InteractableUiManager : BaseUiElement<InteractableUiManager> {
         }
 
         if(!ReferenceEquals(interactable, lastSeenInteractable)) {
-            displayText.text = interactable.GetHoverText();
             icon.sprite = InteractableIconLookup.Lookup(interactable.GetIconType());
             lastSeenInteractable = interactable;
         }
+
+        displayText.text = interactable.GetHoverText();
         
         canvasGroup.alpha += alphaDelta;
     }

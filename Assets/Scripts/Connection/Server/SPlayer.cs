@@ -7,7 +7,7 @@ using Unity.VisualScripting;
 
 namespace Networking.Server {
     public static class SPlayerExtensions {
-        public static bool TryGetWSPlayer(this NetPeer peer, out SPlayer player) {
+        public static bool TryGetSPlayer(this NetPeer peer, out SPlayer player) {
             if(peer.Tag == null) {
                 player = null;
                 return false;
