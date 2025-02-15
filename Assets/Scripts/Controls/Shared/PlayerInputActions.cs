@@ -24,7 +24,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     ""name"": ""PlayerInputActions"",
     ""maps"": [
         {
-            ""name"": ""Gameplay"",
+            ""name"": ""KeyboardControls"",
             ""id"": ""8bf1c474-35fd-46b5-a5d0-0e27f4e26a6d"",
             ""actions"": [
                 {
@@ -64,15 +64,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Look"",
-                    ""type"": ""Value"",
-                    ""id"": ""1c43e3d7-1f9e-4a8f-8b61-b42aad08437a"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
                     ""name"": ""Crouch"",
                     ""type"": ""Value"",
                     ""id"": ""dc199611-5d36-45ec-94cf-7279d664e42e"",
@@ -98,15 +89,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Fire"",
-                    ""type"": ""Button"",
-                    ""id"": ""092a33a4-62fd-4b7a-a211-ce964b7bfb06"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -156,17 +138,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""3c4d4b30-9da0-4a40-962f-0f36f4c248a6"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""ae472dc2-37da-468c-8999-ed00020cce26"",
                     ""path"": ""<Keyboard>/leftCtrl"",
                     ""interactions"": """",
@@ -195,17 +166,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Interact"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""baa1f167-0f43-47f5-a6f7-b834afaad236"",
-                    ""path"": ""<Mouse>/leftButton"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -298,33 +258,84 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""MouseControls"",
+            ""id"": ""5d6c1014-c41c-45f8-8679-4c9be634be53"",
+            ""actions"": [
+                {
+                    ""name"": ""Look"",
+                    ""type"": ""Value"",
+                    ""id"": ""73591bbe-875d-4c55-8759-71946aea3fe8"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""4ff2aad6-5131-4abe-af5e-5c97f19615c9"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""9c21abcd-f09e-49c0-ad93-1fc83a4775f5"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Look"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""672a0512-6a53-46bc-ab8d-5ee0af63e1bf"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
 }");
-        // Gameplay
-        m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
-        m_Gameplay_Forward = m_Gameplay.FindAction("Forward", throwIfNotFound: true);
-        m_Gameplay_Left = m_Gameplay.FindAction("Left", throwIfNotFound: true);
-        m_Gameplay_Back = m_Gameplay.FindAction("Back", throwIfNotFound: true);
-        m_Gameplay_Right = m_Gameplay.FindAction("Right", throwIfNotFound: true);
-        m_Gameplay_Look = m_Gameplay.FindAction("Look", throwIfNotFound: true);
-        m_Gameplay_Crouch = m_Gameplay.FindAction("Crouch", throwIfNotFound: true);
-        m_Gameplay_Jump = m_Gameplay.FindAction("Jump", throwIfNotFound: true);
-        m_Gameplay_Interact = m_Gameplay.FindAction("Interact", throwIfNotFound: true);
-        m_Gameplay_Fire = m_Gameplay.FindAction("Fire", throwIfNotFound: true);
+        // KeyboardControls
+        m_KeyboardControls = asset.FindActionMap("KeyboardControls", throwIfNotFound: true);
+        m_KeyboardControls_Forward = m_KeyboardControls.FindAction("Forward", throwIfNotFound: true);
+        m_KeyboardControls_Left = m_KeyboardControls.FindAction("Left", throwIfNotFound: true);
+        m_KeyboardControls_Back = m_KeyboardControls.FindAction("Back", throwIfNotFound: true);
+        m_KeyboardControls_Right = m_KeyboardControls.FindAction("Right", throwIfNotFound: true);
+        m_KeyboardControls_Crouch = m_KeyboardControls.FindAction("Crouch", throwIfNotFound: true);
+        m_KeyboardControls_Jump = m_KeyboardControls.FindAction("Jump", throwIfNotFound: true);
+        m_KeyboardControls_Interact = m_KeyboardControls.FindAction("Interact", throwIfNotFound: true);
         // Ui
         m_Ui = asset.FindActionMap("Ui", throwIfNotFound: true);
         m_Ui_Chat = m_Ui.FindAction("Chat", throwIfNotFound: true);
         m_Ui_Inventory = m_Ui.FindAction("Inventory", throwIfNotFound: true);
         m_Ui_Escape = m_Ui.FindAction("Escape", throwIfNotFound: true);
         m_Ui_Confirm = m_Ui.FindAction("Confirm", throwIfNotFound: true);
+        // MouseControls
+        m_MouseControls = asset.FindActionMap("MouseControls", throwIfNotFound: true);
+        m_MouseControls_Look = m_MouseControls.FindAction("Look", throwIfNotFound: true);
+        m_MouseControls_Fire = m_MouseControls.FindAction("Fire", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
     {
-        UnityEngine.Debug.Assert(!m_Gameplay.enabled, "This will cause a leak and performance issues, PlayerInputActions.Gameplay.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_KeyboardControls.enabled, "This will cause a leak and performance issues, PlayerInputActions.KeyboardControls.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Ui.enabled, "This will cause a leak and performance issues, PlayerInputActions.Ui.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_MouseControls.enabled, "This will cause a leak and performance issues, PlayerInputActions.MouseControls.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -383,40 +394,36 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         return asset.FindBinding(bindingMask, out action);
     }
 
-    // Gameplay
-    private readonly InputActionMap m_Gameplay;
-    private List<IGameplayActions> m_GameplayActionsCallbackInterfaces = new List<IGameplayActions>();
-    private readonly InputAction m_Gameplay_Forward;
-    private readonly InputAction m_Gameplay_Left;
-    private readonly InputAction m_Gameplay_Back;
-    private readonly InputAction m_Gameplay_Right;
-    private readonly InputAction m_Gameplay_Look;
-    private readonly InputAction m_Gameplay_Crouch;
-    private readonly InputAction m_Gameplay_Jump;
-    private readonly InputAction m_Gameplay_Interact;
-    private readonly InputAction m_Gameplay_Fire;
-    public struct GameplayActions
+    // KeyboardControls
+    private readonly InputActionMap m_KeyboardControls;
+    private List<IKeyboardControlsActions> m_KeyboardControlsActionsCallbackInterfaces = new List<IKeyboardControlsActions>();
+    private readonly InputAction m_KeyboardControls_Forward;
+    private readonly InputAction m_KeyboardControls_Left;
+    private readonly InputAction m_KeyboardControls_Back;
+    private readonly InputAction m_KeyboardControls_Right;
+    private readonly InputAction m_KeyboardControls_Crouch;
+    private readonly InputAction m_KeyboardControls_Jump;
+    private readonly InputAction m_KeyboardControls_Interact;
+    public struct KeyboardControlsActions
     {
         private @PlayerInputActions m_Wrapper;
-        public GameplayActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
-        public InputAction @Forward => m_Wrapper.m_Gameplay_Forward;
-        public InputAction @Left => m_Wrapper.m_Gameplay_Left;
-        public InputAction @Back => m_Wrapper.m_Gameplay_Back;
-        public InputAction @Right => m_Wrapper.m_Gameplay_Right;
-        public InputAction @Look => m_Wrapper.m_Gameplay_Look;
-        public InputAction @Crouch => m_Wrapper.m_Gameplay_Crouch;
-        public InputAction @Jump => m_Wrapper.m_Gameplay_Jump;
-        public InputAction @Interact => m_Wrapper.m_Gameplay_Interact;
-        public InputAction @Fire => m_Wrapper.m_Gameplay_Fire;
-        public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
+        public KeyboardControlsActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Forward => m_Wrapper.m_KeyboardControls_Forward;
+        public InputAction @Left => m_Wrapper.m_KeyboardControls_Left;
+        public InputAction @Back => m_Wrapper.m_KeyboardControls_Back;
+        public InputAction @Right => m_Wrapper.m_KeyboardControls_Right;
+        public InputAction @Crouch => m_Wrapper.m_KeyboardControls_Crouch;
+        public InputAction @Jump => m_Wrapper.m_KeyboardControls_Jump;
+        public InputAction @Interact => m_Wrapper.m_KeyboardControls_Interact;
+        public InputActionMap Get() { return m_Wrapper.m_KeyboardControls; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(GameplayActions set) { return set.Get(); }
-        public void AddCallbacks(IGameplayActions instance)
+        public static implicit operator InputActionMap(KeyboardControlsActions set) { return set.Get(); }
+        public void AddCallbacks(IKeyboardControlsActions instance)
         {
-            if (instance == null || m_Wrapper.m_GameplayActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_GameplayActionsCallbackInterfaces.Add(instance);
+            if (instance == null || m_Wrapper.m_KeyboardControlsActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_KeyboardControlsActionsCallbackInterfaces.Add(instance);
             @Forward.started += instance.OnForward;
             @Forward.performed += instance.OnForward;
             @Forward.canceled += instance.OnForward;
@@ -429,9 +436,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Right.started += instance.OnRight;
             @Right.performed += instance.OnRight;
             @Right.canceled += instance.OnRight;
-            @Look.started += instance.OnLook;
-            @Look.performed += instance.OnLook;
-            @Look.canceled += instance.OnLook;
             @Crouch.started += instance.OnCrouch;
             @Crouch.performed += instance.OnCrouch;
             @Crouch.canceled += instance.OnCrouch;
@@ -441,12 +445,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
-            @Fire.started += instance.OnFire;
-            @Fire.performed += instance.OnFire;
-            @Fire.canceled += instance.OnFire;
         }
 
-        private void UnregisterCallbacks(IGameplayActions instance)
+        private void UnregisterCallbacks(IKeyboardControlsActions instance)
         {
             @Forward.started -= instance.OnForward;
             @Forward.performed -= instance.OnForward;
@@ -460,9 +461,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Right.started -= instance.OnRight;
             @Right.performed -= instance.OnRight;
             @Right.canceled -= instance.OnRight;
-            @Look.started -= instance.OnLook;
-            @Look.performed -= instance.OnLook;
-            @Look.canceled -= instance.OnLook;
             @Crouch.started -= instance.OnCrouch;
             @Crouch.performed -= instance.OnCrouch;
             @Crouch.canceled -= instance.OnCrouch;
@@ -472,26 +470,23 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
-            @Fire.started -= instance.OnFire;
-            @Fire.performed -= instance.OnFire;
-            @Fire.canceled -= instance.OnFire;
         }
 
-        public void RemoveCallbacks(IGameplayActions instance)
+        public void RemoveCallbacks(IKeyboardControlsActions instance)
         {
-            if (m_Wrapper.m_GameplayActionsCallbackInterfaces.Remove(instance))
+            if (m_Wrapper.m_KeyboardControlsActionsCallbackInterfaces.Remove(instance))
                 UnregisterCallbacks(instance);
         }
 
-        public void SetCallbacks(IGameplayActions instance)
+        public void SetCallbacks(IKeyboardControlsActions instance)
         {
-            foreach (var item in m_Wrapper.m_GameplayActionsCallbackInterfaces)
+            foreach (var item in m_Wrapper.m_KeyboardControlsActionsCallbackInterfaces)
                 UnregisterCallbacks(item);
-            m_Wrapper.m_GameplayActionsCallbackInterfaces.Clear();
+            m_Wrapper.m_KeyboardControlsActionsCallbackInterfaces.Clear();
             AddCallbacks(instance);
         }
     }
-    public GameplayActions @Gameplay => new GameplayActions(this);
+    public KeyboardControlsActions @KeyboardControls => new KeyboardControlsActions(this);
 
     // Ui
     private readonly InputActionMap m_Ui;
@@ -562,17 +557,69 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         }
     }
     public UiActions @Ui => new UiActions(this);
-    public interface IGameplayActions
+
+    // MouseControls
+    private readonly InputActionMap m_MouseControls;
+    private List<IMouseControlsActions> m_MouseControlsActionsCallbackInterfaces = new List<IMouseControlsActions>();
+    private readonly InputAction m_MouseControls_Look;
+    private readonly InputAction m_MouseControls_Fire;
+    public struct MouseControlsActions
+    {
+        private @PlayerInputActions m_Wrapper;
+        public MouseControlsActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Look => m_Wrapper.m_MouseControls_Look;
+        public InputAction @Fire => m_Wrapper.m_MouseControls_Fire;
+        public InputActionMap Get() { return m_Wrapper.m_MouseControls; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(MouseControlsActions set) { return set.Get(); }
+        public void AddCallbacks(IMouseControlsActions instance)
+        {
+            if (instance == null || m_Wrapper.m_MouseControlsActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_MouseControlsActionsCallbackInterfaces.Add(instance);
+            @Look.started += instance.OnLook;
+            @Look.performed += instance.OnLook;
+            @Look.canceled += instance.OnLook;
+            @Fire.started += instance.OnFire;
+            @Fire.performed += instance.OnFire;
+            @Fire.canceled += instance.OnFire;
+        }
+
+        private void UnregisterCallbacks(IMouseControlsActions instance)
+        {
+            @Look.started -= instance.OnLook;
+            @Look.performed -= instance.OnLook;
+            @Look.canceled -= instance.OnLook;
+            @Fire.started -= instance.OnFire;
+            @Fire.performed -= instance.OnFire;
+            @Fire.canceled -= instance.OnFire;
+        }
+
+        public void RemoveCallbacks(IMouseControlsActions instance)
+        {
+            if (m_Wrapper.m_MouseControlsActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IMouseControlsActions instance)
+        {
+            foreach (var item in m_Wrapper.m_MouseControlsActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_MouseControlsActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public MouseControlsActions @MouseControls => new MouseControlsActions(this);
+    public interface IKeyboardControlsActions
     {
         void OnForward(InputAction.CallbackContext context);
         void OnLeft(InputAction.CallbackContext context);
         void OnBack(InputAction.CallbackContext context);
         void OnRight(InputAction.CallbackContext context);
-        void OnLook(InputAction.CallbackContext context);
         void OnCrouch(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
         void OnInteract(InputAction.CallbackContext context);
-        void OnFire(InputAction.CallbackContext context);
     }
     public interface IUiActions
     {
@@ -580,5 +627,10 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnInventory(InputAction.CallbackContext context);
         void OnEscape(InputAction.CallbackContext context);
         void OnConfirm(InputAction.CallbackContext context);
+    }
+    public interface IMouseControlsActions
+    {
+        void OnLook(InputAction.CallbackContext context);
+        void OnFire(InputAction.CallbackContext context);
     }
 }

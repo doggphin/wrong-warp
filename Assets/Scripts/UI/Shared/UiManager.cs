@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Controllers.Shared;
+using Inventories;
 using UnityEngine;
 
 public class UiManager : BaseSingleton<UiManager>
@@ -9,29 +10,40 @@ public class UiManager : BaseSingleton<UiManager>
     [SerializeField] private GameObject inventoryUiPrefab;
     [SerializeField] private GameObject interactableUiPrefab;
 
-    private EscapeUiManager escapeUi;
+    private ChatUiManager chatUiManager;
+    private InventoryUiManager inventoryUiManager;
+    private InteractableUiManager interactableUiManager;
+    private EscapeUiManager escapeUiManager;
 
     public IUiElement ActiveUiElement { get; private set; }
 
     protected override void Awake() {
-        ControlsManager.EscapeClicked += OpenEscape;
         
-        Instantiate(interactableUiPrefab, transform);
-        Instantiate(chatUiPrefab, transform);
-        Instantiate(inventoryUiPrefab, transform);
-        escapeUi = Instantiate(escapeUiPrefab, transform).GetComponent<EscapeUiManager>();
+        interactableUiManager = Helpers.InstantiateAndGetComponent<InteractableUiManager>(transform, interactableUiPrefab);
+        chatUiManager = Helpers.InstantiateAndGetComponent<ChatUiManager>(transform, chatUiPrefab);
+        inventoryUiManager = Helpers.InstantiateAndGetComponent<InventoryUiManager>(transform, inventoryUiPrefab);
+        escapeUiManager = Helpers.InstantiateAndGetComponent<EscapeUiManager>(transform, escapeUiPrefab);
+
+        ControlsManager.EscapeClicked += OpenEscape;
+        ControlsManager.InventoryClicked += () => TryToggleUiElement(inventoryUiManager);
+        ControlsManager.ChatClicked += () => TryToggleUiElement(chatUiManager);
 
         base.Awake();
     }
 
     protected override void OnDestroy()
     {
+        ControlsManager.EscapeClicked -= OpenEscape;
+
         CloseActiveUiElement();
+
         base.OnDestroy();
+        Cursor.lockState = CursorLockMode.None;
     }
 
+
     /// <returns> Whether a UI element was closed. </returns>
-    public static void CloseActiveUiElement() {
+    public void CloseActiveUiElement() {
         if(Instance.ActiveUiElement == null)
             return;
 
@@ -39,29 +51,38 @@ public class UiManager : BaseSingleton<UiManager>
         Instance.ActiveUiElement = null;
 
         Cursor.lockState = CursorLockMode.Locked;
-        ControlsManager.SetGameplayControlsEnabled(true);
+        ControlsManager.SetKeyboardControlsEnabled(true);
+        ControlsManager.SetMouseControlsEnabled(true);
     }
 
 
     /// <returns> Whether the UI element was set. </returns>
-    public static void SetActiveUiElement(IUiElement uiElement, bool disableControls) {
-        if(Instance.ActiveUiElement != null)
+    private void SetActiveUiElement(IUiElement uiElement) {
+        if(ActiveUiElement != null)
             return;
 
-        Instance.ActiveUiElement = uiElement;
-        Instance.ActiveUiElement.Open();
+        ActiveUiElement = uiElement;
+        ActiveUiElement.Open();
 
-        Cursor.lockState = CursorLockMode.None;
-        ControlsManager.SetGameplayControlsEnabled(false);
+        Cursor.lockState = uiElement.RequiresMouse ? CursorLockMode.None : CursorLockMode.Locked;
+        ControlsManager.SetKeyboardControlsEnabled(uiElement.AllowsMovement);
+        ControlsManager.SetMouseControlsEnabled(!uiElement.RequiresMouse);
     }
 
     
-    // When escape is pressed, either close the current ui or open the escape UI
-    private static void OpenEscape() {
-        if(Instance.ActiveUiElement != null) {
+    private void TryToggleUiElement(IUiElement uiElement) {
+        if(ActiveUiElement == null) {
+            SetActiveUiElement(uiElement);
+        } else if (ReferenceEquals(uiElement, ActiveUiElement) && !ReferenceEquals(uiElement, chatUiManager)) {
+            CloseActiveUiElement();
+        }
+    }
+
+    private void OpenEscape() {
+        if(ActiveUiElement != null) {
             CloseActiveUiElement();   
         } else {
-            Instance.escapeUi.Open();
+            SetActiveUiElement(escapeUiManager);
         }
     }
 }

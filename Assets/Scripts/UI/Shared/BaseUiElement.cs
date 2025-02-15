@@ -1,10 +1,19 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public class BaseUiElement<T> : BaseSingleton<T>, IUiElement where T : MonoBehaviour
+public abstract class BaseUiElement<T> : BaseSingleton<T>, IUiElement where T : BaseUiElement<T>
 {
-    public bool IsOpen { get; protected set; }
-    public bool RequiresMouse { get; protected set; }
-    
+    public bool IsOpen { get; protected set; } = false;
+    public abstract bool RequiresMouse { get; }
+    public abstract bool AllowsMovement { get; }
+
+
+    protected override void Awake()
+    {
+        gameObject.SetActive(false);
+        base.Awake();
+    }
     public virtual void Close()
     {
         IsOpen = false;

@@ -6,18 +6,22 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CanvasGroup))]
 public class InteractableUiManager : BaseUiElement<InteractableUiManager> {
     public const float fadeTimeSeconds = 0.15f;
+    public override bool RequiresMouse => false;
+    public override bool AllowsMovement => true;
 
     private CanvasGroup canvasGroup;
     [SerializeField] TMP_Text displayText;
     [SerializeField] Image icon;
 
+    BaseInteractable lastSeenInteractable = null;
+
     protected override void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
         base.Awake();
+        gameObject.SetActive(true);
     }
 
-    BaseInteractable lastSeenInteractable = null;
     void LateUpdate() {
         if(!ControlsManager.TryGetPlayer(out var player)) {
             canvasGroup.alpha = 0;

@@ -8,48 +8,32 @@ using UnityEngine.EventSystems;
 
 namespace Inventories {
     public struct MoveItemRequest {
-        int fromInventoryId;
-        int fromIndex;
-        int toInventoryId;
-        int toIndex;
+        public int fromInventoryId, fromIndex, toInventoryId, toIndex;
+        public PointerEventData.InputButton button;
     }
 
-    public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
-        private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
 
+    public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
         [AssetsOnly][SerializeField] private GameObject inventorySlotPrefab;
 
-        public static Action<MoveItemRequest> MoveItem;
+        private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
+        private MoveItemRequest moveItemRequest = new();
+        public static Action<MoveItemRequest> RequestToMoveItem;
 
-        protected override void Awake() {    
-            IsOpen = true;
-            Close();
-                    
-            WWNetManager.Disconnected += CleanupDisplays;
+        public override bool RequiresMouse => true;
+        public override bool AllowsMovement => true;
+        protected override void Awake() {                      
             InventoryUiVisualSlot.StartDrag += StartDrag;
             InventoryUiVisualSlot.Drop += Drop;
 
             base.Awake();
         }
-
-
         protected override void OnDestroy()
         {
-            WWNetManager.Disconnected -= CleanupDisplays;
             InventoryUiVisualSlot.StartDrag -= StartDrag;
             InventoryUiVisualSlot.Drop -= Drop;
 
-            Close();
-
             base.OnDestroy();
-        }
-
-        
-        ///<summary> Since UIManager isn't destroyed on disconnect, clean up displays on disconnect </summary>
-        private void CleanupDisplays(WDisconnectInfo _) {
-            foreach(Transform child in transform) {
-                Destroy(child.gameObject);
-            }
         }
 
 
@@ -71,44 +55,40 @@ namespace Inventories {
         public void UpdateSlotOfInventory(Inventory inventory, int slotIdx) {
             inventoryDisplays[inventory].UpdateSlotVisual(slotIdx);
         }
-
-
-        public override void Open()
-        {
-            if(IsOpen)
-                return;
-            
-            base.Open();
-            
-            ControlsManager.InventoryClicked -= SetAsActive;
-            ControlsManager.InventoryClicked += UiManager.CloseActiveUiElement;
+        
+        int? fromInventoryId, fromIndex, toInventoryId, toIndex;
+        PointerEventData.InputButton? draggingButton;
+        private int GetDragStackSize(int stackSize, PointerEventData.InputButton button) {
+            return button switch {
+                PointerEventData.InputButton.Left => stackSize,
+                PointerEventData.InputButton.Middle => stackSize / 2,
+                PointerEventData.InputButton.Right => 1,
+                _ => throw new NotImplementedException()
+            };
+        }
+        private void StartDrag(Inventory inventory, int index, PointerEventData.InputButton button) {
+            fromInventoryId ??= inventory.Id;
+            fromIndex ??= index;
+            draggingButton ??= button;
         }
 
+        private void Drop(Inventory inventory, int index, PointerEventData.InputButton button) {
+            toInventoryId ??= inventory.Id;
+            toIndex ??= index;
 
-        public override void Close()
-        {
-            if(!IsOpen)
-                return;
+            if(draggingButton.HasValue && draggingButton.Value == button) {
+                RequestToMoveItem?.Invoke(new MoveItemRequest() {
+                    button = button,
+                    fromInventoryId = fromInventoryId.Value,
+                    fromIndex = fromIndex.Value,
+                    toInventoryId = toInventoryId.Value,
+                    toIndex = toIndex.Value,
+                });
+                Debug.Log("Requesting to move!");
+            }
             
-            base.Close();
-
-            ControlsManager.InventoryClicked += SetAsActive;
-            ControlsManager.InventoryClicked -= UiManager.CloseActiveUiElement;
-        }
-
-
-        private void SetAsActive() {
-            UiManager.SetActiveUiElement(this, true);
-        }
-
-
-        private void StartDrag(int fromInventory, int fromIndex, PointerEventData.InputButton button) {
-            
-        }
-
-
-        private void Drop(int fromInventory, int fromIndex, PointerEventData.InputButton button) {
-            
+            fromInventoryId = fromIndex = toInventoryId = toIndex = null;
+            draggingButton = null;
         }
     }
 }

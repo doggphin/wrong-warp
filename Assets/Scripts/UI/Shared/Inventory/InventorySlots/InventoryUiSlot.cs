@@ -9,9 +9,12 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
     [SerializeField] Image itemSprite;
     [SerializeField] TMP_Text stackSizeText;
 
-    public Action<int, int> Inspect;
-    public static Action<int, int, PointerEventData.InputButton> StartDrag;
-    public static Action<int, int, PointerEventData.InputButton> Drop;
+    private Inventory inventory;
+    private int inventoryIndex;
+
+    public Action<Inventory, int> Inspect;
+    public static Action<Inventory, int, PointerEventData.InputButton> StartDrag;
+    public static Action<Inventory, int, PointerEventData.InputButton> Drop;
     
     public void SetVisibleSlottedItem(SlottedItem slottedItem) {
         var color = itemSprite.color;
@@ -28,10 +31,8 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
         itemSprite.color = color;
     }
 
-    private int inventoryId;
-    private int inventoryIndex;
-    public void Init(int inventoryId, int inventoryIndex, SlottedItem item) {
-        this.inventoryId = inventoryId;
+    public void Init(Inventory inventory, int inventoryIndex, SlottedItem item) {
+        this.inventory = inventory;
         this.inventoryIndex = inventoryIndex;
         SetVisibleSlottedItem(item);
     }
@@ -39,13 +40,13 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
     public void OnPointerClick(PointerEventData eventData)
     {
         Debug.Log($"Clicked pointer with {eventData.button} on {inventoryIndex}!");
-        Inspect?.Invoke(inventoryId, inventoryIndex);
+        Inspect?.Invoke(inventory, inventoryIndex);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         Debug.Log($"Started dragging pointer with {eventData.button} from {inventoryIndex}!");
-        StartDrag?.Invoke(inventoryId, inventoryIndex, eventData.button);
+        StartDrag?.Invoke(inventory, inventoryIndex, eventData.button);
     }
 
     // This needs to be here to use OnBeginDrag and OnEndDrag
@@ -53,7 +54,7 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
 
     public void OnDrop(PointerEventData eventData) {
         Debug.Log($"Let go of pointer with {eventData.button} on {inventoryIndex}!");
-        Drop?.Invoke(inventoryId, inventoryIndex, eventData.button);
+        Drop?.Invoke(inventory, inventoryIndex, eventData.button);
     }
 
     /*public void OnPointerUp(PointerEventData eventData)

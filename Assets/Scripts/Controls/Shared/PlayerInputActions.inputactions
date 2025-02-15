@@ -2,7 +2,7 @@
     "name": "PlayerInputActions",
     "maps": [
         {
-            "name": "Gameplay",
+            "name": "KeyboardControls",
             "id": "8bf1c474-35fd-46b5-a5d0-0e27f4e26a6d",
             "actions": [
                 {
@@ -42,15 +42,6 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Look",
-                    "type": "Value",
-                    "id": "1c43e3d7-1f9e-4a8f-8b61-b42aad08437a",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
                     "name": "Crouch",
                     "type": "Value",
                     "id": "dc199611-5d36-45ec-94cf-7279d664e42e",
@@ -76,15 +67,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
-                },
-                {
-                    "name": "Fire",
-                    "type": "Button",
-                    "id": "092a33a4-62fd-4b7a-a211-ce964b7bfb06",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -134,17 +116,6 @@
                 },
                 {
                     "name": "",
-                    "id": "3c4d4b30-9da0-4a40-962f-0f36f4c248a6",
-                    "path": "<Mouse>/delta",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Look",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "ae472dc2-37da-468c-8999-ed00020cce26",
                     "path": "<Keyboard>/leftCtrl",
                     "interactions": "",
@@ -173,17 +144,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Interact",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "baa1f167-0f43-47f5-a6f7-b834afaad236",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Fire",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -272,6 +232,54 @@
                     "processors": "",
                     "groups": "",
                     "action": "Confirm",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "MouseControls",
+            "id": "5d6c1014-c41c-45f8-8679-4c9be634be53",
+            "actions": [
+                {
+                    "name": "Look",
+                    "type": "Value",
+                    "id": "73591bbe-875d-4c55-8759-71946aea3fe8",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Fire",
+                    "type": "Button",
+                    "id": "4ff2aad6-5131-4abe-af5e-5c97f19615c9",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "9c21abcd-f09e-49c0-ad93-1fc83a4775f5",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "672a0512-6a53-46bc-ab8d-5ee0af63e1bf",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Fire",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

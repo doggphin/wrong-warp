@@ -11,10 +11,15 @@ public class ChatUiManager : BaseUiElement<ChatUiManager>
     [SerializeField] private ChatUiMessageInput messageInput;
 
     public static Action<string> SendChatMessage;
-    
+
+    public override bool RequiresMouse => false;
+    public override bool AllowsMovement => false;
+
     protected override void Awake() {
         SPacket<SChatMessagePkt>.ApplyUnticked += ReceiveChatMessage;
         base.Awake();
+        gameObject.SetActive(true);
+        DisableMessageInput();
     }
 
     protected override void OnDestroy() {
@@ -23,19 +28,15 @@ public class ChatUiManager : BaseUiElement<ChatUiManager>
     }
 
 
-    void Start() {
-        DisableMessageInput();
+    public override void Open() {
+        IsOpen = true;
+        EnableMessageInput();
     }
 
 
-    public override void Open()
-    {
-        if(IsOpen)
-            return;
-
-        IsOpen = true;
-        
-        EnableMessageInput();
+    public override void Close() {
+        IsOpen = false;
+        DisableMessageInput();
     }
 
 
@@ -44,37 +45,21 @@ public class ChatUiManager : BaseUiElement<ChatUiManager>
         messageInput.StartTyping();
 
         ControlsManager.ConfirmClicked += ConfirmChatMessage;
-        ControlsManager.ChatClicked -= SetAsActiveUi;
+    }
+
+        private void DisableMessageInput() {
+        messageInput.gameObject.SetActive(false);
+        messageInput.ClearInput();
+        messageInput.StopTyping();
+
+        ControlsManager.ConfirmClicked -= ConfirmChatMessage;
     }
 
     public static void ConfirmChatMessage() {
         string message = Instance.messageInput.GetInput();
         SendChatMessage?.Invoke(message);
         
-        UiManager.CloseActiveUiElement();
-    }
-
-    private void SetAsActiveUi() {
-        UiManager.SetActiveUiElement(this, true);
-    }
-    
-    public override void Close()
-    {
-        if(!IsOpen)
-            return;
-
-        IsOpen = false;
-        
-        DisableMessageInput();
-    }
-    
-    private void DisableMessageInput() {
-        messageInput.gameObject.SetActive(false);
-        messageInput.ClearInput();
-        messageInput.StopTyping();
-
-        ControlsManager.ConfirmClicked -= ConfirmChatMessage;
-        ControlsManager.ChatClicked += SetAsActiveUi;
+        UiManager.Instance.CloseActiveUiElement();
     }
 
 

@@ -4,4 +4,5 @@ public interface IUiElement {
     public void Toggle();
     public bool IsOpen { get; }
     public bool RequiresMouse { get; }
+    public bool AllowsMovement { get; }
 }

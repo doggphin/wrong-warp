@@ -6,6 +6,7 @@ using Audio.Shared;
 using Networking.Server;
 using Inventories;
 
+
 namespace Controllers.Shared {
     public class ControlsManager : BaseSingleton<ControlsManager> {
         private PlayerInputActions inputActions;
@@ -52,18 +53,18 @@ namespace Controllers.Shared {
 
             inputActions = new();
 
-            BindInputActionToInputType(inputActions.Gameplay.Forward, InputType.Forward);
-            BindInputActionToInputType(inputActions.Gameplay.Left, InputType.Left);
-            BindInputActionToInputType(inputActions.Gameplay.Back, InputType.Back);
-            BindInputActionToInputType(inputActions.Gameplay.Right, InputType.Right);
-            BindInputActionToInputType(inputActions.Gameplay.Jump, InputType.Jump);
-            BindInputActionToInputType(inputActions.Gameplay.Interact, InputType.Interact);
+            BindInputActionToInputType(inputActions.KeyboardControls.Forward, InputType.Forward);
+            BindInputActionToInputType(inputActions.KeyboardControls.Left, InputType.Left);
+            BindInputActionToInputType(inputActions.KeyboardControls.Back, InputType.Back);
+            BindInputActionToInputType(inputActions.KeyboardControls.Right, InputType.Right);
+            BindInputActionToInputType(inputActions.KeyboardControls.Jump, InputType.Jump);
+            BindInputActionToInputType(inputActions.KeyboardControls.Interact, InputType.Interact);
 
-            inputActions.Gameplay.Fire.started += (InputAction.CallbackContext ctx) => HandleOneOffAction(ctx, InputType.FireDownEvent);
-            BindInputActionToInputType(inputActions.Gameplay.Fire, InputType.FireDown);
+            inputActions.MouseControls.Fire.started += (InputAction.CallbackContext ctx) => HandleOneOffAction(ctx, InputType.FireDownEvent);
+            BindInputActionToInputType(inputActions.MouseControls.Fire, InputType.FireDown);
             
 
-            inputActions.Gameplay.Look.performed += (InputAction.CallbackContext ctx) => {
+            inputActions.MouseControls.Look.performed += (InputAction.CallbackContext ctx) => {
                 if(player != null)
                     player.AddRotationDelta(ctx.action.ReadValue<Vector2>());
             };
@@ -76,22 +77,24 @@ namespace Controllers.Shared {
 
 
         public static void ActivateControls() {
-            SetGameplayControlsEnabled(true);
+            SetKeyboardControlsEnabled(true);
             SetUiControlsEnabled(true);
+            SetMouseControlsEnabled(true);
         }
 
         public static void DeactivateControls() {
-            SetGameplayControlsEnabled(false);
+            SetKeyboardControlsEnabled(false);
             SetUiControlsEnabled(false);
+            SetMouseControlsEnabled(false);
         }
 
 
         // Gameplay and Ui don't share a base class, can't be made more efficient
-        public static void SetGameplayControlsEnabled(bool value) {
+        public static void SetKeyboardControlsEnabled(bool value) {
             if(value) {
-                Instance.inputActions.Gameplay.Enable();
+                Instance.inputActions.KeyboardControls.Enable();
             } else {
-                Instance.inputActions.Gameplay.Disable();
+                Instance.inputActions.KeyboardControls.Disable();
             }
         }
         public static void SetUiControlsEnabled(bool value) {
@@ -101,14 +104,11 @@ namespace Controllers.Shared {
                 Instance.inputActions.Ui.Disable();
             }
         }
-        public static bool GameplayControlsEnabled {
-            get => Instance.inputActions.Gameplay.enabled;
-            private set {
-                if(value) {
-                    Instance.inputActions.Gameplay.Enable();
-                } else {
-                    Instance.inputActions.Gameplay.Disable();
-                }
+        public static void SetMouseControlsEnabled(bool value) {
+            if(value) {
+                Instance.inputActions.MouseControls.Enable();
+            } else {
+                Instance.inputActions.MouseControls.Disable();
             }
         }
 

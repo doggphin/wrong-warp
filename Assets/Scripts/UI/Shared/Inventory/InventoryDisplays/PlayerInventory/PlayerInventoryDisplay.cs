@@ -18,7 +18,6 @@ public class PlayerInventoryDisplay : BaseInventoryDisplay {
 
     protected override void GenerateSlots(Inventory inventory)
     {
-        int inventoryId = inventory.Id;
         for(int i=0; i<inventory.SlottedItems.Length; i++) {
             Transform origin = 
                 i <= 3 ? hotbarOrigin :
@@ -29,7 +28,7 @@ public class PlayerInventoryDisplay : BaseInventoryDisplay {
                 mainOrigin;
 
             idxToSlots[i] = Instantiate(VisualSlotPrefab, origin).GetComponent<InventoryUiVisualSlot>();
-            idxToSlots[i].Init(inventoryId, i, inventory.SlottedItems[i]);
+            idxToSlots[i].Init(inventory, i, inventory.SlottedItems[i]);
         }
     }
 

@@ -43,6 +43,7 @@ namespace Networking.Shared {
                 mainMenu = Instantiate(mainMenuPrefab).GetComponent<MainMenu>();
             if(uiManager != null)
                 Destroy(uiManager.gameObject);
+            Cursor.lockState = CursorLockMode.None;
         }
 
         private void StopMainMenu() {
@@ -105,7 +106,6 @@ namespace Networking.Shared {
             // Not great to do this here, but it's common between both client/server OnDestroy()s
             ControlsManager.SetPlayer(null);
             ControlsManager.DeactivateControls();
-            UiManager.CloseActiveUiElement();
 
             if(Instance.WcNetClient != null)
                 Destroy(Instance.WcNetClient);
@@ -116,7 +116,6 @@ namespace Networking.Shared {
             Instance.WsNetServer = null;
             Instance.ticker = null;
 
-            Cursor.lockState = CursorLockMode.None;
             Disconnected?.Invoke(info);
 
             Instance.EnterMainMenu();
