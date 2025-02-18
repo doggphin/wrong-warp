@@ -1,15 +1,13 @@
+using System;
+using System.Collections;
+using Unity.VisualScripting;
+using UnityEditor.Timeline.Actions;
 using UnityEngine;
 using UnityEngine.Pool;
 
 namespace Audio.Shared {
-    public struct PositionedSoundEffectSettings {
-        public AudioEffect audioEffect;
-        public Transform transform;
-        public Vector3? position;
-    }
-
     public class AudioManager : BaseSingleton<AudioManager> {
-        const int MAX_SOUNDS = 32;
+        const int MAX_SOUNDS = 128;
         private ObjectPool<AudioPlayer> audioPlayerPool;
 
         [SerializeField] GameObject audioPlayerPrefab;
@@ -19,29 +17,26 @@ namespace Audio.Shared {
             audioPlayerPool = new ObjectPool<AudioPlayer>(OnAudioPlayerPoolCreate, OnAudioPlayerPoolGet, OnAudioPlayerPoolRelease, OnAudioPlayerPoolDestroy, true, MAX_SOUNDS, MAX_SOUNDS);
         }
 
-        public static AudioPlayer PlayPositionedSoundEffect(PositionedSoundEffectSettings audioSettings) {
-            AudioPlayer audioPlayer = Instance.audioPlayerPool.Get();
-            if(audioPlayer == null)
-                return null;
 
-            if(audioSettings.position.HasValue)
-                audioPlayer.transform.position = audioSettings.position.Value;
-            
-            AudioClip clip = AudioLookup.Lookup(audioSettings.audioEffect);
-            
-            if(clip == null) {
-                Instance.audioPlayerPool.Release(audioPlayer);
-                return null;
-            }   
-
-            audioPlayer.Play(audioSettings.transform, clip);
-            return audioPlayer;
+        public static void PlayPositionedSoundEffect(string audioFile, Transform t) {
+            AsyncAudioLookup.TryGetAsset(audioFile, 
+                (randomAudio) => Instance.PlayPositionedSoundEffect(randomAudio, t));
         }
+
+
+        private void PlayPositionedSoundEffect(RandomAudioCollectionSO randomAudio, Transform t) {
+            AudioPlayer audioPlayer = Instance.audioPlayerPool.Get();
+
+            PlayableAudioSO randomAudioChoice = randomAudio.GetRandomSoundChoice();
+            audioPlayer.Play(t, randomAudioChoice.Clip);
+        }
+
 
         private AudioPlayer OnAudioPlayerPoolCreate() {
             AudioPlayer audioPlayer = Instantiate(audioPlayerPrefab, transform).GetComponent<AudioPlayer>();
             return audioPlayer;
         }
+
 
         private void OnAudioPlayerPoolRelease(AudioPlayer audioPlayer) {
             audioPlayer.gameObject.SetActive(false);

@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IDropHandler /* IPointerUpHandler */ {
-    [SerializeField] Image itemSprite;
-    [SerializeField] TMP_Text stackSizeText;
+public class InventoryUiVisualSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IDropHandler /* IPointerUpHandler, IPointerClickHandler, */ {
+    [field: SerializeField] public Image ItemImage { get; private set; }
+    [SerializeField] private TMP_Text stackSizeText;
 
     private Inventory inventory;
     private int inventoryIndex;
@@ -17,18 +17,18 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
     public static Action<Inventory, int, PointerEventData.InputButton> Drop;
     
     public void SetVisibleSlottedItem(SlottedItem slottedItem) {
-        var color = itemSprite.color;
+        var color = ItemImage.color;
 
         if(slottedItem != null) {
             stackSizeText.text = slottedItem.stackSize.ToString();
             var baseItem = slottedItem.BaseItemRef;
-            itemSprite.sprite = baseItem.SlotSprite;
+            ItemImage.sprite = baseItem.SlotSprite;
             color.a = 1;
         } else {
             color.a = 0;
         }
 
-        itemSprite.color = color;
+        ItemImage.color = color;
     }
 
     public void Init(Inventory inventory, int inventoryIndex, SlottedItem item) {
@@ -37,11 +37,11 @@ public class InventoryUiVisualSlot : MonoBehaviour, IPointerClickHandler, IBegin
         SetVisibleSlottedItem(item);
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    /*public void OnPointerClick(PointerEventData eventData)
     {
         Debug.Log($"Clicked pointer with {eventData.button} on {inventoryIndex}!");
         Inspect?.Invoke(inventory, inventoryIndex);
-    }
+    }*/
 
     public void OnBeginDrag(PointerEventData eventData)
     {

@@ -20,4 +20,7 @@ public abstract class BaseInventoryDisplay : MonoBehaviour {
     public void UpdateSlotVisual(int idx) {
         idxToSlots[idx].SetVisibleSlottedItem(inventory[idx]);
     }
+
+
+    public InventoryUiVisualSlot GetSlot(int index) => idxToSlots[index];
 }

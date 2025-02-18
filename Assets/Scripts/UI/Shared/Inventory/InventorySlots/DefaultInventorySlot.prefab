@@ -262,7 +262,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05c94caf5f70ded4f93d4d602afb9307, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemSprite: {fileID: 4616671369271080197}
+  <ItemImage>k__BackingField: {fileID: 4616671369271080197}
   stackSizeText: {fileID: 3279516840402353023}
 --- !u!1 &8843649927186020720
 GameObject:

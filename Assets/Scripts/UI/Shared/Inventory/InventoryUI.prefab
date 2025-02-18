@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e48af6a85a5bf164fa6b777d1d69b044, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventorySlotPrefab: {fileID: 4145230244449369534, guid: 64c5f82508686554fbeb7875ffc77ba9, type: 3}
+  dragSlotPrefab: {fileID: 5588970694318612198, guid: 1c980ed08e65abd48bfccaecd343879f, type: 3}
 --- !u!225 &3315820528030424411
 CanvasGroup:
   m_ObjectHideFlags: 0

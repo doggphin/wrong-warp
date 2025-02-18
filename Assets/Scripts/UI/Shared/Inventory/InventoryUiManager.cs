@@ -5,26 +5,26 @@ using TriInspector;
 using Networking.Shared;
 using System;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using JetBrains.Annotations;
 
 namespace Inventories {
-    public struct MoveItemRequest {
-        public int fromInventoryId, fromIndex, toInventoryId, toIndex;
-        public PointerEventData.InputButton button;
-    }
-
-
     public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
-        [AssetsOnly][SerializeField] private GameObject inventorySlotPrefab;
-
-        private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
-        private MoveItemRequest moveItemRequest = new();
-        public static Action<MoveItemRequest> RequestToMoveItem;
-
         public override bool RequiresMouse => true;
         public override bool AllowsMovement => true;
+
+        public static Action<CMoveSlotRequest> RequestToMoveItem;
+
+        private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
+
+        [AssetsOnly][SerializeField] private GameObject dragSlotPrefab;
+        private DragSlot dragSlot;
+
         protected override void Awake() {                      
             InventoryUiVisualSlot.StartDrag += StartDrag;
             InventoryUiVisualSlot.Drop += Drop;
+
+            dragSlot = Helpers.InstantiateAndGetComponent<DragSlot>(transform, dragSlotPrefab);
 
             base.Awake();
         }
@@ -44,6 +44,9 @@ namespace Inventories {
                 inventory,
                 inventoryDisplay
             );
+
+            // Drag image should show on top of everything, always
+            dragSlot.transform.SetAsLastSibling();
         }
 
 
@@ -67,6 +70,15 @@ namespace Inventories {
             };
         }
         private void StartDrag(Inventory inventory, int index, PointerEventData.InputButton button) {
+            if(inventory[index] == null || inventory[index].stackSize == 0) {
+                Debug.Log("CANT DRAG SLOT");
+                return;
+            }
+
+            Debug.Log("START DRAG SLOT");
+            var slotToDrag = inventoryDisplays[inventory].GetSlot(index);
+            dragSlot.Show(slotToDrag);
+
             fromInventoryId ??= inventory.Id;
             fromIndex ??= index;
             draggingButton ??= button;
@@ -77,16 +89,18 @@ namespace Inventories {
             toIndex ??= index;
 
             if(draggingButton.HasValue && draggingButton.Value == button) {
-                RequestToMoveItem?.Invoke(new MoveItemRequest() {
+                /*RequestToMoveItem?.Invoke(new MoveItemRequest() {
                     button = button,
                     fromInventoryId = fromInventoryId.Value,
                     fromIndex = fromIndex.Value,
                     toInventoryId = toInventoryId.Value,
                     toIndex = toIndex.Value,
-                });
+                });*/
                 Debug.Log("Requesting to move!");
             }
             
+            Debug.Log("DROP DRAG SLOT");
+            dragSlot.Hide();
             fromInventoryId = fromIndex = toInventoryId = toIndex = null;
             draggingButton = null;
         }

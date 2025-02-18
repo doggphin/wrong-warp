@@ -9,7 +9,7 @@ public class SPacketUnpacker : BasePacketUnpacker<SPacketUnpacker>
         { PacketIdentifier.CJoinRequest, Deserialize<CJoinRequestPkt> },
         { PacketIdentifier.CGroupedInputs, Deserialize<CGroupedInputsPkt> },
         { PacketIdentifier.CMoveSlotRequest, Deserialize<CMoveSlotRequest> },
-        { PacketIdentifier.CDropSlotRequest, Deserialize<CDropSlotRequest> },
+        //{ PacketIdentifier.CDropSlotRequest, Deserialize<CDropSlotRequest> },
         { PacketIdentifier.CChatMessage, Deserialize<CChatMessagePkt> },
     };
 

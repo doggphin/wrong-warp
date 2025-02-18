@@ -5,6 +5,8 @@ using System;
 using Audio.Shared;
 using Networking.Server;
 using Inventories;
+using Unity.VisualScripting;
+using System.IO;
 
 
 namespace Controllers.Shared {
@@ -145,7 +147,7 @@ namespace Controllers.Shared {
                     Debug.Log(fireDownSubtickFraction);
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
-                    AudioManager.PlayPositionedSoundEffect(new PositionedSoundEffectSettings { audioEffect = AudioEffect.SpellBurst, position = Vector3.zero });
+                    AudioManager.PlayPositionedSoundEffect("Spells/Burst", player.transform);
                     SEntity entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
                     entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingPotion, 5);
                     break;
