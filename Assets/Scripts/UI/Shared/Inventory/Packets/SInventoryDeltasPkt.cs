@@ -27,5 +27,7 @@ namespace Networking.Shared {
                 delta.Serialize(writer);
             }
         }
+        
+        public override bool ShouldCache => false;
     }
 }

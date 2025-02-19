@@ -19,6 +19,8 @@ public class CPacketUnpacker : BasePacketUnpacker<CPacketUnpacker>
         { PacketIdentifier.SEntityTransformUpdate, Deserialize<SEntityTransformUpdatePkt> },
         { PacketIdentifier.STickedPacketCollection, Deserialize<TickedPacketCollection> },
         { PacketIdentifier.STickedEntityUpdates, Deserialize<TickedEntitiesUpdates> },
+        { PacketIdentifier.SAddInventory, Deserialize<SAddInventoryPkt> },
+        { PacketIdentifier.SInventoryDeltas, Deserialize<SInventoryDeltasPkt> }
     };
 
     protected override Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> PacketDeserializers { get => packetDeserializers; }

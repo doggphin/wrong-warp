@@ -8,5 +8,11 @@ public abstract class BaseInventoryActionListener<T> : BaseSingleton<T> where T 
         base.Awake();
     }
 
+    protected override void OnDestroy()
+    {
+        InventoryUiManager.RequestToMoveItem -= HandleMoveSlotRequest;
+        base.OnDestroy();
+    }
+
     protected abstract void HandleMoveSlotRequest(CMoveSlotRequestPkt request);
 }

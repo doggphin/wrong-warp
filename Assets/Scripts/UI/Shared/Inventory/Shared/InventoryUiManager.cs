@@ -104,5 +104,10 @@ namespace Inventories {
             fromInventoryId = fromIndex = toInventoryId = toIndex = null;
             draggingButton = null;
         }
+
+
+        public void UpdateSlotVisual(Inventory inventory, int slot) {
+            inventoryDisplays[inventory].UpdateSlotVisual(slot);
+        }
     }
 }

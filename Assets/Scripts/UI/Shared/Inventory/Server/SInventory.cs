@@ -7,7 +7,7 @@ using System;
 using System.Linq;
 
 namespace Networking.Server {
-    public class SInventory : Inventory {
+    public class SInventory : MonoBehaviour {
         private SEntity entityRef;
 
         private HashSet<int> indicesThatHaveChanged = new();
@@ -15,6 +15,8 @@ namespace Networking.Server {
 
         private bool hasBroadcastModified;
         public Action<SInventory> Modified;
+
+        public Inventory inventory;
 
         void Awake() {
             entityRef = GetComponent<SEntity>();
@@ -35,9 +37,9 @@ namespace Networking.Server {
             Debug.Log($"Adding as an observer!");
 
             if(player.IsHost) {
-                InventoryUiManager.Instance.AddInventory(this);   
+                InventoryUiManager.Instance.AddInventory(inventory);   
             } else {
-                SAddInventoryPkt addInventoryPacket = new(){ inventory = this };
+                SAddInventoryPkt addInventoryPacket = new(){ inventory = inventory };
                 player.ReliablePackets?.AddPacket(SNetManager.Tick, addInventoryPacket);
             }
         }
@@ -45,7 +47,7 @@ namespace Networking.Server {
 
         public void RemoveObserver(SPlayer player) {
             if(player.IsHost) {
-                InventoryUiManager.Instance.RemoveInventory(this);
+                InventoryUiManager.Instance.RemoveInventory(inventory);
             } else {
                 if(!observers.Remove(player)) {
                     Debug.LogError("Tried to remove an observer from an inventory that they were not observing!");
@@ -71,17 +73,17 @@ namespace Networking.Server {
             foreach (int indexThatChanged in indicesThatHaveChanged) {
                 deltas.Add(new() {
                     idx = indexThatChanged,
-                    slottedItem = SlottedItems[indexThatChanged]
+                    slottedItem = inventory.SlottedItems[indexThatChanged]
                 });
             }
             SInventoryDeltasPkt packet = new() {
-                deltas = new(indicesThatHaveChanged.Count)
+                deltas = deltas
             };
 
             foreach(SPlayer player in observers) {
                 if(player.IsHost) {
                     foreach(int index in indicesThatHaveChanged) {
-                        InventoryUiManager.Instance.UpdateSlotOfInventory(this, index);
+                        InventoryUiManager.Instance.UpdateSlotOfInventory(inventory, index);
                     } 
                 } else {
                     player.ReliablePackets.AddPacket(SNetManager.Tick, packet);
@@ -107,20 +109,20 @@ namespace Networking.Server {
         ///<summary> Tries to move an item from an index in this inventory to an index in another inventory. If toSInventory is null, drops the item </summary>
         public void MoveItem(int fromIndex, int toIndex, SInventory toSInventory) {
             // Don't allow interactions outside the bounds of the inventories' items array
-            if(fromIndex < 0 || fromIndex >= SlottedItems.Length || toIndex < 0 || toIndex >= toSInventory.SlottedItems.Length)
+            if(fromIndex < 0 || fromIndex >= inventory.SlottedItems.Length || toIndex < 0 || toIndex >= toSInventory.inventory.SlottedItems.Length)
                 return;
 
-            SlottedItem fromItem = SlottedItems[fromIndex];
-            if(!toSInventory.AllowsItemClassificationAtIndex(toIndex, fromItem.BaseItemRef.ItemClassificationBitflags))
+            SlottedItem fromItem = inventory.SlottedItems[fromIndex];
+            if(!toSInventory.inventory.AllowsItemClassificationAtIndex(toIndex, fromItem.BaseItemRef.ItemClassificationBitflags))
                 return;
             
             // If "to" slot is empty, just move it to it
-            if(toSInventory.SlottedItems[toIndex] == null) {
+            if(toSInventory.inventory.SlottedItems[toIndex] == null) {
                 // Swap the places of the items
-                toSInventory.SlottedItems[toIndex] = fromItem;
-                SlottedItems[fromIndex] = null;
+                toSInventory.inventory.SlottedItems[toIndex] = fromItem;
+                inventory.SlottedItems[fromIndex] = null;
             // Otherwise try to merge it... If that doesn't work, return early
-            } else if(!toSInventory.SlottedItems[toIndex].TryAbsorbSlottedItem(SlottedItems[fromIndex], SlottedItems[fromIndex].stackSize)) {
+            } else if(!toSInventory.inventory.SlottedItems[toIndex].TryAbsorbSlottedItem(inventory.SlottedItems[fromIndex], inventory.SlottedItems[fromIndex].stackSize)) {
                 return;
             }
 
@@ -137,11 +139,11 @@ namespace Networking.Server {
             // During first run, try to stack the item into each item in the inventory
             // Also, keep track of the first empty slot in case it can't be stacked into anything
             int? firstEmptyIndex = null;
-            for(int i=0; i<SlottedItems.Length; i++) {
-                SlottedItem slot = SlottedItems[i];
+            for(int i=0; i<inventory.SlottedItems.Length; i++) {
+                SlottedItem slot = inventory.SlottedItems[i];
                 // Save first empty slot for use later if necessary
                 if(slot == null) {
-                    if(AllowsItemClassificationAtIndex(i, itemToAdd.BaseItemRef.ItemClassificationBitflags)) {
+                    if(inventory.AllowsItemClassificationAtIndex(i, itemToAdd.BaseItemRef.ItemClassificationBitflags)) {
                         firstEmptyIndex ??= i;
                     }
                     continue;
@@ -170,7 +172,7 @@ namespace Networking.Server {
             int amountToRemove = Math.Min(itemToAdd.BaseItemRef.MaxStackSize, itemToAdd.stackSize);
             SlottedItem copy = itemToAdd.ShallowCopy();
             copy.stackSize = amountToRemove;
-            SlottedItems[firstEmptyIndex.Value] = copy;
+            inventory.SlottedItems[firstEmptyIndex.Value] = copy;
             itemToAdd.stackSize -= amountToRemove;
 
             RecognizeModified(firstEmptyIndex.Value);

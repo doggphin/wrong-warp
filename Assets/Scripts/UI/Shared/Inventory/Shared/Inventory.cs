@@ -3,13 +3,19 @@ using LiteNetLib.Utils;
 using System;
 
 namespace Inventories { 
-    public abstract class Inventory : MonoBehaviour, INetSerializable {
+    public class Inventory : INetSerializable {
         public int Id { get; private set; }
         public InventoryTemplateSO Template { get; protected set; }
         public SlottedItem[] SlottedItems { get; protected set; }
         
-        public void Init(int id, InventoryTemplateSO template) {
+        public Inventory(int id) {
             Id = id;
+        }
+        public Inventory(int id, InventoryTemplateSO template) {
+            Id = id;
+            SetTemplate(template);
+        }
+        public void SetTemplate(InventoryTemplateSO template) {
             Template = template;
             SlottedItems = new SlottedItem[template.SlotsCount];
         }
@@ -17,16 +23,16 @@ namespace Inventories {
 
         public void Deserialize(NetDataReader reader)
         {
-            Template = InventoryTemplateLookup.Lookup((InventoryTemplateType)reader.GetUShort());
+            ushort templateTypeCode = reader.GetUShort();
+            InventoryTemplateType templateType = (InventoryTemplateType)templateTypeCode;
+            SetTemplate(InventoryTemplateLookup.Lookup(templateType));
 
-            for(int i=0; i<SlottedItems.Length; i++) {
-                uint amountOfBlanks = reader.GetVarUInt();
-                i += (int)amountOfBlanks;
-
+            for(int i=(int)reader.GetVarUInt(); i<SlottedItems.Length; i+=(int)reader.GetVarUInt()) {
                 if(i<SlottedItems.Length) {
+                    Debug.Log("Deserializing an item!");
                     SlottedItem item = new();
-                    item.Deserialize(reader);
                     SlottedItems[i] = item;
+                    item.Deserialize(reader);
                 }
             }
         }
@@ -41,18 +47,22 @@ namespace Inventories {
             uint amountOfBlanks = 0;
             for(int i=0; i<SlottedItems.Length; i++) {
                 SlottedItem item = SlottedItems[i];
-                if(item != null) {
-                    writer.PutVarUInt(amountOfBlanks);
-                    amountOfBlanks = 0;
-                    item.Serialize(writer);
-                } else {
+
+                if(item == null) {
                     amountOfBlanks++;
+                } else {
+                    writer.PutVarUInt(amountOfBlanks);
+                    item.Serialize(writer);
+                    amountOfBlanks = 0;
+                    Debug.Log("Put an item");
                 }
             }
             
             // Finally, if there's any blanks left, put the amount of them
-            if(amountOfBlanks != 0)
-                writer.Put(amountOfBlanks);
+            if(amountOfBlanks != 0) {
+                Debug.Log($"Putting last {amountOfBlanks}!");
+                writer.PutVarUInt(amountOfBlanks);
+            }
         }
 
 

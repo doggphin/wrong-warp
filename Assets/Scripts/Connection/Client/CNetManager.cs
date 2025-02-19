@@ -17,6 +17,7 @@ namespace Networking.Client {
     [RequireComponent(typeof(ControlsManager))]
     [RequireComponent(typeof(CPacketPacker))]
     [RequireComponent(typeof(CPacketDefragmenter))]
+    [RequireComponent(typeof(CInventoryManager))]
     public class CNetManager : BaseSingleton<CNetManager>, ITicker, INetEventListener {
         private ControlsManager controlsManager;
         private CPacketDefragmenter packetDefragmenter;

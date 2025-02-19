@@ -13,6 +13,7 @@ public abstract class BasePacketUnpacker<T> : BaseSingleton<T> where T : BasePac
         return ret;
     }
 
+
     protected abstract Dictionary<PacketIdentifier, Func<NetDataReader, BasePacket>> PacketDeserializers { get; }
 
     ///<summary> Reads out a packet type and then a packet that matches that type from a NetDataReader </summary>
@@ -20,15 +21,17 @@ public abstract class BasePacketUnpacker<T> : BaseSingleton<T> where T : BasePac
     public static BasePacket DeserializeNextPacket(NetDataReader reader) {
         ushort packetTypeUShort = reader.GetUShort();
         if(!Instance.PacketDeserializers.TryGetValue((PacketIdentifier)packetTypeUShort, out var function)) {
+            Debug.Log(reader.AvailableBytes);
             throw new Exception($"No handler for {(PacketIdentifier)packetTypeUShort} (Code {packetTypeUShort})!");
         }
         return function(reader);
     }
 
+
     ///<summary> Either caches or immediatedly applies a packet based on its logic </summary>
     public static void ConsumePacket(int tick, BasePacket packet) {
         if(packet.GetType().ToString() != "SDefaultControllerStatePkt") {
-            Debug.Log($"Deserializing a {packet.GetType()}");
+            Debug.Log($"Consuming a {packet.GetType()}");
         }
         
         if(packet.ShouldCache) {
@@ -38,11 +41,13 @@ public abstract class BasePacketUnpacker<T> : BaseSingleton<T> where T : BasePac
         }
     }
 
+
     ///<summary> Reads through next packet in NetDataReader, applying or caching it as per the packet's logic  </summary>
     public static void ConsumeNextPacket(int tick, NetDataReader reader) {
         BasePacket packet = DeserializeNextPacket(reader);
         ConsumePacket(tick, packet);
     }
+
 
     ///<summary> Reads through an entire NetDataReader, applying or caching each packet read </summary>
     public static void ConsumeAllPackets(int tick, NetDataReader reader) {

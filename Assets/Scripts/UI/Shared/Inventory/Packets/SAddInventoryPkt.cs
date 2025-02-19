@@ -9,6 +9,8 @@ namespace Networking.Shared {
 
         public override void Deserialize(NetDataReader reader) {
             id = reader.GetInt();
+
+            inventory = new(id);
             inventory.Deserialize(reader);
         }
 
@@ -19,6 +21,6 @@ namespace Networking.Shared {
             inventory.Serialize(writer);
         }
 
-        public override bool ShouldCache => throw new System.NotImplementedException();
+        public override bool ShouldCache => true;
     }
 }

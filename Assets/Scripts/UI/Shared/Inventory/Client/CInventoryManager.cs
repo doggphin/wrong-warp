@@ -30,31 +30,27 @@ namespace Networking.Client {
 
 
         private void HandleInventoryDeltas(SInventoryDeltasPkt pkt) {
+            Debug.Log("THIS IS BEING CALLED ASDF");
             Inventory inventory = inventories[pkt.inventoryId];
             foreach(var delta in pkt.deltas) {
                 inventory[delta.idx] = delta.slottedItem;
+                InventoryUiManager.Instance.UpdateSlotVisual(inventory, delta.idx);
+                Debug.Log($"Updated {delta.idx}!");
             }
         }
 
+
         private void HandleRemoveInventory(SRemoveInventoryPkt pkt) {
+            Inventory inventoryToRemove = inventories[pkt.inventoryId];
             inventories.Remove(pkt.inventoryId);
+            InventoryUiManager.Instance.RemoveInventory(inventoryToRemove);
         }
+
 
         private void HandleAddInventory(SAddInventoryPkt pkt) {
             inventories[pkt.id] = pkt.inventory;
-        }
-
-        public void SetPersonalInventoryId(int newId) {
-            inventories.Remove(PersonalInventoryId);
-            PersonalInventoryId = newId;
-        }
-
-        public void ReceiveInventoryFromServer(int id, Inventory inventory) {
-            inventories[id] = inventory;
-        }
-
-        public void ReceiveInventoryDeltaFromServer(int inventoryId, InventoryDeltaSerializable inventoryDelta) {
-            inventories[inventoryId].SlottedItems[inventoryDelta.idx] = inventoryDelta.slottedItem;
+            InventoryUiManager.Instance.AddInventory(pkt.inventory);
+            Debug.Log("Adding an inventory visual!!!!");
         }
     }
 }

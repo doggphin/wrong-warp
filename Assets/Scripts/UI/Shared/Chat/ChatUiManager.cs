@@ -12,7 +12,7 @@ public class ChatUiManager : BaseUiElement<ChatUiManager>
 
     public static Action<string> SendChatMessage;
 
-    public override bool RequiresMouse => false;
+    public override bool RequiresMouse => true;
     public override bool AllowsMovement => false;
 
     protected override void Awake() {

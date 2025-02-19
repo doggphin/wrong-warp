@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2ce316c006f5104680992ac3bd23e93, type: 3}
-  m_Name: PlayerInventory
+  m_Name: Player
   m_EditorClassIdentifier: 
   <TemplateType>k__BackingField: 0
   <InventoryDisplayPrefab>k__BackingField: {fileID: 6352252763916925877, guid: 44ab992c1865cf641a9be2569ceeefad, type: 3}

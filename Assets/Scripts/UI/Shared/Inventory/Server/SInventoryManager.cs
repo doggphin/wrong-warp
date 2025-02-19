@@ -81,7 +81,7 @@ namespace Networking.Server {
 
             int inventoryId = Instance.idGenerator.GetNextEntityId(Instance.inventories);
             SInventory sInventory = entity.AddComponent<SInventory>();
-            sInventory.Init(inventoryId, inventoryTemplate);
+            sInventory.inventory = new Inventory(inventoryId, inventoryTemplate);
             Instance.inventories[inventoryId] = sInventory;
 
             sInventory.Modified += Instance.AddModifiedSInventoryToBuffer;
@@ -92,7 +92,7 @@ namespace Networking.Server {
 
         public static void DeleteInventory(SInventory sInventory) {
             sInventory.Modified -= Instance.AddModifiedSInventoryToBuffer;
-            Instance.inventories.Remove(sInventory.Id);
+            Instance.inventories.Remove(sInventory.inventory.Id);
             Destroy(sInventory);
         }
 
@@ -106,6 +106,7 @@ namespace Networking.Server {
             foreach(var inventory in inventoriesWithUpdatesBuffer) {
                 inventory.SendAndClearUpdates();
             }
+            inventoriesWithUpdatesBuffer.Clear();
         }
     }
 }
