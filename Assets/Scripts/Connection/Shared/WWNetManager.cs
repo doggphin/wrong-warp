@@ -11,7 +11,7 @@ using Audio.Shared;
 using Inventories;
 
 namespace Networking.Shared {
-    [RequireComponent(typeof(AsyncAudioLookup))]
+    [RequireComponent(typeof(AsyncAudioCollectionLookup))]
     [RequireComponent(typeof(EntityPrefabLookup))]
     [RequireComponent(typeof(ItemLookup))]
     [RequireComponent(typeof(InteractableIconLookup))]

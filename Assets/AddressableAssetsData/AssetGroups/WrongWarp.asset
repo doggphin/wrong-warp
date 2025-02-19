@@ -15,18 +15,18 @@ MonoBehaviour:
   m_GroupName: WrongWarp
   m_GUID: ea9f51801b6ea2144811b9375725df09
   m_SerializeEntries:
+  - m_GUID: 56c06e3ab82008b4b98f322e7c4ef19b
+    m_Address: Assets/ResourcesAsync/AudioCollections/Koth/Inventory/MovePotion.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 754f71b64b265c94b806235baf2cb1a6
-    m_Address: Assets/AsyncResources/RandomAudio/Spells/Burst.asset
+    m_Address: Assets/ResourcesAsync/AudioCollections/Koth/Spells/Burst.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a706a301a17065c459ac938688439313
-    m_Address: Assets/AsyncResources
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c71fa5290b91e7949917d8b680523d65
-    m_Address: Assets/AsyncResources/RandomAudio/Spells
+    m_Address: Assets/ResourcesAsync
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

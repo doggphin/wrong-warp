@@ -147,7 +147,7 @@ namespace Controllers.Shared {
                     Debug.Log(fireDownSubtickFraction);
                     fireDownLookVector = player.GetLook();
                     // TODO: remove this
-                    AudioManager.PlayPositionedSoundEffect("Spells/Burst", player.transform);
+                    AudioManager.PlaySFX("Koth/Spells/Burst", player.transform);
                     SEntity entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
                     entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingPotion, 5);
                     break;

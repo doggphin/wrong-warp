@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73d1524bb6f45a1489d76b5cbd4fee89, type: 3}
   m_Name: Burst
   m_EditorClassIdentifier: 
-  <AudioChoices>k__BackingField:
-  - {fileID: 11400000, guid: e90e901500c271a4caa2f79dadd52620, type: 2}
+  Clips:
+  - {fileID: 8300000, guid: 050b0dd68c6cf5646949ff6765b5eb02, type: 3}
+  - {fileID: 8300000, guid: 12497089db8316c49af87fad31aa31b6, type: 3}
+  Range: 5
+  PitchVariation: 5

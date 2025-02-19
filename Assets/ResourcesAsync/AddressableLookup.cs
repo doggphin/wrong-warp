@@ -9,8 +9,9 @@ using UnityEngine.Video;
 
 public abstract class AsyncBaseLookup<T> : BaseSingleton<AsyncBaseLookup<T>> where T : UnityEngine.Object
 {
-    private const string AddressablesFolder = "Assets/AsyncResources";
+    private const string AddressablesFolder = "Assets/ResourcesAsync";
     protected abstract string BaseFolder { get; }
+    private string GetContainingFolder() => $"{AddressablesFolder}/{BaseFolder}";
 
     protected virtual string FileExtensionOverride { get; } = null;
     private string fileExtension;
@@ -40,33 +41,34 @@ public abstract class AsyncBaseLookup<T> : BaseSingleton<AsyncBaseLookup<T>> whe
     
     /// <summary> Tries to get an addressable asset. </summary>
     /// <param name="assetName"> The name of the asset relative to its base containing folder; eg "Spells/Burst" </param>
-    /// <param name="actionOnCompleted"> An optional action to queue for when the object is completed </param>
+    /// <param name="onCompletedCallback"> An optional action to queue for when the object is completed </param>
     /// <returns>
     /// Returns true if the asset was already loaded, calling the action instantly; otherwise, starts loading the asset and returns false
     /// </returns>
-    public static bool TryGetAsset(string assetName, Action<T> actionOnCompleted = null) {
+    public static bool TryGetAsset(string assetName, Action<T> onCompletedCallback = null) {
         if(Instance.loadedAssets.TryGetValue(assetName, out T preloadedAsset)) {
-            actionOnCompleted?.Invoke(preloadedAsset);
+            onCompletedCallback?.Invoke(preloadedAsset);
             return true;
         } else {
-            StartLoadingAsset(assetName, actionOnCompleted);
+            StartLoadingAsset(assetName, onCompletedCallback);
             return false;
         }
     }
 
+
     /// <summary> Starts loading an asset into memory if it hasn't been + isn't being loaded into memory. </summary>
-    public static void StartLoadingAsset(string assetName, Action<T> actionOnCompleted = null) {
+    public static void StartLoadingAsset(string assetName, Action<T> onCompletedCallback = null) {
         if(Instance.queuedOnLoadActions.TryGetValue(assetName, out List<Action<T>> assetBeingWaitedOn)) {
-            if(actionOnCompleted != null) {
-                assetBeingWaitedOn.Add(actionOnCompleted);
+            if(onCompletedCallback != null) {
+                assetBeingWaitedOn.Add(onCompletedCallback);
             }
             
             return;
         }
 
-        Instance.queuedOnLoadActions[assetName] = actionOnCompleted == null ? new() : new() { actionOnCompleted };
+        Instance.queuedOnLoadActions[assetName] = onCompletedCallback == null ? new() : new() { onCompletedCallback };
 
-        string pathToAsset = $"{AddressablesFolder}/{Instance.BaseFolder}/{assetName}{Instance.fileExtension}";
+        string pathToAsset = $"{Instance.GetContainingFolder()}/{assetName}{Instance.fileExtension}";
         Addressables.LoadAssetAsync<T>(pathToAsset).Completed += (asset) => { Instance.AssetFinishedLoading(assetName, asset); };
     }
 
@@ -82,5 +84,34 @@ public abstract class AsyncBaseLookup<T> : BaseSingleton<AsyncBaseLookup<T>> whe
         foreach(Action<T> action in queuedOnLoadActions[assetName]) {
             action.Invoke(asset);
         }
+    }
+
+
+    public static void PreloadSubfolder(string subFolder, Action onFinishedCallback = null) {
+        string folderToLoad = $"{Instance.GetContainingFolder()}/{subFolder}";
+
+        Addressables.LoadResourceLocationsAsync(folderToLoad).Completed += (locationsHandle) => {
+            var locations = locationsHandle.Result;
+            int totalCount = locations.Count;
+            int loadedCount = 0;
+            
+            foreach (var location in locations) {
+                // Derive the assetName as used in StartLoadingAsset.
+                string prefix = $"{AddressablesFolder}/{Instance.BaseFolder}/";
+                string assetNameWithExtension = location.InternalId.StartsWith(prefix)
+                    ? location.InternalId.Substring(prefix.Length)
+                    : location.InternalId;
+                
+                string assetName = assetNameWithExtension;
+                if (assetName.EndsWith(Instance.fileExtension))
+                    assetName = assetName.Substring(0, assetName.Length - Instance.fileExtension.Length);
+                
+                StartLoadingAsset(assetName, asset => {
+                    loadedCount++;
+                    if (loadedCount == totalCount)
+                        onFinishedCallback?.Invoke();
+                });
+            }
+        };
     }
 }

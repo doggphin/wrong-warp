@@ -18,17 +18,15 @@ namespace Audio.Shared {
         }
 
 
-        public static void PlayPositionedSoundEffect(string audioFile, Transform t) {
-            AsyncAudioLookup.TryGetAsset(audioFile, 
-                (randomAudio) => Instance.PlayPositionedSoundEffect(randomAudio, t));
+        public static void PlaySFX(string audioFile, Transform t) {
+            AsyncAudioCollectionLookup.TryGetAsset(audioFile, 
+                (randomAudio) => Instance.CreateAndPlayAudioPlayer(randomAudio, t));
         }
 
 
-        private void PlayPositionedSoundEffect(RandomAudioCollectionSO randomAudio, Transform t) {
+        private void CreateAndPlayAudioPlayer(AudioCollection audioCollection, Transform t) {
             AudioPlayer audioPlayer = Instance.audioPlayerPool.Get();
-
-            PlayableAudioSO randomAudioChoice = randomAudio.GetRandomSoundChoice();
-            audioPlayer.Play(t, randomAudioChoice.Clip);
+            audioPlayer.Play(t, audioCollection.GetRandomSoundChoice());
         }
 
 

@@ -1,4 +1,1 @@
-public class AsyncAudioLookup : AsyncBaseLookup<RandomAudioCollectionSO>
-{
-    protected override string BaseFolder => "RandomAudio";
-}
+public class AsyncAudioCollectionLookup : AsyncBaseLookup<AudioCollection> { protected override string BaseFolder => "AudioCollections"; }

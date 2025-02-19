@@ -20,8 +20,11 @@ namespace Audio.Shared {
             FinishedPlaying?.Invoke(this);
         }
 
-        private IEnumerator PlayAtSourceThenRelease(Transform parentTransform, AudioClip clip) {
+        private IEnumerator PlayAtSourceThenRelease(Transform parentTransform, AudioCollection.PlayableAudio playableAudio) {
+            AudioClip clip = playableAudio.clip;
             audioSource.clip = clip;
+            audioSource.pitch = playableAudio.pitch;
+            audioSource.maxDistance = playableAudio.range;
             audioSource.Play();
 
             if(parentTransform == null) {
@@ -38,9 +41,9 @@ namespace Audio.Shared {
             Stop();
         }
 
-        public void Play(Transform parentTransform, AudioClip clip) {
+        public void Play(Transform parentTransform, AudioCollection.PlayableAudio playableAudio) {
             StopAllCoroutines();   
-            StartCoroutine(PlayAtSourceThenRelease(parentTransform, clip));
+            StartCoroutine(PlayAtSourceThenRelease(parentTransform, playableAudio));
         }
 
         void OnDestroy() {
