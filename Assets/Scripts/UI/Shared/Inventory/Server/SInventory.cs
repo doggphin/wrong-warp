@@ -55,6 +55,9 @@ namespace Networking.Server {
         }
 
 
+        public bool IsObservedBy(SPlayer player) => observers.Contains(player);
+
+
         public void OnDestroy()
         {
             foreach(var observer in observers) {
@@ -101,32 +104,28 @@ namespace Networking.Server {
         }
 
         
-        ///<summary> Tries to move an item from an index in this inventory to an index in another inventory. If toInventory is not specified, uses this inventory. </summary>
-        public void MoveItem(int fromIndex, int toIndex, SInventory toSInventory = null) {
-            // A null toInventory signifies moving within self
-            // TODO: moving within self would mean movements within own inventory could be seriously optimized by sending MoveItem arguments rather than deltas
-            if(toSInventory == null) {
-                toSInventory = this;
-            }
-
+        ///<summary> Tries to move an item from an index in this inventory to an index in another inventory. If toSInventory is null, drops the item </summary>
+        public void MoveItem(int fromIndex, int toIndex, SInventory toSInventory) {
             // Don't allow interactions outside the bounds of the inventories' items array
             if(fromIndex < 0 || fromIndex >= SlottedItems.Length || toIndex < 0 || toIndex >= toSInventory.SlottedItems.Length)
                 return;
 
             SlottedItem fromItem = SlottedItems[fromIndex];
-            if(!toSInventory.AllowsItemClassificationAtIndex(fromIndex, fromItem.BaseItemRef.ItemClassificationBitflags))
+            if(!toSInventory.AllowsItemClassificationAtIndex(toIndex, fromItem.BaseItemRef.ItemClassificationBitflags))
                 return;
             
-            // If moving into an empty slot or a slot that contains an item that cannot be merged into,
-            if(toSInventory.SlottedItems[toIndex] == null && !toSInventory.SlottedItems[toIndex].TryAbsorbSlottedItem(SlottedItems[fromIndex], SlottedItems[fromIndex].stackSize)) {
+            // If "to" slot is empty, just move it to it
+            if(toSInventory.SlottedItems[toIndex] == null) {
                 // Swap the places of the items
-                SlottedItem toItem = toSInventory.SlottedItems[toIndex];
-                toSInventory.SlottedItems[toIndex] = SlottedItems[fromIndex];
-                SlottedItems[toIndex] = toItem;
+                toSInventory.SlottedItems[toIndex] = fromItem;
+                SlottedItems[fromIndex] = null;
+            // Otherwise try to merge it... If that doesn't work, return early
+            } else if(!toSInventory.SlottedItems[toIndex].TryAbsorbSlottedItem(SlottedItems[fromIndex], SlottedItems[fromIndex].stackSize)) {
+                return;
             }
 
             // Invoke actions to alert both inventories as having been modified
-            RecognizeModified(fromIndex);        
+            RecognizeModified(fromIndex);      
             toSInventory.RecognizeModified(toIndex);
         }
 

@@ -4,8 +4,10 @@ using Inventories;
 using Unity.VisualScripting;
 using UnityEngine.Video;
 using Networking.Shared;
+using LiteNetLib;
 
 namespace Networking.Server {
+    [RequireComponent(typeof(SInventoryActionListener))]
     public class SInventoryManager : BaseSingleton<SInventoryManager> {
         private Dictionary<int, SInventory> inventories = new();
         private BaseIdGenerator idGenerator = new();
@@ -15,13 +17,42 @@ namespace Networking.Server {
         protected override void Awake()
         {
             InteractableTakeable.InteractedStart += HandlePickUpItem;
+            CMoveSlotRequestPkt.ApplyUnticked += HandleMoveSlot;
             base.Awake();
         }
 
         protected override void OnDestroy()
         {
             InteractableTakeable.InteractedStart -= HandlePickUpItem;
+            CMoveSlotRequestPkt.ApplyUnticked -= HandleMoveSlot;
             base.OnDestroy();
+        }
+
+
+        private void HandleMoveSlot(CMoveSlotRequestPkt pkt, NetPeer peer) {
+            if(!SPlayer.TryFromPeer(peer, out SPlayer player)) {
+                return;
+            }
+            
+            if(!inventories.TryGetValue(pkt.fromInventoryId, out SInventory fromInventory) || !fromInventory.IsObservedBy(player)) {
+                return;
+            }
+
+            SInventory toInventory;
+            if(!pkt.toInventoryId.HasValue) {
+                toInventory = fromInventory;
+            } else {
+                if(!inventories.TryGetValue(pkt.toInventoryId.Value, out toInventory) || !toInventory.IsObservedBy(player)) {
+                    return;
+                }
+            }
+
+            if(pkt.toIndex.HasValue) {
+                fromInventory.MoveItem(pkt.fromIndex, pkt.toIndex.Value, toInventory);
+            } else {
+                // Drop the item, somehow
+            }
+            
         }
 
 

@@ -19,10 +19,9 @@ namespace Networking.Client {
     [RequireComponent(typeof(CPacketDefragmenter))]
     public class CNetManager : BaseSingleton<CNetManager>, ITicker, INetEventListener {
         private ControlsManager controlsManager;
-        private CPacketPacker packetPacker;
         private CPacketDefragmenter packetDefragmenter;
 
-        private NetPeer serverPeer;
+        public NetPeer ServerPeer { get; private set; }
         private NetDataWriter writer = new();
         private string userName = "";
         private bool isJoined = false;
@@ -50,12 +49,12 @@ namespace Networking.Client {
         
         public void OnPeerConnected(NetPeer peer) {
             Debug.Log("Connected to server: " + peer.Address);
-            serverPeer = peer;
+            ServerPeer = peer;
 
             Activate();
 
             CJoinRequestPkt joinRequest = new() { userName = userName };
-            packetPacker.SendSingleReliable(writer, serverPeer, CentralTimingTick, joinRequest);
+            CPacketPacker.SendSingleReliable(joinRequest);
         }
         private bool isActivated;
         private void Activate() {
@@ -67,7 +66,6 @@ namespace Networking.Client {
 
             controlsManager = GetComponent<ControlsManager>();
             ControlsManager.ActivateControls();
-            packetPacker = GetComponent<CPacketPacker>();
             packetDefragmenter = GetComponent<CPacketDefragmenter>();
 
             isActivated = true;
@@ -144,10 +142,7 @@ namespace Networking.Client {
             // Send inputs to the server
             if(CentralTimingTick > mostRecentlySentTick) {
                 //Debug.Log($"Sending inputs for {SendingTick}!");
-                packetPacker.SendSingleUnreliable(
-                    writer, 
-                    serverPeer, 
-                    SendingTick,
+                CPacketPacker.SendSingleUnreliable(
                     new CGroupedInputsPkt() { inputsSerialized = new InputsSerializable[]{ controlsManager.inputs[SendingTick] } }
                 );
                 mostRecentlySentTick = CentralTimingTick;
@@ -241,14 +236,9 @@ namespace Networking.Client {
 
 
         private void SendChatMessage(string message) {
-            NetDataWriter writer = new();
-            CChatMessagePkt pkt = new() {
+            CPacketPacker.SendSingleReliable(new CChatMessagePkt {
                 message = message
-            };
-
-            // Tick is not relevant here but something needs to be written there regardless
-            packetPacker.SendSingleReliable(writer, serverPeer, SendingTick, pkt);
-            Debug.Log("Sent message to the server!");
+            });
         }
     }
 }

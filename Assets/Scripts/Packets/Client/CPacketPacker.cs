@@ -1,10 +1,15 @@
 using LiteNetLib;
 using LiteNetLib.Utils;
+using Networking.Client;
+using Networking.Shared;
 
 public class CPacketPacker : PacketPacker<CPacketPacker> {
-    public void SendSingleUnreliable<T>(NetDataWriter writer, NetPeer peer, int tick, T packet) where T : INetSerializable {
-        StartPacketCollection(writer, tick);
+    public static void SendSingleUnreliable<T>(T packet, int? tick = null) where T : INetSerializable {
+        NetDataWriter writer = GetSinglesWriter();
+
+        StartPacketCollection(writer, tick ?? WWNetManager.GetTick());
         packet.Serialize(writer);
-        peer.Send(writer, DeliveryMethod.Unreliable);
+
+        CNetManager.Instance.ServerPeer.Send(writer, DeliveryMethod.Unreliable);
     }
 }

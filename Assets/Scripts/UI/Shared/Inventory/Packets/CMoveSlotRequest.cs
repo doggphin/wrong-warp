@@ -3,7 +3,7 @@ using LiteNetLib.Utils;
 using UnityEngine.EventSystems;
 
 namespace Networking.Shared {
-    public class CMoveSlotRequest : CPacket<CMoveSlotRequest>
+    public class CMoveSlotRequestPkt : CPacket<CMoveSlotRequestPkt>
     {
         public PointerEventData.InputButton buttonType;
 

@@ -8,18 +8,27 @@ using Unity.VisualScripting;
 namespace Networking.Server {
     public static class SPlayerExtensions {
         public static bool TryGetSPlayer(this NetPeer peer, out SPlayer player) {
-            if(peer.Tag == null) {
-                player = null;
-                return false;
+            // If peer is null, then this is the host
+            if(peer == null) {
+                player = SNetManager.HostPlayer;
             } else {
-                player = (SPlayer)peer.Tag;
-                return true;
+                player = peer.Tag as SPlayer;
             }
+
+            return player != null;
         }
     }
+
     public class SPlayer {
         public static SPlayer FromPeer(NetPeer peer) {
-            return peer.Tag == null ? null : (SPlayer)peer.Tag;
+            return peer == null ?
+                SNetManager.HostPlayer :
+                peer.Tag as SPlayer;
+        }
+
+        public static bool TryFromPeer(NetPeer peer, out SPlayer player) {
+            player = FromPeer(peer);
+            return player != null;
         }
 
         public SChunk previousChunk = null;

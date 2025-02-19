@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using Inventories;
 using Networking.Server;
 using Networking.Shared;
+using UnityEngine;
 
 namespace Networking.Client {
+    [RequireComponent(typeof(CInventoryActionListener))]
     class CInventoryManager : BaseSingleton<CInventoryManager> {
         public int PersonalInventoryId { get; private set; }
         private Dictionary<int, Inventory> inventories = new();

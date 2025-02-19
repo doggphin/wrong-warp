@@ -19,7 +19,6 @@ namespace Networking.Server {
     [RequireComponent(typeof(ControlsManager))]
     public class SNetManager : BaseSingleton<SNetManager>, ITicker, INetEventListener {
         private ControlsManager controlsManager;
-        private SPacketPacker packetPacker;
 
         private static int tick;
         public int GetTick() => tick;
@@ -44,7 +43,6 @@ namespace Networking.Server {
             tick = NetCommon.TICKS_PER_SECOND;
             
             controlsManager = GetComponent<ControlsManager>();
-            packetPacker = GetComponent<SPacketPacker>();
             ControlsManager.ActivateControls();
             ChatUiManager.SendChatMessage += SendHostChatMessage;
             CPacket<CJoinRequestPkt>.ApplyUnticked += HandleJoinRequest;
@@ -135,7 +133,7 @@ namespace Networking.Server {
                 return;
 
             bool hasReliableUpdates = false;
-            packetPacker.StartPacketCollection(testWriter, tick);
+            SPacketPacker.StartPacketCollection(testWriter, tick);
             if(player.Entity != null) {
                 if(SChunkManager.Instance.TryGetReliablePlayerUpdates(player, out NetDataWriter reliableChunkUpdates)) {
                     testWriter.Append(reliableChunkUpdates);
@@ -181,7 +179,7 @@ namespace Networking.Server {
             peer.Tag = player;
             PlayerJoined?.Invoke(player);
 
-            packetPacker.StartPacketCollection(baseWriter, tick);
+            SPacketPacker.StartPacketCollection(baseWriter, tick);
             
             SJoinAcceptPkt joinAcceptPacket = new() {
                 userName = userName,

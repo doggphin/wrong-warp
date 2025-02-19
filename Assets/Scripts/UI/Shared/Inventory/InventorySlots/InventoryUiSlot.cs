@@ -20,12 +20,13 @@ public class InventoryUiVisualSlot : MonoBehaviour, IBeginDragHandler, IDragHand
         var color = ItemImage.color;
 
         if(slottedItem != null) {
-            stackSizeText.text = slottedItem.stackSize.ToString();
             var baseItem = slottedItem.BaseItemRef;
-            ItemImage.sprite = baseItem.SlotSprite;
+            stackSizeText.text = slottedItem.stackSize.ToString();
+            ItemImage.sprite = slottedItem.BaseItemRef.SlotSprite;
             color.a = 1;
         } else {
             color.a = 0;
+            stackSizeText.text = "";
         }
 
         ItemImage.color = color;

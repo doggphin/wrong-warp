@@ -13,7 +13,7 @@ namespace Inventories {
         public override bool RequiresMouse => true;
         public override bool AllowsMovement => true;
 
-        public static Action<CMoveSlotRequest> RequestToMoveItem;
+        public static Action<CMoveSlotRequestPkt> RequestToMoveItem;
 
         private Dictionary<Inventory, BaseInventoryDisplay> inventoryDisplays = new();
 
@@ -89,13 +89,13 @@ namespace Inventories {
             toIndex ??= index;
 
             if(draggingButton.HasValue && draggingButton.Value == button) {
-                /*RequestToMoveItem?.Invoke(new MoveItemRequest() {
-                    button = button,
+                RequestToMoveItem?.Invoke(new CMoveSlotRequestPkt() {
+                    buttonType = button,
                     fromInventoryId = fromInventoryId.Value,
                     fromIndex = fromIndex.Value,
                     toInventoryId = toInventoryId.Value,
                     toIndex = toIndex.Value,
-                });*/
+                });
                 Debug.Log("Requesting to move!");
             }
             
