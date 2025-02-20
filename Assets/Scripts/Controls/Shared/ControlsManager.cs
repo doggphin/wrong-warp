@@ -144,16 +144,41 @@ namespace Controllers.Shared {
             switch(inputType) {
                 case InputType.FireDownEvent:
                     fireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();
-                    Debug.Log(fireDownSubtickFraction);
                     fireDownLookVector = player.GetLook();
+
                     // TODO: remove this
-                    AudioManager.PlaySFX("Koth/Spells/Burst", player.transform);
-                    SEntity entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
-                    entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingPotion, 5);
+                    System.Random random = new();
+                    foreach(ItemType itemType in random.Next(0, 2) == 0 ? new ItemType[] { 
+                        ItemType.TestingPotion,
+                        ItemType.TestingBoots,
+                        ItemType.TestingChestplate,
+                        ItemType.TestingPants,
+                        ItemType.TestingHelmet
+                    } : new ItemType[] { 
+                        ItemType.TestingPotion,
+                        ItemType.TestingPotion,
+                        ItemType.TestingPotion,
+                        ItemType.TestingPotion,
+                        ItemType.TestingWand
+                    }) {
+                        SEntity entityA = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
+                        entityA.GetComponent<InteractableTakeable>().item = new SlottedItem(itemType, 3);
+                        AudioManager.PlaySFX("Koth/Spells/Burst", entityA.transform);
+                    }
+                    
                     break;
                 case InputType.AltFireDownEvent:
                     altFireDownSubtickFraction = WWNetManager.GetPercentageThroughTickCurrentFrame();
                     altFireDownLookVector = player.GetLook();
+
+                    SEntity entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
+                    entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingWand, 1);
+                    AudioManager.PlaySFX("Koth/Spells/Burst", entity.transform);
+
+                    entity = SEntityManager.Instance.SpawnEntity(EntityPrefabId.DroppedItem, null, null, null);
+                    entity.GetComponent<InteractableTakeable>().item = new SlottedItem(ItemType.TestingPotion, 30);
+                    AudioManager.PlaySFX("Koth/Spells/Burst", entity.transform);
+
                     break;
             }
         }

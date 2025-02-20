@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b71bce24ce405e240b01efdaf635ee1c
+    m_Address: Assets/ResourcesAsync/AudioCollections/Koth/Inventory/Slide.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: ee9f54a864b1d3243a7e388275e36edd, type: 2}
   m_SchemaSet:

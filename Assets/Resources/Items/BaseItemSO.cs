@@ -19,6 +19,8 @@ namespace Inventories {
         [AlchemySerializeField, NonSerialized] private HashSet<ItemCategory> categories = new();
         public int ItemClassificationBitflags { get; private set; }
 
+        [field: SerializeField] public string AudioCollectionAddressable { get; private set; } = "Koth/Inventory/Slide";
+
         private void OnEnable() {
             ItemClassificationBitflags = 
                 InventoryTemplateSO.GenerateItemCategoryFlags(categories);

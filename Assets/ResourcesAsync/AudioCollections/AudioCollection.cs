@@ -11,8 +11,8 @@ public class AudioCollection : ScriptableObject
     }
 
     [SerializeField] private AudioClip[] Clips;
-    [SerializeField] private float Range;
-    [SerializeField] private float PitchVariation;
+    [SerializeField] private float Range = 10;
+    [SerializeField] private float PitchVariation = 5;
 
     public PlayableAudio GetRandomSoundChoice() {
         return new PlayableAudio() {

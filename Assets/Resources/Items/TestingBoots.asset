@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 912bf57dcec92964cb5c8a99f213ea0d, type: 3}
-  m_Name: TestingPotion
+  m_Name: TestingBoots
   m_EditorClassIdentifier: 
-  <ItemName>k__BackingField: Potion
-  <Description>k__BackingField: A delicious potion!
-  <SlotSprite>k__BackingField: {fileID: 21300000, guid: acd1d63c9830a1a4faad28305a88830a, type: 3}
-  <MaxStackSize>k__BackingField: 5
-  <AudioCollectionAddressable>k__BackingField: Koth/Inventory/MovePotion
+  <ItemName>k__BackingField: Testing Boots
+  <Description>k__BackingField: 
+  <SlotSprite>k__BackingField: {fileID: 21300000, guid: 765f0fa884cc3064db9734362c704b27, type: 3}
+  <MaxStackSize>k__BackingField: 1
+  <AudioCollectionAddressable>k__BackingField: Koth/Inventory/MoveMetalArmor
   __alchemySerializationData_Inventories_BaseItemSO:
     categories:
       isCreated: 1
-      data: "[\n    128\n]"
+      data: "[\n    16\n]"
     unityObjectReferences: []

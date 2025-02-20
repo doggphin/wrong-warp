@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73d1524bb6f45a1489d76b5cbd4fee89, type: 3}
-  m_Name: MovePotion
+  m_Name: MoveMetalArmor
   m_EditorClassIdentifier: 
   Clips:
-  - {fileID: 8300000, guid: 1028b6c9c6c3f9e4c97bbe791254f9f3, type: 3}
-  - {fileID: 8300000, guid: 79894f482fe5acd42b4e496fed8ba67b, type: 3}
-  - {fileID: 8300000, guid: bd1439ee6f7b8534387a82cb192fffc0, type: 3}
+  - {fileID: 8300000, guid: 74cba18265d7b4d4b8ecb33133ced3c5, type: 3}
+  - {fileID: 8300000, guid: 563d5cb800ed8db40b3bbb784b849bf0, type: 3}
+  - {fileID: 8300000, guid: 7dbe0d2f538f74f43a9090a0d3da79f1, type: 3}
   Range: 5
   PitchVariation: 5

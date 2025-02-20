@@ -7,6 +7,7 @@ using System;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using JetBrains.Annotations;
+using Audio.Shared;
 
 namespace Inventories {
     public class InventoryUiManager : BaseUiElement<InventoryUiManager> {
@@ -59,7 +60,8 @@ namespace Inventories {
             inventoryDisplays[inventory].UpdateSlotVisual(slotIdx);
         }
         
-        int? fromInventoryId, fromIndex, toInventoryId, toIndex;
+        int? fromIndex, toIndex;
+        Inventory fromInventory, toInventory;
         PointerEventData.InputButton? draggingButton;
         private int GetDragStackSize(int stackSize, PointerEventData.InputButton button) {
             return button switch {
@@ -79,21 +81,31 @@ namespace Inventories {
             var slotToDrag = inventoryDisplays[inventory].GetSlot(index);
             dragSlot.Show(slotToDrag);
 
-            fromInventoryId ??= inventory.Id;
+            fromInventory ??= inventory;
             fromIndex ??= index;
             draggingButton ??= button;
+
+            AudioManager.PlaySFX(inventory[index].BaseItemRef.AudioCollectionAddressable);
         }
 
         private void Drop(Inventory inventory, int index, PointerEventData.InputButton button) {
-            toInventoryId ??= inventory.Id;
+            toInventory = inventory;
             toIndex ??= index;
 
             if(draggingButton.HasValue && draggingButton.Value == button) {
+                // Play the sound of the slot that will be being swapped with if possible
+                // Otherwise just replay the sound effect of the item being moved
+                if(toInventory[index] != null) {
+                    AudioManager.PlaySFX(toInventory[toIndex.Value].BaseItemRef.AudioCollectionAddressable);
+                } else {
+                    AudioManager.PlaySFX(fromInventory[fromIndex.Value].BaseItemRef.AudioCollectionAddressable);
+                }
+                
                 RequestToMoveItem?.Invoke(new CMoveSlotRequestPkt() {
                     buttonType = button,
-                    fromInventoryId = fromInventoryId.Value,
+                    fromInventoryId = fromInventory.Id,
                     fromIndex = fromIndex.Value,
-                    toInventoryId = toInventoryId.Value,
+                    toInventoryId = toInventory.Id,
                     toIndex = toIndex.Value,
                 });
                 Debug.Log("Requesting to move!");
@@ -101,7 +113,8 @@ namespace Inventories {
             
             Debug.Log("DROP DRAG SLOT");
             dragSlot.Hide();
-            fromInventoryId = fromIndex = toInventoryId = toIndex = null;
+            fromInventory = toInventory = null;
+            fromIndex  = toIndex = null;
             draggingButton = null;
         }
 

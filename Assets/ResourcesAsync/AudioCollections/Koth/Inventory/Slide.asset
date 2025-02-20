@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73d1524bb6f45a1489d76b5cbd4fee89, type: 3}
-  m_Name: MovePotion
+  m_Name: Slide
   m_EditorClassIdentifier: 
   Clips:
-  - {fileID: 8300000, guid: 1028b6c9c6c3f9e4c97bbe791254f9f3, type: 3}
-  - {fileID: 8300000, guid: 79894f482fe5acd42b4e496fed8ba67b, type: 3}
-  - {fileID: 8300000, guid: bd1439ee6f7b8534387a82cb192fffc0, type: 3}
+  - {fileID: 8300000, guid: 72f022bb17786764ab60d390ae6b7943, type: 3}
+  - {fileID: 8300000, guid: bf79ab0f937658a40babd4b086e2d890, type: 3}
+  - {fileID: 8300000, guid: 8a3049c54eb440c45be3ab56baad5225, type: 3}
   Range: 5
   PitchVariation: 5

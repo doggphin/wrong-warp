@@ -18,15 +18,17 @@ namespace Audio.Shared {
         }
 
 
-        public static void PlaySFX(string audioFile, Transform t) {
-            AsyncAudioCollectionLookup.TryGetAsset(audioFile, 
-                (randomAudio) => Instance.CreateAndPlayAudioPlayer(randomAudio, t));
+        public static void PlaySFX(string audioFile, Transform t = null) {
+            AsyncAudioCollectionLookup.TryGetAsset(audioFile, (randomAudio) => {
+                    bool isPositioned = t != null;
+                    Instance.CreateAndPlayAudioPlayer(randomAudio, isPositioned ? t : Instance.transform, isPositioned);
+                });
         }
 
 
-        private void CreateAndPlayAudioPlayer(AudioCollection audioCollection, Transform t) {
+        private void CreateAndPlayAudioPlayer(AudioCollection audioCollection, Transform t, bool isPositioned) {
             AudioPlayer audioPlayer = Instance.audioPlayerPool.Get();
-            audioPlayer.Play(t, audioCollection.GetRandomSoundChoice());
+            audioPlayer.Play(t, audioCollection.GetRandomSoundChoice(), isPositioned);
         }
 
 

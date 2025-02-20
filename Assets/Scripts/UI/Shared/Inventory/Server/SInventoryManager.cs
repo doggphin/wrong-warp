@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine.Video;
 using Networking.Shared;
 using LiteNetLib;
+using Audio.Shared;
 
 namespace Networking.Server {
     [RequireComponent(typeof(SInventoryActionListener))]
@@ -61,6 +62,7 @@ namespace Networking.Server {
             if(!entity.TryGetComponent(out SInventory inventory) || !inventory.TryAddItem(takeable.item))
                 return;
 
+            AudioManager.PlaySFX(takeable.item.BaseItemRef.AudioCollectionAddressable);
             SEntity takeableEntity = takeable.GetComponent<SEntity>();
             int newStackSize = takeable.item.stackSize;
             if(newStackSize <= 0) {
